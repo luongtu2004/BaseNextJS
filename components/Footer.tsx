@@ -34,7 +34,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <h5 className="text-[13px] font-bold text-slate-900 uppercase tracking-[0.15em] mb-8">Dịch vụ chính</h5>
             <ul className="space-y-4">
-              {['Vận tải & Di chuyển', 'Xây dựng - Điện máy & Nội thất', 'Giúp việc, Chăm sóc & Làm đẹp', 'Y tế & Giáo dục', 'Tiện ích, Du lịch, Khách sạn và Bảo hiểm'].map((item) => (
+              {['Vận tải & Di chuyển', 'Xây dựng, nội thất và kỹ thuật', 'Giúp việc, Chăm sóc & Làm đẹp', 'Y tế & Giáo dục', 'Du lịch, Khách sạn và Bảo hiểm'].map((item) => (
                 <li key={item}>
                   <Link href="#" className="text-[14px] text-slate-500 font-medium hover:text-primary transition-colors">{item}</Link>
                 </li>

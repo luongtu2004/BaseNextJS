@@ -20,7 +20,7 @@ export const PILLARS = [
   },
   {
     id: 'construction_electronics',
-    title: 'XÂY DỰNG - ĐIỆN MÁY & NỘI THẤT',
+    title: 'XÂY DỰNG, NỘI THẤT VÀ KỸ THUẬT',
     description: 'Thi công, sửa chữa nhà cửa và điện máy gia dụng tại nhà.',
     image: '/pillar_construction_1773647692104.png',
     industries: [
@@ -76,7 +76,7 @@ export const PILLARS = [
   },
   {
     id: 'travel',
-    title: 'TIỆN ÍCH, DU LỊCH, KHÁCH SẠN VÀ BẢO HIỂM',
+    title: 'DU LỊCH, KHÁCH SẠN VÀ BẢO HIỂM',
     description: 'Dịch vụ tiện ích du lịch, lưu trú và bảo hiểm trọn gói.',
     image: '/pillar_transportation_1773647657871.png',
     industries: [

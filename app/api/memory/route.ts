@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const baseUrl = process.env.AI_BASE_URL || 'http://113.160.201.164:8003/v1';
   const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL || 'local-main';
+  const model = process.env.AI_MODEL || 'local-fast';
 
   if (!apiKey) {
     return new Response(JSON.stringify({ profile: null }), { status: 200 });

@@ -10,7 +10,7 @@ Dưới đây là kiến thức chi tiết về 5 trụ cột dịch thực tế
 - **Dịch vụ lái xe hộ:** Lái xe khi say rượu; Lái xe theo ngày/chuyến (ô tô/xe máy).
 - **Công nghệ:** Xe ôm công nghệ.
 
-## 2. XÂY DỰNG - ĐIỆN MÁY & NỘI THẤT
+## 2. XÂY DỰNG, NỘI THẤT VÀ KỸ THUẬT
 
 - **Xây dựng & Nội thất:** Điện nước (24/7); Thợ nề; Sơn bả/chống thấm; Trần thạch cao; Nhôm kính/cửa cuốn; Cơ khí/hàn xì; Thợ mộc.
 - **Hạ tầng kỹ thuật:** Thông tắc cống; Hút bể phốt.
@@ -26,10 +26,10 @@ Dưới đây là kiến thức chi tiết về 5 trụ cột dịch thực tế
 
 ## 4. Y TẾ & GIÁO DỤC
 
-- **Y tế:** Điều dưỡng tại nhà (tiêm, truyền, vật lý trị liệu); Lấy mẫu máu xét nghiệm tại nhà.
-- **Giáo dục:** Gia sư văn hóa (Toán/Văn/Anh...); Gia sư năng khiếu (Đàn/Họa/Võ/Bơi).
+- **Y tế:** Điều dưỡng tại nhà (tiêm, truyền, phục hồi chức năng); Lấy mẫu máu xét nghiệm tại nhà; **Chăm sóc mẹ & bé sau sinh (tắm bé, thông sữa); Thuê thiết bị y tế (máy oxy, xe lăn); Vận chuyển y tế (xe cứu thương không khẩn cấp).**
+- **Giáo dục:** Gia sư văn hóa (Toán/Văn/Anh...); Gia sư năng khiếu (Đàn/Họa/Võ/Bơi); **Luyện thi chứng chỉ (IELTS/TOEIC); Ngoại ngữ mới (Nhật/Hàn/Trung); Tin học & Công nghệ cơ bản.**
 
-## 5. TIỆN ÍCH, DU LỊCH, KHÁCH SẠN VÀ BẢO HIỂM
+## 5. DU LỊCH, KHÁCH SẠN VÀ BẢO HIỂM
 
 - **Vé & Lưu trú:** Đặt vé máy bay nội địa/quốc tế; Đặt khách sạn, homestay, resort.
 - **Tour & Di chuyển:** Đặt tour ghép/tour riêng; Thuê xe tự lái hoặc xe du lịch có tài xế; Đưa đón sân bay.

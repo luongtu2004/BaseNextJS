@@ -1,56 +1,205 @@
 # Kế hoạch triển khai Backend API — Sàn Dịch Vụ (Phase 1)
 
-Tài liệu mô tả phạm vi, stack, cấu trúc thư mục, thứ tự công việc và các điểm rà soát với `database.sql`. **Cập nhật tiến độ** bằng cách tick các mục dưới mục 7.
-
-## Tiến độ nhanh
-
-| Sprint | Trạng thái |
-|--------|------------|
-| Sprint 0 — Hạ tầng | **Hoàn thành** (2026-03-23) |
-| Sprint 1 — Auth / Common | **Đang làm** (2026-03-23) |
-| Sprint 2 — Customer | Chưa làm |
-| Sprint 3 — Provider | Chưa làm |
-| Sprint 4 — Admin | Chưa làm |
-| Sprint 5 — Cứng hóa | Chưa làm |
-
-**Chạy API sau Sprint 0:** từ thư mục `backend/`, tạo `.env` từ `.env.example`, cấu hình `DATABASE_URL`, rồi:
-
-`uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
-
-- `GET /health` — không cần DB.
-- `GET /health/db` — kiểm tra `SELECT 1` qua pool async.
-
-**Alembic (DB đã có sẵn từ `database.sql`):** một lần trên môi trường đó: `alembic stamp 001_baseline` (hoặc `alembic stamp head`) để đồng bộ revision baseline, không chạy `upgrade` tạo bảng trùng.
+Tài liệu mô tả scope, API spec, stack, cấu trúc thư mục, **thứ tự ưu tiên khi làm API**, và các điểm rà soát với `database.sql`. Cập nhật tiến độ bằng cách tick các mục dưới phần "Tiến độ hiện tại".
 
 ---
 
-## 1. Mục tiêu Phase 1
+## Tiến độ hiện tại
 
-- **Nền tảng:** Python (REST API) + PostgreSQL, đồng bộ với schema hiện có trong `database.sql`.
-- **Nghiệp vụ giai đoạn đầu:** quản lý **thông tin người dùng**, **danh mục dịch vụ**, **hồ sơ provider**, **bài viết công khai**; một người có thể vừa **khách** vừa **thợ** (role `customer` + `provider_owner`).
-- **Chưa ưu tiên:** đặt lịch / job / thanh toán / chat realtime / đánh giá thực tế (các cột `avg_rating`, `total_jobs_completed` có thể giữ mặc định hoặc cập nhật thủ công/admin cho tới khi có module giao dịch).
+| Phase | Trạng thái | Phiên bản | Ngày cập nhật | Ghi chú |
+|-------|------------|-----------|---------------|---------|
+| Phase 1 — Auth + Common | Đang làm | 0.1.0 | 2026-03-23 | `/health`, `/health/db` OK |
+| Phase 2 — Admin | Hoàn thành | 0.2.0 | 2026-03-23 | Full Admin API: taxonomy, users, providers, posts |
+| Phase 3 — Customer | Chưa làm | 0.1.0 | 2026-03-23 | Chờ Admin taxonomy |
+| Phase 4 — Provider Owner | Chưa làm | 0.1.0 | 2026-03-23 | Chờ Customer và Admin |
 
 ---
 
-## 2. Stack đề xuất
+## Giới thiệu: Thứ tự làm API (ưu tiên)
+
+**Làm theo đúng thứ tự này để có data nền và test được ngay.**
+
+### Phase 1 — Auth ( foundational layer)
+
+Làm xong trước để có **user, token, role, auth middleware**:
+
+- `GET /health` — kiểm tra server chạy
+- `GET /health/db` — kiểm tra DB connection
+- `POST /auth/otp/send`
+- `POST /auth/otp/verify`
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `GET /common/me`
+
+**Sau phase này bạn đã có:**
+- user model
+- token (JWT)
+- role system
+- auth middleware (guards)
+
+---
+
+### Phase 2 — Admin (data foundation)
+
+**Làm trước nhất: A. Taxonomy dịch vụ**
+
+Vì mọi thứ sau đều phụ thuộc taxonomy (industry categories, service categories, skills).
+
+#### A. Admin quản lý taxonomy dịch vụ
+
+**API nên làm:**
+
+| # | Method | Path |
+|---|--------|------|
+| A1 | GET | `/api/v1/admin/industry-categories` |
+| A2 | POST | `/api/v1/admin/industry-categories` |
+| A3 | PUT | `/api/v1/admin/industry-categories/{id}` |
+| A4 | PATCH | `/api/v1/admin/industry-categories/{id}/status` |
+| A5 | GET | `/api/v1/admin/service-categories` |
+| A6 | POST | `/api/v1/admin/service-categories` |
+| A7 | PUT | `/api/v1/admin/service-categories/{id}` |
+| A8 | PATCH | `/api/v1/admin/service-categories/{id}/status` |
+| A9 | GET | `/api/v1/admin/service-skills` |
+| A10 | POST | `/api/v1/admin/service-skills` |
+| A11 | PUT | `/api/v1/admin/service-skills/{id}` |
+| A12 | PATCH | `/api/v1/admin/service-skills/{id}/status` |
+| A13 | GET | `/api/v1/admin/service-categories/{id}/attributes` |
+| A14 | POST | `/api/v1/admin/service-categories/{id}/attributes` |
+| A15 | PUT | `/api/v1/admin/service-category-attributes/{attrId}` |
+| A16 | DELETE | `/api/v1/admin/service-category-attributes/{attrId}` |
+| A17 | GET | `/api/v1/admin/service-categories/{id}/requirements` |
+| A18 | POST | `/api/v1/admin/service-categories/{id}/requirements` |
+| A19 | PUT | `/api/v1/admin/service-category-requirements/{id}` |
+| A20 | DELETE | `/api/v1/admin/service-category-requirements/{id}` |
+
+**Vì sao làm phần này trước?**
+- Customer có data để duyệt dịch vụ
+- Provider có data để chọn dịch vụ phục vụ
+- Admin có thể seed toàn bộ hệ thống ngay
+
+#### B. Admin quản lý user (sau taxonomy)
+
+**API nên làm:**
+
+| # | Method | Path |
+|---|--------|------|
+| B1 | GET | `/api/v1/admin/users` |
+| B2 | GET | `/api/v1/admin/users/{id}` |
+| B3 | PATCH | `/api/v1/admin/users/{id}/status` |
+
+**Tùy chọn:**
+- `POST /api/v1/admin/users/create-provider-owner` — admin tạo sẵn user/provider
+
+**Mục đích:**
+- Xem danh sách user
+- Khóa/mở user
+- Quản trị cơ bản
+
+#### C. Admin quản lý provider (sau user)
+
+**API nên làm:**
+
+| # | Method | Path |
+|---|--------|------|
+| C1 | GET | `/api/v1/admin/providers` |
+| C2 | GET | `/api/v1/admin/providers/{id}` |
+| C3 | PATCH | `/api/v1/admin/providers/{id}/status` |
+
+**Tùy chọn:**
+- `POST /api/v1/admin/providers/import`
+- `POST /api/v1/admin/providers/manual-create`
+
+**Mục đích:**
+- Xem provider nào đang có
+- Duyệt / ẩn / khóa provider
+- Chuẩn bị data provider để test customer search
+
+#### D. Admin quản lý bài viết (tùy chọn)
+
+**API nên làm:**
+
+| # | Method | Path |
+|---|--------|------|
+| D1 | GET | `/api/v1/admin/post-categories` |
+| D2 | POST | `/api/v1/admin/post-categories` |
+| D3 | PUT | `/api/v1/admin/post-categories/{id}` |
+| D4 | GET | `/api/v1/admin/posts` |
+| D5 | POST | `/api/v1/admin/posts` |
+| D6 | GET | `/api/v1/admin/posts/{id}` |
+| D7 | PUT | `/api/v1/admin/posts/{id}` |
+| D8 | PATCH | `/api/v1/admin/posts/{id}/status` |
+| D9 | POST | `/api/v1/admin/posts/{id}/media` |
+| D10 | DELETE | `/api/v1/admin/post-media/{mediaId}` |
+
+**Mục đích:**
+- Admin có thể đăng bài quảng bá ngay
+- Web có content sớm để test UI
+
+---
+
+### Phase 3 — Customer (sau Admin đã có data)
+
+Sau khi admin đã tạo taxonomy/provider/post rồi mới làm customer sẽ rất dễ test.
+
+**API nên làm:**
+
+| # | Method | Path |
+|---|--------|------|
+| 301 | GET | `/api/v1/customer/industry-categories` |
+| 302 | GET | `/api/v1/customer/industry-categories/{id}/service-categories` |
+| 303 | GET | `/api/v1/customer/service-categories/{id}/skills` |
+| 304 | GET | `/api/v1/customer/providers` |
+| 305 | GET | `/api/v1/customer/providers/{id}` |
+| 306 | GET | `/api/v1/customer/providers/{id}/services` |
+| 307 | POST | `/api/v1/customer/become-provider` |
+
+**Vì sao để sau Admin?**
+- Đã có taxonomy
+- Đã có provider mẫu
+- Customer search test được ngay
+
+---
+
+### Phase 4 — Provider Owner (sau Customer)
+
+Khi customer đã xem được danh sách rồi mới làm màn quản lý provider.
+
+**API nên làm:**
+
+| # | Method | Path |
+|---|--------|------|
+| 401 | GET | `/api/v1/provider/me` |
+| 402 | PUT | `/api/v1/provider/me` |
+| 403 | GET | `/api/v1/provider/me/profile` |
+| 404 | PUT | `/api/v1/provider/me/profile/individual` |
+| 405 | PUT | `/api/v1/provider/me/profile/business` |
+| 406 | GET | `/api/v1/provider/service-options` |
+| 407 | POST | `/api/v1/provider/services` |
+| 408 | GET | `/api/v1/provider/services` |
+| 409 | GET | `/api/v1/provider/services/{id}` |
+| 410 | PUT | `/api/v1/provider/services/{id}` |
+| 411 | PATCH | `/api/v1/provider/services/{id}` (update attributes) |
+| 412 | DELETE | `/api/v1/provider/services/{id}/deactivate` |
+
+---
+
+## Stack đề xuất
 
 | Thành phần | Gợi ý | Ghi chú |
 |------------|--------|---------|
 | Framework | **FastAPI** | OpenAPI sẵn, async, phù hợp mobile app. |
-| DB driver / ORM | **SQLAlchemy 2.x (async)** + **psycopg 3** (binary) hoặc **asyncpg** | URL mẫu: `postgresql+psycopg://...` (đã tránh lỗi build asyncpg trên Windows/Python mới nếu thiếu MSVC). Có thể đổi lại `postgresql+asyncpg://` khi môi trường hỗ trợ. Migration: **Alembic**. |
+| DB driver / ORM | **SQLAlchemy 2.x (async)** + **psycopg 3** (binary) | URL mẫu: `postgresql+psycopg://...` |
+| Migration | **Alembic** | — |
 | Validation / config | **Pydantic v2** + **pydantic-settings** | Env tách khỏi code. |
-| Auth | **JWT** (access + refresh) | `python-jose` hoặc `PyJWT`; refresh token lưu DB hoặc Redis (xem mục 6). |
-| Password | **bcrypt** / **argon2** (qua `passlib` hoặc `argon2-cffi`) | Lưu `users.password_hash`. |
-| OTP | Tầng service + adapter SMS | Dev: log/mock; Prod: gateway thật (ESMS, Twilio, v.v.). |
-| HTTP server | **uvicorn** | Chạy local / Docker. |
-
-File `requirements.txt` ở thư mục `backend/` liệt kê package khởi điểm; khi bắt đầu code nên **đóng version** (pin) theo môi trường CI/production.
+| Auth | **JWT** (access + refresh) | `python-jose` hoặc `PyJWT` |
+| Password | **bcrypt** (qua `passlib`) | `passlib[bcrypt]` |
+| OTP | Tầng service + adapter SMS | Dev: log/mock; Prod: gateway thật |
+| HTTP server | **uvicorn** | Chạy local / Docker |
 
 ---
 
-## 3. Cấu trúc thư mục backend (đề xuất)
-
-Tạo dần khi code, không bắt buộc đủ ngay ngày đầu:
+## Cấu trúc thư mục backend
 
 ```text
 backend/
@@ -61,26 +210,25 @@ backend/
       security.py           # JWT, password, OTP helpers
     db/
       session.py            # Async engine, session factory
-      base.py               # Declarative base (nếu dùng ORM)
-    models/                 # SQLAlchemy models (mirror database.sql)
+      base.py               # Declarative base
+    models/                 # SQLAlchemy models
     schemas/                # Pydantic request/response
     api/
       deps.py               # get_db, get_current_user, role guards
       v1/
-        auth.py
-        common.py
-        customer.py
-        provider.py
+        auth.py             # Phase 1
+        common.py           # Phase 1
+        customer.py         # Phase 3
+        provider.py         # Phase 4
         admin/
-          users.py
-          providers.py
-          taxonomy.py
-          posts.py
-    services/               # OTP, auth, provider, taxonomy, posts...
-  alembic/                  # Sinh sau khi có models
-  tests/
+          taxonomy.py       # Phase 2A
+          users.py          # Phase 2B
+          providers.py      # Phase 2C
+          posts.py          # Phase 2D
+  services/
+  alembic/
   docs/
-    KE_HOACH_BACKEND.md     # (file này)
+    KE_HOACH_BACKEND.md
   .env.example
   requirements.txt
   .gitignore
@@ -88,171 +236,150 @@ backend/
 
 ---
 
-## 4. Rà soát schema `database.sql` ↔ API đặc tả
+## Checklist endpoint đầy đủ
 
-### 4.1. Đã có và khớp tốt
+### MODULE A — Auth / Common (Phase 1)
 
-- `users`, `user_roles`, `user_profiles`, `user_status_logs`
-- `providers`, `provider_individual_profiles`, `provider_business_profiles`, `provider_documents`, `provider_status_logs`
-- Taxonomy: `industry_categories`, `service_categories`, `service_skills`, `service_category_attributes`, `service_category_requirements`
-- `provider_services`, `provider_service_attributes`, `provider_document_services`
-- eKYC: `user_identity_*` (Phase 1 có thể **chưa** mở API; chỉ dùng cột tổng quát trên `users` nếu cần)
-- CMS: `post_categories`, `posts`, `post_media`
-
-### 4.2. Lệch / cần quyết định trước khi code
-
-| Vấn đề | API yêu cầu | Trạng thái DB | Hành động đề xuất |
-|--------|-------------|----------------|-------------------|
-| Lọc provider theo **tỉnh / quận** | `province_code`, `district_code` | **Chưa có** cột/bảng địa giới trên `providers` | **Phase 1a:** bỏ query hoặc trả toàn bộ + lọc client; **Phase 1b:** migration thêm `province_code`, `district_code` (hoặc bảng `provider_locations`). |
-| **OTP session** | `otp_session_id`, TTL | Không có bảng | Thêm bảng `otp_sessions` hoặc dùng **Redis** (TTL native). |
-| **Refresh token** revoke (logout) | `POST /auth/logout` | Không có bảng | Thêm `refresh_tokens` (user_id, jti, expires_at, revoked_at) hoặc Redis blacklist. |
-| `verification_token` sau verify OTP | JWT ngắn hạn one-time | — | Ký JWT riêng (scope `otp_register` / `otp_login`) TTL 5–10 phút. |
-
-Ghi chép quyết định cuối vào phần “Chốt schema bổ sung” trước sprint code Auth.
-
----
-
-## 5. Nguyên tắc thiết kế API
-
-- **Prefix:** `/api/v1` cho mọi route (đồng nhất với đặc tả).
-- **Phiên bản:** header `Accept` hoặc chỉ dùng path; Phase 1 chỉ cần v1.
-- **Lỗi:** JSON thống nhất (`code`, `message`, `details`); mã HTTP chuẩn (401, 403, 404, 422, 409).
-- **Phân quyền:** dependency FastAPI — `customer` cho B, `provider_owner` cho C, `admin` cho D; module A/Common một số endpoint public hoặc `Authorization: Bearer`.
-- **Idempotency:** đăng ký provider (`become-provider`) — nếu đã có `provider` cho `owner_user_id` thì trả 409 hoặc trả provider hiện có (chốt một luồng).
-
----
-
-## 6. Auth & OTP — luồng kỹ thuật (chuẩn bị trước khi code)
-
-1. **POST `/auth/otp/send`:** tạo `otp_session_id` (UUID), lưu hash mã OTP + `expires_at` + `attempt_count`; gửi SMS (hoặc log dev).
-2. **POST `/auth/otp/verify`:** so khớp mã, tăng attempt; thành công → phát **`otp_verification_token`** (JWT có `sub`=phone, `typ`=register|login, `sid`=session).
-3. **POST `/auth/register`:** verify JWT OTP + tạo `users` (phone unique), `phone_verified=true`, role `customer`, `user_profiles` mặc định; phát access + refresh.
-4. **POST `/auth/login/otp`:** user đã tồn tại + OTP verified → cập nhật `last_login_at`, phát token.
-5. **POST `/auth/login/password`:** bcrypt verify `password_hash`.
-6. **Refresh / logout:** lưu refresh token để revoke; logout set revoked hoặc xóa device row.
-
----
-
-## 7. Thứ tự triển khai (sprint gợi ý)
-
-### Sprint 0 — Hạ tầng (1–2 ngày)
-
-- [x] Cài PostgreSQL local; chạy / chỉnh `database.sql` (extensions `pgcrypto`, `pg_trgm`). *(Do phía bạn đã tạo DB — giữ nguyên.)*
-- [x] Tạo venv Python, `pip install -r requirements.txt`.
-- [x] Scaffold FastAPI `app/main.py`, healthcheck `GET /health`, `GET /health/db`, CORS từ env.
-- [x] Kết nối DB async (`app/db/session.py`, `psycopg`); **ORM models** mirror `database.sql` trong `app/models/`; Alembic khởi tạo + revision baseline rỗng `001_baseline` (DB có sẵn → dùng `alembic stamp`).
-- [x] Copy `.env.example` → `.env`, không commit `.env`. *(Việc trên máy dev — tick khi bạn đã tạo file.)*
-
-### Sprint 1 — Module A (Auth + Common) + seed tối thiểu
-
-- [x] Bảng bổ sung (nếu chọn): `otp_sessions`, `refresh_tokens` (migration).
-- [x] A1: OTP send/verify, register, login OTP, login password, refresh, logout.
-- [x] A2: `GET/PUT /common/me`, `GET /common/me/roles`.
-- [x] A2: `GET /common/posts`, `GET /common/posts/{slug}` (chỉ `status=published`, `visibility=public`).
-- [ ] Test Postman/OpenAPI; tài liệu hóa example request.
-
-### Sprint 2 — Module B (Customer)
-
-- [ ] B1: industry / service-categories / skills (read-only, `is_active=true`).
-- [ ] B2: list providers + detail + services (JOIN profile individual/business để lấy tên hiển thị).
-- [ ] B2: filter `keyword` (ILIKE / `pg_trgm` nếu thêm index tên — có thể phase sau).
-- [ ] B3: `POST /customer/become-provider` (transaction: role + `providers` + profile subtable).
-- [ ] Quyết định và (nếu cần) migration **địa chỉ provider** cho filter tỉnh/huyện.
-
-### Sprint 3 — Module C (Provider owner)
-
-- [ ] Guard `provider_owner` + resolve `provider` theo `owner_user_id`.
-- [ ] C1: `GET/PUT /provider/me`, profile GET/PUT individual & business.
-- [ ] C2: `service-options` (cây taxonomy), CRUD `provider_services` (unique key như DB), **deactivate = `is_active=false`** thay vì DELETE cứng.
-- [ ] C3: attributes template + `PUT .../attributes` (ghi `provider_service_attributes`; validate theo `service_category_attributes`).
-
-### Sprint 4 — Module D (Admin)
-
-- [ ] Guard `admin`.
-- [ ] D1: users list/detail/PATCH status + `user_status_logs`.
-- [ ] D2: providers list/detail/PATCH status + `provider_status_logs`.
-- [ ] D3: CRUD taxonomy + attributes + requirements (đúng route đặc tả; chú ý `PATCH .../status` cho `is_active`).
-- [ ] D4: post categories, posts, status, media upload (URL lưu DB; upload thực tế có thể presigned S3/MinIO — phase sau nếu chỉ lưu URL).
-
-### Sprint 5 — Cứng hóa
-
-- [ ] Test tự động (pytest) cho auth + một vài flow customer/provider.
-- [ ] CORS, rate limit OTP (theo IP + phone).
-- [ ] Chuẩn bị Docker Compose (API + Postgres [+ Redis]) cho team app.
-
----
-
-## 8. Checklist endpoint (đối chiếu đặc tả)
-
-### MODULE A — Auth / Common
-
-| # | Method | Path | Ghi chú nhanh |
-|---|--------|------|----------------|
+| # | Method | Path | Notes |
+|---|--------|------|-------|
 | 1 | POST | `/api/v1/auth/otp/send` | phone → session + TTL |
-| 2 | POST | `/api/v1/auth/otp/verify` | → `otp_verification_token` hoặc flag |
+| 2 | POST | `/api/v1/auth/otp/verify` | → `otp_verification_token` |
 | 3 | POST | `/api/v1/auth/register` | + role customer + profile |
 | 4 | POST | `/api/v1/auth/login/otp` | |
 | 5 | POST | `/api/v1/auth/login/password` | |
 | 6 | POST | `/api/v1/auth/refresh` | |
 | 7 | POST | `/api/v1/auth/logout` | revoke refresh |
 | 8 | GET | `/api/v1/common/me` | Bearer |
-| 9 | PUT | `/api/v1/common/me` | user + user_profiles fields |
-| 10 | GET | `/api/v1/common/me/roles` | |
-| 11 | GET | `/api/v1/common/posts` | query filter + phân trang |
-| 12 | GET | `/api/v1/common/posts/{slug}` | |
+| 9 | PUT | `/api/v1/common/me` | Bearer |
+| 10 | GET | `/api/v1/common/me/roles` | Bearer |
+| 11 | GET | `/api/v1/common/posts` | optional |
+| 12 | GET | `/api/v1/common/posts/{slug}` | optional |
 
-### MODULE B — Customer
-
-| # | Method | Path |
-|---|--------|------|
-| 1 | GET | `/api/v1/customer/industry-categories` |
-| 2 | GET | `/api/v1/customer/industry-categories/{industryId}/service-categories` |
-| 3 | GET | `/api/v1/customer/service-categories/{categoryId}/skills` |
-| 4 | GET | `/api/v1/customer/providers` |
-| 5 | GET | `/api/v1/customer/providers/{providerId}` |
-| 6 | GET | `/api/v1/customer/providers/{providerId}/services` |
-| 7 | POST | `/api/v1/customer/become-provider` |
-
-### MODULE C — Provider owner
+### MODULE C — Customer (Phase 3)
 
 | # | Method | Path |
 |---|--------|------|
-| 1 | GET | `/api/v1/provider/me` |
-| 2 | PUT | `/api/v1/provider/me` |
-| 3 | GET | `/api/v1/provider/me/profile` |
-| 4 | PUT | `/api/v1/provider/me/profile/individual` |
-| 5 | PUT | `/api/v1/provider/me/profile/business` |
-| 6 | GET | `/api/v1/provider/service-options` |
-| 7 | POST | `/api/v1/provider/services` |
-| 8 | GET | `/api/v1/provider/services` |
-| 9 | GET | `/api/v1/provider/services/{providerServiceId}` |
-| 10 | PUT | `/api/v1/provider/services/{providerServiceId}` |
-| 11 | PATCH | `/api/v1/provider/services/{providerServiceId}/deactivate` (khuyến nghị) |
-| 12 | GET | `/api/v1/provider/services/attributes-template` |
-| 13 | PUT | `/api/v1/provider/services/{providerServiceId}/attributes` |
+| 301 | GET | `/api/v1/customer/industry-categories` |
+| 302 | GET | `/api/v1/customer/industry-categories/{industryId}/service-categories` |
+| 303 | GET | `/api/v1/customer/service-categories/{categoryId}/skills` |
+| 304 | GET | `/api/v1/customer/providers` |
+| 305 | GET | `/api/v1/customer/providers/{providerId}` |
+| 306 | GET | `/api/v1/customer/providers/{providerId}/services` |
+| 307 | POST | `/api/v1/customer/become-provider` |
 
-### MODULE D — Admin
+### MODULE P — Provider Owner (Phase 4)
 
-Theo đặc tả D1–D4 (users, providers, taxonomy đầy đủ, posts + media). Đảm bảo **một bảng mapping** giữa route `service-category-attributes` và khóa DB `service_category_attributes` để tránh nhầm ID category vs ID attribute.
+| # | Method | Path |
+|---|--------|------|
+| 401 | GET | `/api/v1/provider/me` |
+| 402 | PUT | `/api/v1/provider/me` |
+| 403 | GET | `/api/v1/provider/me/profile` |
+| 404 | PUT | `/api/v1/provider/me/profile/individual` |
+| 405 | PUT | `/api/v1/provider/me/profile/business` |
+| 406 | GET | `/api/v1/provider/service-options` |
+| 407 | POST | `/api/v1/provider/services` |
+| 408 | GET | `/api/v1/provider/services` |
+| 409 | GET | `/api/v1/provider/services/{id}` |
+| 410 | PUT | `/api/v1/provider/services/{id}` |
+| 411 | PATCH | `/api/v1/provider/services/{id}` |
+| 412 | DELETE | `/api/v1/provider/services/{id}/deactivate` |
+
+### MODULE D — Admin (Phase 2)
+
+#### D1. Taxonomy (Làm đầu tiên trong Admin)
+
+| # | Method | Path |
+|---|--------|------|
+| A1 | GET | `/api/v1/admin/industry-categories` |
+| A2 | POST | `/api/v1/admin/industry-categories` |
+| A3 | PUT | `/api/v1/admin/industry-categories/{id}` |
+| A4 | PATCH | `/api/v1/admin/industry-categories/{id}/status` |
+| A5 | GET | `/api/v1/admin/service-categories` |
+| A6 | POST | `/api/v1/admin/service-categories` |
+| A7 | PUT | `/api/v1/admin/service-categories/{id}` |
+| A8 | PATCH | `/api/v1/admin/service-categories/{id}/status` |
+| A9 | GET | `/api/v1/admin/service-skills` |
+| A10 | POST | `/api/v1/admin/service-skills` |
+| A11 | PUT | `/api/v1/admin/service-skills/{id}` |
+| A12 | PATCH | `/api/v1/admin/service-skills/{id}/status` |
+| A13 | GET | `/api/v1/admin/service-categories/{id}/attributes` |
+| A14 | POST | `/api/v1/admin/service-categories/{id}/attributes` |
+| A15 | PUT | `/api/v1/admin/service-category-attributes/{attrId}` |
+| A16 | DELETE | `/api/v1/admin/service-category-attributes/{attrId}` |
+| A17 | GET | `/api/v1/admin/service-categories/{id}/requirements` |
+| A18 | POST | `/api/v1/admin/service-categories/{id}/requirements` |
+| A19 | PUT | `/api/v1/admin/service-category-requirements/{id}` |
+| A20 | DELETE | `/api/v1/admin/service-category-requirements/{id}` |
+
+#### D2. User (sau taxonomy)
+
+| # | Method | Path |
+|---|--------|------|
+| B1 | GET | `/api/v1/admin/users` |
+| B2 | GET | `/api/v1/admin/users/{id}` |
+| B3 | PATCH | `/api/v1/admin/users/{id}/status` |
+| B4 | POST | `/api/v1/admin/users/create-provider-owner` |
+
+#### D3. Provider (sau user)
+
+| # | Method | Path |
+|---|--------|------|
+| C1 | GET | `/api/v1/admin/providers` |
+| C2 | GET | `/api/v1/admin/providers/{id}` |
+| C3 | PATCH | `/api/v1/admin/providers/{id}/status` |
+| C4 | POST | `/api/v1/admin/providers/import` |
+| C5 | POST | `/api/v1/admin/providers/manual-create` |
+
+#### D4. Posts (tùy chọn)
+
+| # | Method | Path |
+|---|--------|------|
+| D1 | GET | `/api/v1/admin/post-categories` |
+| D2 | POST | `/api/v1/admin/post-categories` |
+| D3 | PUT | `/api/v1/admin/post-categories/{id}` |
+| D4 | GET | `/api/v1/admin/posts` |
+| D5 | POST | `/api/v1/admin/posts` |
+| D6 | GET | `/api/v1/admin/posts/{id}` |
+| D7 | PUT | `/api/v1/admin/posts/{id}` |
+| D8 | PATCH | `/api/v1/admin/posts/{id}/status` |
+| D9 | POST | `/api/v1/admin/posts/{id}/media` |
+| D10 | DELETE | `/api/v1/admin/post-media/{mediaId}` |
 
 ---
 
-## 9. Tiêu chí “xong Phase 1”
+## Tiêu chí "xong Phase 1"
 
 - App mobile có thể: đăng ký/đăng nhập, xem/me cập nhật hồ sơ, xem danh mục, tìm provider (trong phạm vi dữ liệu), xem bài viết.
 - Thợ: đăng ký provider, sửa hồ sơ, đăng ký dịch vụ + thuộc tính động.
 - Admin: duyệt user/provider (status), quản taxonomy và bài viết cơ bản.
-- OpenAPI (`/docs`) cập nhật; env mẫu đủ để onboard dev mới trong &lt; 30 phút.
+- OpenAPI (`/docs`) cập nhật; env mẫu đủ để onboard dev mới trong < 30 phút.
 
 ---
 
-## 10. Việc cần chốt trước khi viết code Auth
+## Chạy API
 
-1. Nhà cung cấp **SMS OTP** (và sandbox key).
-2. **Redis** có bắt buộc không (OTP + refresh) hay chỉ PostgreSQL.
-3. Có cho **đăng ký không mật khẩu** (chỉ OTP) không — ảnh hưởng `password_hash` nullable và flow login.
-4. Quy ước **một user — một provider** hay nhiều provider (schema hiện tại: `owner_user_id` không unique → có thể nhiều; đặc tả “become-provider” nên chốt một record hay nhiều).
+**Từ thư mục `backend/`:**
+
+1. Tạo `.env` từ `.env.example`:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+2. Cấu hình `DATABASE_URL` trong `.env`
+
+3. Chạy server:
+   ```powershell
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+**Health check:**
+- `GET /health` — không cần DB.
+- `GET /health/db` — kiểm tra `SELECT 1` qua pool async.
+
+**Swagger UI:**
+- `http://localhost:8000/docs` — OpenAPI docs
+- `http://localhost:8000/redoc` — ReDoc docs
 
 ---
 
-*Tài liệu có thể chỉnh sửa theo tiến độ; mỗi lần thêm bảng migration nên cập nhật mục 4 và 7.*
+*Có thể chỉnh sửa theo tiến độ; mỗi lần thêm bảng migration nên cập nhật tài liệu.*

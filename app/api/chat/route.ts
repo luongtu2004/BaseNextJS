@@ -103,7 +103,7 @@ QUY TẮC:
 
   const baseUrl = process.env.AI_BASE_URL || 'http://113.160.201.164:8003/v1';
   const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL || 'local-main';
+  const model = process.env.AI_MODEL || 'local-fast';
 
   if (!apiKey) {
     return new Response(
@@ -124,8 +124,19 @@ QUY TẮC:
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: 'system', content: systemContent }, ...messages],
-        max_tokens: 128000, // Tăng lên 128k theo yêu cầu để AI thoải mái "suy nghĩ"
+        messages: [
+          // Port 8003 sometimes dislikes the 'system' role.
+          // Injecting persona and knowledge into the user message for maximum compatibility.
+          ...(messages.length > 0
+            ? [
+              {
+                role: 'user',
+                content: `${systemContent}\n\n[KIẾN THỨC CỐT LÕI - SÀN DỊCH VỤ 24/7]\n${knowledgeBase}\n\n[YÊU CẦU: Hãy trả lời với tư cáh là Thu Thủy]\n\nCâu hỏi: ${messages[messages.length - 1].content}`
+              }
+            ]
+            : messages),
+        ],
+        max_tokens: 8192,
         stream: true,
       }),
 
@@ -148,26 +159,47 @@ QUY TẮC:
     const reader = aiResponse.body.getReader();
     const decoder = new TextDecoder();
     let fullContent = '';
+    let buffer = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value, { stream: true });
-      for (const line of chunk.split('\n')) {
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      // Keep the last partial line in the buffer
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed || trimmed === 'data: [DONE]') continue;
         if (trimmed.startsWith('data: ')) {
           try {
-            const json = JSON.parse(trimmed.slice(6));
-            // Accumulate both content and reasoning_content fields
-            fullContent += json.choices?.[0]?.delta?.content ?? '';
-            fullContent += json.choices?.[0]?.delta?.reasoning_content ?? '';
-          } catch {
+            const jsonText = trimmed.slice(6);
+            if (jsonText === '[DONE]') continue;
+            // console.log('DEBUG CHUNK:', jsonText); // Log raw JSON for debugging
+            const json = JSON.parse(jsonText);
+            const content = json.choices?.[0]?.delta?.content ?? json.choices?.[0]?.message?.content ?? '';
+            const reasoning = json.choices?.[0]?.delta?.reasoning_content ?? json.choices?.[0]?.message?.reasoning_content ?? '';
+
+            if (content) fullContent += content;
+            if (reasoning) fullContent += reasoning;
+          } catch (e) {
+            console.error('Error parsing JSON from SSE chunk:', e, 'Raw text:', trimmed);
             // Skip malformed SSE lines
           }
         }
       }
+    }
+
+    // Process any remaining data in the buffer
+    const finalTrimmed = buffer.trim();
+    if (finalTrimmed.startsWith('data: ') && finalTrimmed !== 'data: [DONE]') {
+      try {
+        const json = JSON.parse(finalTrimmed.slice(6));
+        fullContent += json.choices?.[0]?.delta?.content ?? '';
+        fullContent += json.choices?.[0]?.delta?.reasoning_content ?? '';
+      } catch (e) { }
     }
 
     console.log('\n\n=== RAW AI OUTPUT ===');

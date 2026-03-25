@@ -1,109 +1,13 @@
 import { NextRequest } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { AI_CONFIG } from '@/lib/ai-config';
+import { stripThinking } from '@/lib/ai-utils';
 
 // Allow up to 60 seconds before Next.js times out this route
 export const maxDuration = 60;
 
-const SYSTEM_PROMPT = `[INST]
-BẠN LÀ: Thu Thủy - 🌸 Nhân viên Thu Thủy của "Sàn Dịch Vụ 24/7".
-LINH HỒN (SOUL):
-- Giúp đỡ tận tâm, không dùng lời sáo rỗng.
-- Có quan điểm riêng, không máy móc.
-- Trân trọng sự riêng tư và niềm tin của khách hàng.
-QUY TẮC:
-1. TRẢ LỜI: Ngắn gọn, chuyên nghiệp, tối đa 2-5 câu.
-2. XƯNG HÔ: Gọi khách là "Quý khách". Tự xưng là "Em".
-3. CẤM: Tuyệt đối không in ra "Thinking Process", không được trả lời sai chính tả. Trả lời ngay kết quả.
-4. NGÔN NGỮ: 100% Tiếng Việt.
-5. CÁCH TRẢ LỜI: Nếu khách hỏi tên thì trả lời là Thu Thủy. Nếu khách hỏi ngoài lề hoặc nằm ngoài 6 dịch vụ trên, hãy trả lời: "Dạ, em chỉ hỗ trợ 6 nhóm dịch vụ chính của Sàn Dịch Vụ 24/7 thôi ạ. Anh/chị có thể cho em biết nhu cầu của mình thuộc nhóm nào trong số đó không ạ?"
-[/INST]`;
-
-/**
- * Rút trích câu trả lời cuối cùng từ "bãi chiến trường" nội dung của Qwen 3.5 7B.
- */
-function stripThinking(text: string): string {
-  let result = text;
-
-  // 1. ƯU TIÊN: Nếu mô hình dùng thẻ <think>...</think> (như DeepSeek, QwQ)
-  // Chúng ta sẽ lấy TOÀN BỘ nội dung nằm sau thẻ đóng </think>
-  if (result.toLowerCase().includes('</think>')) {
-    const parts = result.split(/<\/think>/i);
-    // Lấy phần tử cuối cùng sau thẻ </think> cuối cùng để đảm bảo sạch sẽ
-    result = parts[parts.length - 1];
-    return result.trim();
-  }
-
-  // 2. Nếu không có thẻ <think>, kiểm tra định dạng XML <thinking>...</thinking>
-  if (result.toLowerCase().includes('</thinking>')) {
-    const parts = result.split(/<\/thinking>/i);
-    result = parts[parts.length - 1];
-    return result.trim();
-  }
-
-  // 3. Dự phòng cho định dạng Qwen 7B (Có chữ "Thinking Process:")
-  if (result.toLowerCase().includes('thinking process:')) {
-    const splitKeywords = ['*Final Plan:*', '*Revised Draft:*', '*Draft:*', '---', '\n\nChào', '\n\nXin', '\n\nDạ'];
-    let bestSplitIndex = -1;
-    for (const kw of splitKeywords) {
-      const idx = result.lastIndexOf(kw);
-      if (idx > bestSplitIndex) {
-        bestSplitIndex = kw.startsWith('\n\n') ? idx + 2 : idx + kw.length;
-      }
-    }
-
-    if (bestSplitIndex !== -1) {
-      result = result.substring(bestSplitIndex);
-    } else {
-      const match = result.match(/\n\n(Chào|Xin|Dạ|Vâng|Em|Mình|Cho hỏi)[^\n]*\n/i);
-      if (match && match.index !== undefined) {
-        result = result.substring(match.index).trim();
-      } else {
-        const paragraphs = result.split('\n\n');
-        result = paragraphs.slice(-2).join('\n\n');
-      }
-    }
-  }
-
-  return result.replace(/^\*.*?\*\s*$/gm, '').trim();
-}
-
 export async function POST(req: NextRequest) {
-  const { messages, userProfile } = await req.json();
-
-  // Load knowledge base from the setup directory
-  let knowledgeBase = "";
-  try {
-    const knowledgePath = path.join(process.cwd(), 'setup', 'KNOWLEDGE.md');
-    knowledgeBase = await fs.readFile(knowledgePath, 'utf-8');
-  } catch (err) {
-    console.error("Error loading knowledge base:", err);
-  }
-
-  // Build system prompt with knowledge and optional user context injected INSIDE the [INST] tag
-  let systemContent = `[INST]
-BẠN LÀ: Thu Thủy - 🌸 Nhân viên Thu Thủy của "Sàn Dịch Vụ 24/7".
-LINH HỒN (SOUL):
-- Giúp đỡ tận tâm, không dùng lời sáo rỗng.
-- Có quan điểm riêng, không máy móc.
-- Trân trọng sự riêng tư và niềm tin của khách hàng.
-
-BẢN THÂN PHẢI DÙNG KIẾN THỨC DƯỚI ĐÂY ĐỂ TƯ VẤN CHÍNH XÁC:
-${knowledgeBase || "Sàn Dịch Vụ 24/7 hỗ trợ 6 nhóm dịch vụ chính."}
-
-${userProfile ? `HỒ SƠ KHÁCH HÀNG: ${userProfile}` : ""}
-
-QUY TẮC:
-1. TRẢ LỜI: Ngắn gọn, chuyên nghiệp, tối đa 2-5 câu.
-2. XƯNG HÔ: Gọi khách là "Quý khách". Tự xưng là "Em".
-3. CẤM: Tuyệt đối không in ra "Thinking Process", không được trả lời sai chính tả. Trả lời ngay kết quả.
-4. NGÔN NGỮ: 100% Tiếng Việt.
-5. CÁCH TRẢ LỜI: Nếu khách hỏi tên thì trả lời là Thu Thủy. Nếu khách hỏi ngoài lề hoặc nằm ngoài các dịch vụ có trong KIẾN THỨC, hãy trả lời: "Dạ, em chỉ hỗ trợ 6 nhóm dịch vụ chính của Sàn Dịch Vụ 24/7 thôi ạ. Anh/chị có thể cho em biết nhu cầu của mình thuộc nhóm nào trong số đó không ạ?"
-[/INST]`;
-
-  const baseUrl = process.env.AI_BASE_URL || 'http://113.160.201.164:8003/v1';
-  const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL || 'local-fast';
+  const { messages } = await req.json();
+  const { baseUrl, apiKey, model } = AI_CONFIG;
 
   if (!apiKey) {
     return new Response(
@@ -124,22 +28,10 @@ QUY TẮC:
       },
       body: JSON.stringify({
         model,
-        messages: [
-          // Port 8003 sometimes dislikes the 'system' role.
-          // Injecting persona and knowledge into the user message for maximum compatibility.
-          ...(messages.length > 0
-            ? [
-              {
-                role: 'user',
-                content: `${systemContent}\n\n[KIẾN THỨC CỐT LÕI - SÀN DỊCH VỤ 24/7]\n${knowledgeBase}\n\n[YÊU CẦU: Hãy trả lời với tư cáh là Thu Thủy]\n\nCâu hỏi: ${messages[messages.length - 1].content}`
-              }
-            ]
-            : messages),
-        ],
+        messages, // Send messages history directly as requested
         max_tokens: 8192,
         stream: true,
       }),
-
       signal: controller.signal,
     });
 
@@ -153,9 +45,6 @@ QUY TẮC:
       );
     }
 
-    // Strategy: buffer ALL tokens from the AI stream, then strip reasoning before
-    // sending the clean final answer to the client in one go.
-    // This correctly handles models that output thinking as plain text (not XML tags).
     const reader = aiResponse.body.getReader();
     const decoder = new TextDecoder();
     let fullContent = '';
@@ -167,7 +56,6 @@ QUY TẮC:
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      // Keep the last partial line in the buffer
       buffer = lines.pop() || '';
 
       for (const line of lines) {
@@ -177,35 +65,16 @@ QUY TẮC:
           try {
             const jsonText = trimmed.slice(6);
             if (jsonText === '[DONE]') continue;
-            // console.log('DEBUG CHUNK:', jsonText); // Log raw JSON for debugging
             const json = JSON.parse(jsonText);
             const content = json.choices?.[0]?.delta?.content ?? json.choices?.[0]?.message?.content ?? '';
-            const reasoning = json.choices?.[0]?.delta?.reasoning_content ?? json.choices?.[0]?.message?.reasoning_content ?? '';
-
+            // Note: Removed redundant reasoning_content handling to keep it super clean as requested
             if (content) fullContent += content;
-            if (reasoning) fullContent += reasoning;
-          } catch (e) {
-            console.error('Error parsing JSON from SSE chunk:', e, 'Raw text:', trimmed);
-            // Skip malformed SSE lines
-          }
+          } catch (e) {}
         }
       }
     }
 
-    // Process any remaining data in the buffer
-    const finalTrimmed = buffer.trim();
-    if (finalTrimmed.startsWith('data: ') && finalTrimmed !== 'data: [DONE]') {
-      try {
-        const json = JSON.parse(finalTrimmed.slice(6));
-        fullContent += json.choices?.[0]?.delta?.content ?? '';
-        fullContent += json.choices?.[0]?.delta?.reasoning_content ?? '';
-      } catch (e) { }
-    }
-
-    console.log('\n\n=== RAW AI OUTPUT ===');
-    console.log(fullContent);
-    console.log('=====================\n\n');
-
+    // Still use stripThinking as a safety measure for any residual tags
     const cleanAnswer = stripThinking(fullContent);
 
     return new Response(cleanAnswer, {

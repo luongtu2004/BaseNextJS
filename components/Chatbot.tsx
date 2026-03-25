@@ -16,7 +16,6 @@ const Chatbot: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [userProfile, setUserProfile] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -38,17 +37,13 @@ const Chatbot: React.FC = () => {
       }, 3500); // 3.5s delay to allow banner animations to finish
       return () => clearTimeout(timer);
     }
-    const storedProfile = localStorage.getItem('chatbot_user_profile');
-    if (storedProfile) {
-      setUserProfile(storedProfile);
-    }
   }, []);
 
   // Auto-greeting when opened for the first time
   useEffect(() => {
     if (isOpen && messages.length === 0 && !isStreaming) {
       const timer = setTimeout(() => {
-        const greeting = "Xin chào Quý khách! em là trợ lý ảo của Sàn Dịch Vụ 24/7. Em có thể giúp gì cho Quý khách trong việc tìm kiếm các dịch vụ vận tải, sửa chữa, hay chăm sóc gia đình ngay lúc này không ạ? ✅";
+        const greeting = "Xin chào Quý khách! em là trợ lý ảo của Sàn Dịch Vụ 24/7. Em có thể giúp gì cho Quý khách trong việc tìm kiếm các dịch vụ vận tải, sửa chữa, hay chăm sóc gia đình ngay lúc này không ạ?";
         setMessages([{ role: 'assistant', content: greeting }]);
       }, 800);
       return () => clearTimeout(timer);
@@ -122,7 +117,6 @@ const Chatbot: React.FC = () => {
             role: m.role === 'error' ? 'assistant' : m.role,
             content: m.content,
           })),
-          userProfile,
         }),
         signal: newController.signal,
       });
@@ -135,23 +129,6 @@ const Chatbot: React.FC = () => {
       const answer = await response.text();
       const updatedMessages = [...currentMessages, { role: 'assistant' as const, content: answer }];
       setMessages(updatedMessages);
-
-      // Background: extract user profile from conversation (fire-and-forget)
-      fetch('/api/memory', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
-        }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.profile) {
-            setUserProfile(data.profile);
-            localStorage.setItem('chatbot_user_profile', data.profile);
-          }
-        })
-        .catch(() => { }); // Silently ignore memory extraction failures
 
       // Refocus input after sending
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -196,7 +173,7 @@ const Chatbot: React.FC = () => {
                     <Bot size={28} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 text-lg md:text-xl">Nhân viên Thu Thủy</h3>
+                    <h3 className="font-bold text-slate-800 text-lg md:text-xl">Nhân viên hỗ trợ</h3>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
                       <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Trực tuyến 24/7</span>

@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css'; // Global styles
 import SmoothScroll from '@/components/SmoothScroll';
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: 'Kết nối 45+ ngành nghề dịch vụ từ Vận tải, Xây dựng, Điện lạnh đến Y tế và Làm đẹp ngay tại nhà.',
 };
 
-export default function RootLayout({children}: {children: React.ReactNode}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={`${inter.variable}`}>
       <body className="font-sans bg-background-light text-slate-900 antialiased" suppressHydrationWarning>

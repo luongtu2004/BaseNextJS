@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
+import { AI_CONFIG } from '@/lib/ai-config';
 
 export const maxDuration = 15;
 
 export async function GET() {
-  const baseUrl = process.env.AI_BASE_URL || 'http://113.160.201.164:8003/v1';
-  const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL || 'local-fast';
+  const { baseUrl, apiKey, model } = AI_CONFIG;
 
   if (!apiKey) {
     return NextResponse.json({ status: 'error', error: 'API key not configured' }, { status: 500 });

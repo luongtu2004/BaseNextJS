@@ -487,7 +487,7 @@ async def patch_post_status(
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     
-    valid_statuses = ["draft", "published", "archived", "deleted"]
+    valid_statuses = ["draft", "pending_review", "published", "hidden", "archived"]
     if status not in valid_statuses:
         raise HTTPException(
             status_code=400,

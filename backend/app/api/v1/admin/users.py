@@ -184,7 +184,7 @@ async def update_user_status(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Validate status
-    valid_statuses = ["active", "suspended", "banned", "deleted"]
+    valid_statuses = ["active", "pending_activation", "suspended", "blocked", "deleted"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     

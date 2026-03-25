@@ -11,14 +11,14 @@ class UserCreateRequest(BaseModel):
     phone: str = Field(..., description="Phone number")
     password: str | None = Field(None, description="Password for login")
     full_name: str | None = Field(None, description="Full name")
-    gender: str | None = Field(None, description="Gender: male, female, other")
+    gender: int | None = Field(None, description="Gender: 0 for male, 1 for female")
     dob: date | None = Field(None, description="Date of birth")
     avatar_url: str | None = Field(None, description="Avatar URL")
 
 
 class UserUpdateRequest(BaseModel):
     full_name: str | None = Field(None, description="Full name")
-    gender: str | None = Field(None, description="Gender: male, female, other")
+    gender: int | None = Field(None, description="Gender: 0 for male, 1 for female")
     dob: date | None = Field(None, description="Date of birth")
     avatar_url: str | None = Field(None, description="Avatar URL")
 
@@ -104,9 +104,9 @@ class PostCreateRequest(BaseModel):
     cover_image_url: str | None = Field(None, description="Cover image URL")
     seo_title: str | None = Field(None, description="SEO title")
     seo_description: str | None = Field(None, description="SEO description")
-    post_type: str | None = Field("article", description="Post type")
-    status: str | None = Field("draft", description="Status: draft, published, archived")
-    visibility: str | None = Field("public", description="Visibility: public, private")
+    post_type: str | None = Field("article", description="Post type: article, promotion, provider_profile, announcement, seo_landing")
+    status: str | None = Field("draft", description="Status: draft, pending_review, published, hidden, archived")
+    visibility: str | None = Field("public", description="Visibility: public, private, provider_only")
     published_at: datetime | None = Field(None, description="Published at")
     expired_at: datetime | None = Field(None, description="Expired at")
     is_featured: bool | None = Field(False, description="Is featured")

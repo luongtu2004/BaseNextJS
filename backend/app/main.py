@@ -48,17 +48,20 @@ async def custom_swagger_ui_html():
     return HTMLResponse(content=get_swagger_html())
 
 
-@app.get("/health", tags=["health"])
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+@app.get("/", include_in_schema=False)
+async def home_redirect():
+    """Redirect root to documentation"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/docs")
 
 
-@app.get("/health/db", tags=["health"])
-async def health_db() -> dict[str, str]:
-    import_models()
-    async with AsyncSessionLocal() as session:
-        await session.execute(text("SELECT 1"))
-    return {"status": "ok", "database": "connected"}
+@app.get("/v1/models", include_in_schema=False)
+async def mock_models():
+    """Mock endpoint to suppress 404 errors from AI tools/plugins"""
+    return {
+        "object": "list",
+        "data": []
+    }
 
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)

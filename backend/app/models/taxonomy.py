@@ -32,6 +32,7 @@ class IndustryCategory(Base):
 
     service_categories: Mapped[list[ServiceCategory]] = relationship(
         back_populates="industry_category",
+        cascade="all, delete-orphan",
     )
 
 
@@ -59,7 +60,10 @@ class ServiceCategory(Base):
     )
 
     industry_category: Mapped[IndustryCategory] = relationship(back_populates="service_categories")
-    skills: Mapped[list[ServiceSkill]] = relationship(back_populates="service_category")
+    skills: Mapped[list[ServiceSkill]] = relationship(
+        back_populates="service_category",
+        cascade="all, delete-orphan",
+    )
     attributes: Mapped[list[ServiceCategoryAttribute]] = relationship(
         back_populates="service_category",
         cascade="all, delete-orphan",

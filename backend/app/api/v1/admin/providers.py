@@ -14,10 +14,10 @@ from app.models.user import User, UserRole
 from app.schemas.admin import ProviderCreateRequest, ProviderUpdateRequest
 
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-providers"])
+router = APIRouter(tags=["admin-providers"])
 
 
-@router.get("/providers")
+@router.get("/")
 async def list_providers(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
@@ -118,7 +118,7 @@ async def list_providers(
     return result
 
 
-@router.get("/providers/{provider_id}")
+@router.get("/{provider_id}")
 async def get_provider(
     provider_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -199,7 +199,7 @@ async def get_provider(
     return provider_data
 
 
-@router.patch("/providers/{provider_id}/status")
+@router.patch("/{provider_id}/status")
 async def update_provider_status(
     provider_id: uuid.UUID,
     status: str,
@@ -212,7 +212,7 @@ async def update_provider_status(
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
     
-    valid_statuses = ["active", "inactive", "pending", "rejected", "suspended"]
+    valid_statuses = ["active", "inactive", "blocked"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     
@@ -240,7 +240,7 @@ async def update_provider_status(
     }
 
 
-@router.patch("/providers/{provider_id}/verification-status")
+@router.patch("/{provider_id}/verification-status")
 async def update_provider_verification_status(
     provider_id: uuid.UUID,
     verification_status: str,
@@ -253,7 +253,7 @@ async def update_provider_verification_status(
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
     
-    valid_statuses = ["pending", "verified", "rejected"]
+    valid_statuses = ["pending", "approved", "rejected", "suspended"]
     if verification_status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid verification_status. Must be one of: {valid_statuses}")
     
@@ -282,7 +282,7 @@ async def update_provider_verification_status(
     }
 
 
-@router.post("/providers/import")
+@router.post("/import")
 async def import_providers(
     provider_ids: list[uuid.UUID],
     db: AsyncSession = Depends(get_db),
@@ -353,7 +353,7 @@ async def import_providers(
     }
 
 
-@router.post("/providers/manual-create", response_model=dict)
+@router.post("/manual-create", response_model=dict)
 async def manual_create_provider(
     payload: ProviderCreateRequest,
     db: AsyncSession = Depends(get_db),

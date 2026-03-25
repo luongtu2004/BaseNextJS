@@ -24,7 +24,7 @@ router = APIRouter(tags=["admin-posts"])
 
 # ==================== Post Categories ====================
 
-@router.get("/post-categories")
+@router.get("/categories")
 async def list_post_categories(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
@@ -57,7 +57,7 @@ async def list_post_categories(
     ]
 
 
-@router.post("/post-categories", response_model=dict)
+@router.post("/categories", response_model=dict)
 async def create_post_category(
     payload: PostCategoryCreateRequest,
     db: AsyncSession = Depends(get_db),
@@ -101,7 +101,7 @@ async def create_post_category(
     }
 
 
-@router.put("/post-categories/{category_id}", response_model=dict)
+@router.put("/categories/{category_id}", response_model=dict)
 async def update_post_category(
     category_id: uuid.UUID,
     payload: PostCategoryUpdateRequest,
@@ -153,7 +153,7 @@ async def update_post_category(
 
 # ==================== Posts ====================
 
-@router.post("/posts", response_model=dict)
+@router.post("/", response_model=dict)
 async def create_post(
     payload: PostCreateRequest,
     db: AsyncSession = Depends(get_db),
@@ -213,7 +213,7 @@ async def create_post(
     }
 
 
-@router.get("/posts")
+@router.get("/")
 async def list_posts(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
@@ -318,7 +318,7 @@ async def list_posts(
     return result
 
 
-@router.get("/posts/{post_id}", response_model=dict)
+@router.get("/{post_id}", response_model=dict)
 async def get_post(
     post_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -402,7 +402,7 @@ async def get_post(
     return post_data
 
 
-@router.put("/posts/{post_id}", response_model=dict)
+@router.put("/{post_id}", response_model=dict)
 async def update_post(
     post_id: uuid.UUID,
     payload: PostUpdateRequest,
@@ -474,7 +474,7 @@ async def update_post(
     }
 
 
-@router.patch("/posts/{post_id}/status")
+@router.patch("/{post_id}/status")
 async def patch_post_status(
     post_id: uuid.UUID,
     status: str,
@@ -517,7 +517,7 @@ async def patch_post_status(
 from app.schemas.admin import PostMediaCreateRequest as SchemaPostMediaCreateRequest
 
 
-@router.post("/posts/{post_id}/media", response_model=dict)
+@router.post("/{post_id}/media", response_model=dict)
 async def create_post_media(
     post_id: uuid.UUID,
     payload: SchemaPostMediaCreateRequest,

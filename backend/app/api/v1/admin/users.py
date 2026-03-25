@@ -7,35 +7,19 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user_with_role
+from app.api.deps import get_current_admin_user, get_current_user_with_role
 from app.db.session import get_db
 from app.models.identity import UserIdentityVerification as UserIdentity
 from app.models.user import User, UserProfile, UserRole, UserStatusLog
 from app.schemas.admin import UserCreateRequest, UserUpdateRequest
 
-
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-users"])
-
-
-async def get_current_admin_user(
-    current_user = Depends(get_current_user_with_role),
-    db: AsyncSession = Depends(get_db),
-):
-    """Check if user has admin role"""
-    admin_role_exists = await db.execute(
-        select(UserRole).where(
-            and_(
-                UserRole.user_id == current_user.id,
-                UserRole.role_code == "admin",
-            )
-        )
-    )
-    if not admin_role_exists.scalar_one_or_none():
-        raise HTTPException(status_code=403, detail="Admin role required")
-    return current_user
+router = APIRouter(tags=["admin-users"])
 
 
-@router.get("/users")
+# Sử dụng get_current_admin_user từ app.api.deps
+
+
+@router.get("/")
 async def list_users(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
@@ -134,7 +118,7 @@ async def list_users(
     return result
 
 
-@router.get("/users/{user_id}")
+@router.get("/{user_id}")
 async def get_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -188,7 +172,7 @@ async def get_user(
     return result
 
 
-@router.patch("/users/{user_id}/status")
+@router.patch("/{user_id}/status")
 async def update_user_status(
     user_id: uuid.UUID,
     status: str,
@@ -227,7 +211,7 @@ async def update_user_status(
     }
 
 
-@router.post("/users/create-provider-owner")
+@router.post("/create-provider-owner")
 async def create_provider_owner(
     payload: UserCreateRequest,
     db: AsyncSession = Depends(get_db),

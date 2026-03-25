@@ -185,8 +185,7 @@ class ServiceCategoryRequirementUpdateRequest(BaseModel):
 
 
 # ==================== Router Definition ====================
-
-router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
+router = APIRouter(tags=["admin-taxonomy"])
 
 
 async def get_current_admin_user(
@@ -209,7 +208,7 @@ async def get_current_admin_user(
 
 # ==================== Industry Categories ====================
 
-@router.get("/taxonomy/industry-categories")
+@router.get("/industry-categories")
 async def list_industry_categories(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
@@ -240,7 +239,7 @@ async def list_industry_categories(
     ]
 
 
-@router.post("/taxonomy/industry-categories", response_model=IndustryCategoryResponse)
+@router.post("/industry-categories", response_model=IndustryCategoryResponse)
 async def create_industry_category(
     payload: IndustryCategoryCreateRequest,
     db: AsyncSession = Depends(get_db),
@@ -267,7 +266,7 @@ async def create_industry_category(
     )
 
 
-@router.put("/taxonomy/industry-categories/{category_id}", response_model=IndustryCategoryResponse)
+@router.put("/industry-categories/{category_id}", response_model=IndustryCategoryResponse)
 async def update_industry_category(
     category_id: uuid.UUID,
     payload: IndustryCategoryUpdateRequest,
@@ -301,7 +300,7 @@ async def update_industry_category(
     )
 
 
-@router.patch("/taxonomy/industry-categories/{category_id}/status")
+@router.patch("/industry-categories/{category_id}/status")
 async def patch_industry_category_status(
     category_id: uuid.UUID,
     is_active: bool,
@@ -318,7 +317,7 @@ async def patch_industry_category_status(
     return {"success": True, "is_active": is_active}
 
 
-@router.delete("/taxonomy/industry-categories/{category_id}")
+@router.delete("/industry-categories/{category_id}")
 async def delete_industry_category(
     category_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -328,15 +327,19 @@ async def delete_industry_category(
     if not category:
         raise HTTPException(status_code=404, detail="Industry category not found")
     
-    db.delete(category)
-    await db.commit()
+    try:
+        await db.delete(category)
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot delete industry category: {str(e)}")
     
     return {"success": True}
 
 
 # ==================== Service Categories ====================
 
-@router.get("/taxonomy/service-categories")
+@router.get("/service-categories")
 async def list_service_categories(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
@@ -381,7 +384,7 @@ async def list_service_categories(
     ]
 
 
-@router.post("/taxonomy/service-categories", response_model=ServiceCategoryResponse)
+@router.post("/service-categories", response_model=ServiceCategoryResponse)
 async def create_service_category(
     payload: ServiceCategoryCreateRequest,
     db: AsyncSession = Depends(get_db),
@@ -410,7 +413,7 @@ async def create_service_category(
     )
 
 
-@router.put("/taxonomy/service-categories/{category_id}", response_model=ServiceCategoryResponse)
+@router.put("/service-categories/{category_id}", response_model=ServiceCategoryResponse)
 async def update_service_category(
     category_id: uuid.UUID,
     payload: ServiceCategoryUpdateRequest,
@@ -447,7 +450,7 @@ async def update_service_category(
     )
 
 
-@router.patch("/taxonomy/service-categories/{category_id}/status")
+@router.patch("/service-categories/{category_id}/status")
 async def patch_service_category_status(
     category_id: uuid.UUID,
     is_active: bool,
@@ -464,7 +467,7 @@ async def patch_service_category_status(
     return {"success": True, "is_active": is_active}
 
 
-@router.delete("/taxonomy/service-categories/{category_id}")
+@router.delete("/service-categories/{category_id}")
 async def delete_service_category(
     category_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -474,15 +477,19 @@ async def delete_service_category(
     if not category:
         raise HTTPException(status_code=404, detail="Service category not found")
     
-    db.delete(category)
-    await db.commit()
+    try:
+        await db.delete(category)
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot delete service category: {str(e)}")
     
     return {"success": True}
 
 
 # ==================== Service Skills ====================
 
-@router.get("/taxonomy/service-skills")
+@router.get("/service-skills")
 async def list_service_skills(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
@@ -527,7 +534,7 @@ async def list_service_skills(
     ]
 
 
-@router.post("/taxonomy/service-skills", response_model=ServiceSkillResponse)
+@router.post("/service-skills", response_model=ServiceSkillResponse)
 async def create_service_skill(
     payload: ServiceSkillCreateRequest,
     db: AsyncSession = Depends(get_db),
@@ -556,7 +563,7 @@ async def create_service_skill(
     )
 
 
-@router.put("/taxonomy/service-skills/{skill_id}", response_model=ServiceSkillResponse)
+@router.put("/service-skills/{skill_id}", response_model=ServiceSkillResponse)
 async def update_service_skill(
     skill_id: uuid.UUID,
     payload: ServiceSkillUpdateRequest,
@@ -591,7 +598,7 @@ async def update_service_skill(
     )
 
 
-@router.patch("/taxonomy/service-skills/{skill_id}/status")
+@router.patch("/service-skills/{skill_id}/status")
 async def patch_service_skill_status(
     skill_id: uuid.UUID,
     is_active: bool,
@@ -608,7 +615,7 @@ async def patch_service_skill_status(
     return {"success": True, "is_active": is_active}
 
 
-@router.delete("/taxonomy/service-skills/{skill_id}")
+@router.delete("/service-skills/{skill_id}")
 async def delete_service_skill(
     skill_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -618,15 +625,19 @@ async def delete_service_skill(
     if not skill:
         raise HTTPException(status_code=404, detail="Service skill not found")
     
-    db.delete(skill)
-    await db.commit()
+    try:
+        await db.delete(skill)
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot delete service skill: {str(e)}")
     
     return {"success": True}
 
 
 # ==================== Service Category Attributes ====================
 
-@router.get("/taxonomy/service-categories/{category_id}/attributes")
+@router.get("/service-categories/{category_id}/attributes")
 async def list_service_category_attributes(
     category_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -663,7 +674,7 @@ async def list_service_category_attributes(
     ]
 
 
-@router.post("/taxonomy/service-categories/{category_id}/attributes", response_model=ServiceCategoryAttributeResponse)
+@router.post("/service-categories/{category_id}/attributes", response_model=ServiceCategoryAttributeResponse)
 async def create_service_category_attribute(
     category_id: uuid.UUID,
     payload: ServiceCategoryAttributeCreateRequest,
@@ -723,7 +734,7 @@ async def create_service_category_attribute(
     )
 
 
-@router.put("/taxonomy/service-category-attributes/{attribute_id}", response_model=ServiceCategoryAttributeResponse)
+@router.put("/service-category-attributes/{attribute_id}", response_model=ServiceCategoryAttributeResponse)
 async def update_service_category_attribute(
     attribute_id: uuid.UUID,
     payload: ServiceCategoryAttributeUpdateRequest,
@@ -777,7 +788,7 @@ async def update_service_category_attribute(
     )
 
 
-@router.delete("/taxonomy/service-category-attributes/{attribute_id}")
+@router.delete("/service-category-attributes/{attribute_id}")
 async def delete_service_category_attribute(
     attribute_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -787,15 +798,19 @@ async def delete_service_category_attribute(
     if not attribute:
         raise HTTPException(status_code=404, detail="Attribute not found")
     
-    db.delete(attribute)
-    await db.commit()
+    try:
+        await db.delete(attribute)
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot delete attribute: {str(e)}")
     
     return {"success": True}
 
 
 # ==================== Service Category Requirements ====================
 
-@router.get("/taxonomy/service-categories/{category_id}/requirements")
+@router.get("/service-categories/{category_id}/requirements")
 async def list_service_category_requirements(
     category_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -838,7 +853,7 @@ async def list_service_category_requirements(
     ]
 
 
-@router.post("/taxonomy/service-categories/{category_id}/requirements", response_model=ServiceCategoryRequirementResponse)
+@router.post("/service-categories/{category_id}/requirements", response_model=ServiceCategoryRequirementResponse)
 async def create_service_category_requirement(
     category_id: uuid.UUID,
     payload: ServiceCategoryRequirementCreateRequest,
@@ -890,7 +905,7 @@ async def create_service_category_requirement(
     )
 
 
-@router.put("/taxonomy/service-category-requirements/{requirement_id}", response_model=ServiceCategoryRequirementResponse)
+@router.put("/service-category-requirements/{requirement_id}", response_model=ServiceCategoryRequirementResponse)
 async def update_service_category_requirement(
     requirement_id: uuid.UUID,
     payload: ServiceCategoryRequirementUpdateRequest,
@@ -946,7 +961,7 @@ async def update_service_category_requirement(
     )
 
 
-@router.patch("/taxonomy/service-category-requirements/{requirement_id}/status")
+@router.patch("/service-category-requirements/{requirement_id}/status")
 async def patch_service_category_requirement_status(
     requirement_id: uuid.UUID,
     is_active: bool,
@@ -963,7 +978,7 @@ async def patch_service_category_requirement_status(
     return {"success": True, "is_active": is_active}
 
 
-@router.delete("/taxonomy/service-category-requirements/{requirement_id}")
+@router.delete("/service-category-requirements/{requirement_id}")
 async def delete_service_category_requirement(
     requirement_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -973,7 +988,11 @@ async def delete_service_category_requirement(
     if not requirement:
         raise HTTPException(status_code=404, detail="Requirement not found")
     
-    db.delete(requirement)
-    await db.commit()
+    try:
+        await db.delete(requirement)
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Cannot delete requirement: {str(e)}")
     
     return {"success": True}

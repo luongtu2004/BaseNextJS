@@ -10,20 +10,22 @@ from pydantic import BaseModel, ConfigDict, Field
 class CustomerIndustryCategory(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
-    name: str
-    slug: str
-    icon_url: str | None
+    name: str | None
+    code: str | None
+    slug: str | None = Field(default=None, validation_alias="code")
     description: str | None
+    icon_url: str | None = None
 
 
 class CustomerServiceCategory(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     industry_category_id: uuid.UUID
-    name: str
-    slug: str
-    icon_url: str | None
+    name: str | None
+    code: str | None
+    slug: str | None = Field(default=None, validation_alias="code")
     description: str | None
+    icon_url: str | None = None
 
 
 class CustomerSkill(BaseModel):
@@ -31,6 +33,7 @@ class CustomerSkill(BaseModel):
     id: uuid.UUID
     service_category_id: uuid.UUID
     name: str
+    code: str | None = None
     description: str | None
 
 

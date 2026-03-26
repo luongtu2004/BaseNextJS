@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import textwrap
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import fastapi
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
 from jose import JWTError
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -224,7 +228,22 @@ async def login_otp(payload: LoginOtpRequest, db: AsyncSession = Depends(get_db)
     return await _build_auth_response(db, user)
 
 
-@router.post("/login/password", response_model=AuthResponse)
+@router.post(
+    "/login/password", 
+    response_model=AuthResponse,
+    summary="Login by phone and password",
+    description="""
+Đăng nhập bằng số điện thoại và mật khẩu.
+
+**Request Body**:
+- `phone`: Số điện thoại đã đăng ký (ví dụ: 0912345678)  
+- `password`: Mật khẩu
+
+**Flow**: OAuth2 Password Grant - không cần client_id/client_secret
+
+**Response**: Trả về access_token và refresh_token để dùng cho các API protected
+"""
+)
 async def login_password(payload: LoginPasswordRequest, db: AsyncSession = Depends(get_db)) -> AuthResponse:
     phone = normalize_phone(payload.phone)
     user_q = await db.execute(select(User).where(User.phone == phone))

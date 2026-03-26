@@ -197,7 +197,7 @@ create table if not exists industry_categories (
 
 create table if not exists service_categories (
     id uuid primary key default gen_random_uuid(),
-    industry_category_id uuid not null references industry_categories(id) on delete restrict,
+    industry_category_id uuid not null references industry_categories(id) on delete cascade,
     code varchar(50),
     name varchar(255),
     description text,
@@ -209,7 +209,7 @@ create table if not exists service_categories (
 
 create table if not exists service_skills (
     id uuid primary key default gen_random_uuid(),
-    service_category_id uuid not null references service_categories(id) on delete restrict,
+    service_category_id uuid not null references service_categories(id) on delete cascade,
     code varchar(50) not null,
     name varchar(255) not null,
     description text,
@@ -414,10 +414,19 @@ create index if not exists idx_user_identity_files_verification_id on user_ident
 create index if not exists idx_user_identity_verification_logs_verification_id on user_identity_verification_logs(verification_id);
 create index if not exists idx_user_identity_review_decisions_verification_id on user_identity_review_decisions(verification_id);
 
-alter table users
-    add constraint fk_users_latest_identity_verification
-    foreign key (latest_identity_verification_id)
-    references user_identity_verifications(id);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'fk_users_latest_identity_verification'
+        AND table_name = 'users'
+    ) THEN
+        ALTER TABLE users
+            ADD CONSTRAINT fk_users_latest_identity_verification
+            FOREIGN KEY (latest_identity_verification_id)
+            REFERENCES user_identity_verifications(id);
+    END IF;
+END $$;
 
 -- =========================================================
 -- POSTS / ADS CONTENT

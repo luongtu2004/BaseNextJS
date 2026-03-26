@@ -2,9 +2,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from sqlalchemy import text
 
+from app.api.v1.docs import get_swagger_html, customize_swagger_docs
 from app.api.v1.router import api_router
+from app.api.v1.swagger_login import swagger_login_router
 from app.core.config import get_settings
 from app.db.session import AsyncSessionLocal, engine, import_models
 
@@ -19,10 +22,16 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="Sàn Dịch Vụ API",
+    title="Sàn Dịch Vụ API - With Phone Authentication",
     version="0.1.0",
+    docs_url=None,  # Disable default Swagger UI
+    redoc_url=None,
+    openapi_url="/openapi.json",  # Keep OpenAPI spec
     lifespan=lifespan,
 )
+
+# Apply custom Swagger UI documentation
+customize_swagger_docs(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,17 +42,28 @@ app.add_middleware(
 )
 
 
-@app.get("/health", tags=["health"])
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+@app.get("/docs", include_in_schema=False, response_class=HTMLResponse)
+async def custom_swagger_ui_html():
+    """Serve custom Swagger UI with manual token input"""
+    return HTMLResponse(content=get_swagger_html())
 
 
-@app.get("/health/db", tags=["health"])
-async def health_db() -> dict[str, str]:
-    import_models()
-    async with AsyncSessionLocal() as session:
-        await session.execute(text("SELECT 1"))
-    return {"status": "ok", "database": "connected"}
+@app.get("/", include_in_schema=False)
+async def home_redirect():
+    """Redirect root to documentation"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/v1/models", include_in_schema=False)
+async def mock_models():
+    """Mock endpoint to suppress 404 errors from AI tools/plugins"""
+    return {
+        "object": "list",
+        "data": []
+    }
 
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
+# swagger_login_router mounted at app level for /swagger/login to match OpenAPI spec
+app.include_router(swagger_login_router, include_in_schema=False)

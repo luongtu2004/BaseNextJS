@@ -2,7 +2,7 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, or_, select, text, func
+from sqlalchemy import and_, or_, select, text, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -77,11 +77,24 @@ async def list_providers(
     current_user: User = Depends(get_current_user)
 ):
     """Tìm kiếm thợ trên toàn hệ thống"""
-    # Chỉ lấy thợ đang hoạt động và đã được duyệt
+    # Lấy cả thợ approved và pending, nhưng ưu tiên approved lên trước
     stmt = (
         select(Provider)
         .options(selectinload(Provider.owner))
-        .where(and_(Provider.status == "active", Provider.verification_status == "approved"))
+        .where(
+            and_(
+                Provider.status == "active",
+                Provider.verification_status.in_(["approved", "pending"])
+            )
+        )
+        .order_by(
+            case(
+                { "approved": 1, "pending": 2 },
+                value=Provider.verification_status,
+                else_=3
+            ),
+            Provider.created_at.desc()
+        )
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -121,7 +134,7 @@ async def search_providers(
     """Tìm kiếm thợ thông minh hỗ trợ AI giúp bóc tách ý định người dùng"""
     conditions = [
         Provider.status == "active",
-        Provider.verification_status == "approved"
+        Provider.verification_status.in_(["approved", "pending"])
     ]
     
     stmt = (
@@ -189,8 +202,21 @@ async def search_providers(
     total_result = await db.execute(select(func.count()).select_from(count_stmt.subquery()))
     total = total_result.scalar() or 0
     
-    # Result collection
-    stmt = stmt.where(and_(*conditions)).distinct().offset((page - 1) * page_size).limit(page_size)
+    # Result collection - Ưu tiên approved lên trước
+    stmt = (
+        stmt.where(and_(*conditions))
+        .distinct()
+        .order_by(
+            case(
+                { "approved": 1, "pending": 2 },
+                value=Provider.verification_status,
+                else_=3
+            ),
+            Provider.created_at.desc()
+        )
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
     result = await db.execute(stmt)
     providers = result.scalars().all()
     

@@ -2,7 +2,7 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, or_, select, text, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -18,6 +18,8 @@ from app.schemas.customer import (
     CustomerProviderListItem,
     CustomerServiceCategory,
     CustomerSkill,
+    CustomerIndividualProfile,
+    CustomerBusinessProfile,
 )
 from app.services.ai_service import AIService
 
@@ -90,14 +92,14 @@ async def list_providers(
         "items": [
             CustomerProviderListItem(
                 id=p.id,
-                owner_full_name=p.owner.full_name if p.owner else None,
-                provider_type=p.provider_type,
-                description=p.description,
+                owner_full_name=str(p.owner.full_name) if p.owner and p.owner.full_name else None,
+                provider_type=str(p.provider_type),
+                description=str(p.description) if p.description else None,
                 avg_rating=float(p.avg_rating),
-                total_reviews=p.total_reviews,
-                total_jobs_completed=p.total_jobs_completed,
-                avatar_url=p.owner.avatar_url if p.owner else None,
-                address=p.owner.address_line if p.owner else None
+                total_reviews=int(p.total_reviews),
+                total_jobs_completed=int(p.total_jobs_completed),
+                avatar_url=str(p.owner.avatar_url) if p.owner and p.owner.avatar_url else None,
+                address=str(p.owner.address_line) if p.owner and p.owner.address_line else None
             )
             for p in providers
         ],
@@ -184,8 +186,8 @@ async def search_providers(
             count_stmt = count_stmt.outerjoin(IndustryCategory, ProviderService.industry_category_id == IndustryCategory.id)
             
     count_stmt = count_stmt.where(and_(*conditions)).distinct()
-    total_result = await db.execute(select(text("count(*)")).select_from(count_stmt.subquery()))
-    total = total_result.scalar()
+    total_result = await db.execute(select(func.count()).select_from(count_stmt.subquery()))
+    total = total_result.scalar() or 0
     
     # Result collection
     stmt = stmt.where(and_(*conditions)).distinct().offset((page - 1) * page_size).limit(page_size)
@@ -196,14 +198,14 @@ async def search_providers(
         "items": [
             CustomerProviderListItem(
                 id=p.id,
-                owner_full_name=p.owner.full_name if p.owner else None,
-                provider_type=p.provider_type,
-                description=p.description,
+                owner_full_name=str(p.owner.full_name) if p.owner and p.owner.full_name else None,
+                provider_type=str(p.provider_type),
+                description=str(p.description) if p.description else None,
                 avg_rating=float(p.avg_rating),
-                total_reviews=p.total_reviews,
-                total_jobs_completed=p.total_jobs_completed,
-                avatar_url=p.owner.avatar_url if p.owner else None,
-                address=p.owner.address_line if p.owner else None
+                total_reviews=int(p.total_reviews),
+                total_jobs_completed=int(p.total_jobs_completed),
+                avatar_url=str(p.owner.avatar_url) if p.owner and p.owner.avatar_url else None,
+                address=str(p.owner.address_line) if p.owner and p.owner.address_line else None
             )
             for p in providers
         ],
@@ -239,16 +241,31 @@ async def get_provider_detail(
     return CustomerProviderDetail(
         id=provider.id,
         owner_user_id=provider.owner_user_id,
-        owner_full_name=provider.owner.full_name if provider.owner else None,
-        provider_type=provider.provider_type,
-        description=provider.description,
+        owner_full_name=str(provider.owner.full_name) if provider.owner and provider.owner.full_name else None,
+        provider_type=str(provider.provider_type),
+        description=str(provider.description) if provider.description else None,
         avg_rating=float(provider.avg_rating),
-        total_reviews=provider.total_reviews,
-        total_jobs_completed=provider.total_jobs_completed,
+        total_reviews=int(provider.total_reviews),
+        total_jobs_completed=int(provider.total_jobs_completed),
         created_at=provider.created_at,
-        avatar_url=provider.owner.avatar_url if provider.owner else None,
-        individual_profile=provider.individual_profile.__dict__ if provider.individual_profile else None,
-        business_profile=provider.business_profile.__dict__ if provider.business_profile else None
+        avatar_url=str(provider.owner.avatar_url) if provider.owner and provider.owner.avatar_url else None,
+        individual_profile=CustomerIndividualProfile(
+            full_name=str(provider.individual_profile.full_name) if provider.individual_profile.full_name else None,
+            exe_year=int(provider.individual_profile.exe_year) if provider.individual_profile.exe_year else None,
+            cccd=str(provider.individual_profile.cccd) if provider.individual_profile.cccd else None
+        ) if provider.individual_profile else None,
+        business_profile=CustomerBusinessProfile(
+            company_name=str(provider.business_profile.company_name),
+            exe_year=int(provider.business_profile.exe_year) if provider.business_profile.exe_year else None,
+            legal_name=str(provider.business_profile.legal_name) if provider.business_profile.legal_name else None,
+            tax_code=str(provider.business_profile.tax_code) if provider.business_profile.tax_code else None,
+            business_license_number=str(provider.business_profile.business_license_number) if provider.business_profile.business_license_number else None,
+            representative_name=str(provider.business_profile.representative_name) if provider.business_profile.representative_name else None,
+            representative_position=str(provider.business_profile.representative_position) if provider.business_profile.representative_position else None,
+            founded_date=provider.business_profile.founded_date,
+            hotline=str(provider.business_profile.hotline) if provider.business_profile.hotline else None,
+            website_url=str(provider.business_profile.website_url) if provider.business_profile.website_url else None
+        ) if provider.business_profile else None
     )
 
 

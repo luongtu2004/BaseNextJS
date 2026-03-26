@@ -40,6 +40,7 @@ class CustomerProviderListItem(BaseModel):
     total_reviews: int
     total_jobs_completed: int
     avatar_url: str | None
+    address: str | None = None
 
 
 class CustomerProviderDetail(BaseModel):

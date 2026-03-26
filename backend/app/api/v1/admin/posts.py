@@ -217,7 +217,6 @@ async def create_post(
 async def list_posts(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
-    keyword: str | None = Query(default=None),
     status: str | None = Query(default=None),
     post_type: str | None = Query(default=None),
     category_id: uuid.UUID | None = Query(default=None),
@@ -227,11 +226,6 @@ async def list_posts(
 ) -> dict:
     """Danh sách bài viết"""
     conditions = []
-    
-    if keyword:
-        conditions.append(Post.title.ilike(f"%{keyword}%"))
-        conditions.append(Post.summary.ilike(f"%{keyword}%"))
-        conditions.append(Post.content.ilike(f"%{keyword}%"))
     
     if status:
         conditions.append(Post.status == status)

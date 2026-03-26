@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_admin_user, get_current_user_with_role
+from app.api.deps import get_current_admin_user
 from app.db.session import get_db
 from app.models.identity import UserIdentityVerification as UserIdentity
 from app.models.user import User, UserProfile, UserRole, UserStatusLog
@@ -23,17 +23,12 @@ router = APIRouter(tags=["admin-users"])
 async def list_users(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
-    keyword: str | None = Query(default=None),
     status: str | None = Query(default=None),
     role: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
 ) -> dict:
     conditions = []
-    
-    if keyword:
-        conditions.append(User.phone.ilike(f"%{keyword}%"))
-        conditions.append(User.full_name.ilike(f"%{keyword}%"))
     
     if status:
         conditions.append(User.status == status)

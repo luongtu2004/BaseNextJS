@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user_with_role
+from app.api.deps import get_current_admin_user
 from app.db.session import get_db
 from app.models.taxonomy import (
     IndustryCategory,
@@ -188,22 +188,7 @@ class ServiceCategoryRequirementUpdateRequest(BaseModel):
 router = APIRouter(tags=["admin-taxonomy"])
 
 
-async def get_current_admin_user(
-    current_user = Depends(get_current_user_with_role),
-    db: AsyncSession = Depends(get_db),
-):
-    """Check if user has admin role"""
-    admin_role_exists = await db.execute(
-        select(UserRole).where(
-            and_(
-                UserRole.user_id == current_user.id,
-                UserRole.role_code == "admin",
-            )
-        )
-    )
-    if not admin_role_exists.scalar_one_or_none():
-        raise HTTPException(status_code=403, detail="Admin role required")
-    return current_user
+# Sử dụng get_current_admin_user từ app.api.deps
 
 
 # ==================== Industry Categories ====================

@@ -36,25 +36,6 @@ async def get_current_user(
     return user
 
 
-async def get_current_user_with_role(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    """Get current user and return it. Role check should be done separately."""
-    payload = safe_decode(token, "access")
-    if not payload or payload.get("typ") != "access":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
-
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
-
-    user = await db.get(User, uuid.UUID(user_id))
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
-
-
 async def get_current_roles(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -63,38 +44,31 @@ async def get_current_roles(
     return [x[0] for x in rows.all()]
 
 
-async def get_current_admin_user(
-    current_user: User = Depends(get_current_user_with_role),
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    """Check if user has admin role"""
-    admin_role_exists = await db.execute(
-        select(UserRole).where(
-            and_(
-                UserRole.user_id == current_user.id,
-                UserRole.role_code == "admin",
-            )
-        )
-    )
-    if not admin_role_exists.scalar_one_or_none():
-        raise HTTPException(status_code=403, detail="Admin role required")
-    return current_user
-
-
-async def get_current_user_with_specific_role(
-    current_user: User = Depends(get_current_user_with_role),
-    role_code: str = Depends(),
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    """Check if user has a specific role"""
-    role_exists = await db.execute(
-        select(UserRole).where(
+def check_user_role(role_code: str):
+    """
+    Factory function to create a dependency that checks for a specific role.
+    Usage: Depends(check_user_role("admin"))
+    """
+    async def role_checker(
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+        stmt = select(UserRole).where(
             and_(
                 UserRole.user_id == current_user.id,
                 UserRole.role_code == role_code,
             )
         )
-    )
-    if not role_exists.scalar_one_or_none():
-        raise HTTPException(status_code=403, detail=f"{role_code} role required")
-    return current_user
+        role_exists = await db.execute(stmt)
+        if not role_exists.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail=f"Role '{role_code}' required"
+            )
+        return current_user
+    
+    return role_checker
+
+
+# Short-cut for common roles
+get_current_admin_user = check_user_role("admin")

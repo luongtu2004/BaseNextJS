@@ -21,7 +21,6 @@ router = APIRouter(tags=["admin-providers"])
 async def list_providers(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),
-    keyword: str | None = Query(default=None),
     status: str | None = Query(default=None),
     verification_status: str | None = Query(default=None),
     provider_type: str | None = Query(default=None),
@@ -30,11 +29,6 @@ async def list_providers(
 ) -> dict:
     """Danh sách providers với tìm kiếm và lọc"""
     conditions = []
-    
-    if keyword:
-        conditions.append(User.phone.ilike(f"%{keyword}%"))
-        conditions.append(User.full_name.ilike(f"%{keyword}%"))
-        conditions.append(ProviderBusinessProfile.company_name.ilike(f"%{keyword}%"))
     
     if status:
         conditions.append(Provider.status == status)

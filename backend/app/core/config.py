@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     otp_length: int = Field(default=6, validation_alias="OTP_LENGTH")
     otp_ttl_seconds: int = Field(default=300, validation_alias="OTP_TTL_SECONDS")
     otp_max_attempts: int = Field(default=5, validation_alias="OTP_MAX_ATTEMPTS")
+    
+    # Local AI
+    local_ai_url: str = Field(default="http://localhost:11434/api/generate", validation_alias="LOCAL_AI_URL")
+    local_ai_model: str = Field(default="llama3", validation_alias="LOCAL_AI_MODEL")
+    local_ai_api_key: str | None = Field(default=None, validation_alias="LOCAL_AI_API_KEY")
 
     @property
     def cors_origin_list(self) -> list[str]:

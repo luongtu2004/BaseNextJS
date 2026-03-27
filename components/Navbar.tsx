@@ -1,11 +1,12 @@
 'use client';
 
-import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane } from 'lucide-react';
+import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane, User } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { PILLARS } from '@/lib/constants';
 import { createSlug } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { getSession } from '@/lib/auth';
 
 const iconMap: Record<string, any> = {
   transportation: Rocket,
@@ -17,6 +18,7 @@ const iconMap: Record<string, any> = {
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleOpen = () => {
@@ -32,9 +34,11 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    const loadUser = async () => {
+      const session = await getSession();
+      setUser(session);
     };
+    loadUser();
   }, []);
 
   return (
@@ -52,12 +56,12 @@ export default function Navbar() {
             <Link href="/" className="text-[13px] font-medium text-slate-500 hover:text-slate-900 transition-colors">Trang chủ</Link>
             
             {/* Mega Menu Trigger Container - Removed 'relative' to allow center positioning against navbar */}
-            <div 
+            <div
               className="h-full flex items-center"
               onMouseEnter={handleOpen}
               onMouseLeave={handleClose}
             >
-              <button 
+              <button
                 className={`flex items-center gap-1.5 text-[13px] font-medium transition-all cursor-pointer h-full px-2 ${isMenuOpen ? 'text-primary' : 'text-slate-500 hover:text-slate-900'}`}
               >
                 Danh mục <ChevronDown size={14} className={`transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
@@ -66,7 +70,7 @@ export default function Navbar() {
               {/* Mega Menu Content - Positioned absolutely relative to the max-w container */}
               <AnimatePresence>
                 {isMenuOpen && (
-                  <div 
+                  <div
                     className="absolute top-16 left-1/2 -translate-x-1/2 w-full max-w-[1740px] z-[1001] pt-0 px-4 md:px-8"
                     onMouseEnter={handleOpen}
                     onMouseLeave={handleClose}
@@ -102,8 +106,8 @@ export default function Navbar() {
                                 {pillar.industries.map((ind, idx) => (
                                   <li key={idx} className="flex items-start gap-2 group/item">
                                     <div className="mt-[7px] w-1 h-1 rounded-full bg-slate-200 group-hover/item:bg-primary transition-colors shrink-0" />
-                                    <Link 
-                                      href={`/danh-muc/${createSlug(ind)}`} 
+                                    <Link
+                                      href={`/danh-muc/${createSlug(ind)}`}
                                       className="text-[13px] text-slate-500 hover:text-primary transition-colors leading-tight"
                                       title={ind}
                                     >
@@ -128,9 +132,15 @@ export default function Navbar() {
         </div>
         
         <div className="flex items-center gap-4">
-          <button className="btn-primary-gradient px-6 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105">
-            Đặt dịch vụ
-          </button>
+          {user ? (
+            <Link href="/admin" className="btn-primary-gradient px-6 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105">
+              {user.user?.full_name || 'Dashboard'}
+            </Link>
+          ) : (
+            <Link href="/login" className="btn-primary-gradient px-6 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105">
+              Đăng nhập
+            </Link>
+          )}
           <button className="md:hidden text-slate-900">
             <Menu size={24} />
           </button>

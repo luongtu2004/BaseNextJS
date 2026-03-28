@@ -16,14 +16,19 @@ export const metadata: Metadata = {
   description: 'Kết nối 45+ ngành nghề dịch vụ từ Vận tải, Xây dựng, Điện lạnh đến Y tế và Làm đẹp ngay tại nhà.',
 };
 
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={`${inter.variable}`}>
       <body className="font-sans bg-background-light text-slate-900 antialiased" suppressHydrationWarning>
         <Providers>
+          <Navbar />
           <SmoothScroll>
             {children}
           </SmoothScroll>
+          <Footer />
           <Chatbot />
         </Providers>
       </body>

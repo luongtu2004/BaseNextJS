@@ -102,7 +102,6 @@ export default function Navbar() {
                     priority
                   />
                 </div>
-                <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-black/40">Sàn DV</span>
               </Link>
             </div>
 

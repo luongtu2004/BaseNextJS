@@ -2,6 +2,7 @@
 
 import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane, User, LogOut, Search, Settings, X } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { PILLARS } from '@/lib/constants';
 import { createSlug } from '@/lib/utils';
@@ -24,6 +25,18 @@ export default function Navbar() {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const { user, isLoading, logout } = useAuth();
 
+  // Khóa cuộn trang khi mở menu toàn màn hình
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+
   const navItems = [
     { title: 'Trang chủ', href: '/', icon: Home, id: 'home' },
     { title: 'Danh mục', icon: LayoutGrid, id: 'catalogue', isMenu: true },
@@ -35,35 +48,75 @@ export default function Navbar() {
     <>
       <nav className="fixed top-6 left-0 right-0 z-[1000] px-4 pointer-events-none flex justify-center items-start gap-4">
 
-        {/* Main Navigation Pill - Chuẩn iOS 26 "Thủy tinh trắng" */}
+        {/* Main Navigation Pill - Chuẩn iOS 26 High Contrast */}
         <motion.div
           initial={{ y: -100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="pointer-events-auto bg-white/80 backdrop-blur-[48px] rounded-full shadow-[0_12px_44px_rgba(0,0,0,0.12)] ring-1 ring-white/60 flex items-center p-1.5 overflow-visible relative min-w-[360px] md:min-w-[480px]"
+          animate={{
+            y: isMenuOpen ? -150 : 0, // Ẩn nhanh khi mở Menu trên Mobile/Desktop để lấy không gian
+            opacity: isMenuOpen ? 0 : 1
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          className={`pointer-events-auto bg-white/85 backdrop-blur-[48px] rounded-full shadow-[0_16px_48px_-12px_rgba(0,0,0,0.15)] ring-1 ring-white/60 flex items-center p-1.5 overflow-visible relative min-w-[320px] md:min-w-[520px] ${isMenuOpen ? 'pointer-events-none' : ''}`}
           onMouseLeave={() => setHoveredTab(null)}
+          style={{ willChange: 'transform, opacity' }}
         >
           <div className="flex items-center w-full justify-around px-1 relative">
+            {/* Logo Link Branding */}
+            <div
+              className="relative px-0.5 py-0.5"
+              onMouseEnter={() => setHoveredTab('logo')}
+            >
+              <AnimatePresence initial={false}>
+                {hoveredTab === 'logo' && (
+                  <motion.div
+                    layoutId="active-pill"
+                    className="absolute inset-0 rounded-full bg-black/5"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 45 }}
+                    style={{ willChange: 'transform, opacity' }}
+                  />
+                )}
+              </AnimatePresence>
+              <Link
+                href="/"
+                className="flex flex-col items-center gap-1 px-3 md:px-6 py-2 rounded-full relative z-10 transition-transform hover:scale-110 duration-300"
+              >
+                <div className="size-5 md:size-6 relative flex items-center justify-center mb-0.5">
+                  <Image
+                    src="/logo.png"
+                    alt="Logo"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+                <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-black/40">Sàn DV</span>
+              </Link>
+            </div>
+
             {navItems.map((item) => {
-              const isActive = item.isMenu ? isMenuOpen : pathname === item.href;
+              const isActive = (item.isMenu && isMenuOpen) || (!item.isMenu && item.href === pathname);
               const isHovered = hoveredTab === item.id;
 
               return (
                 <div
                   key={item.id}
-                  className="relative px-1 py-1"
+                  className="relative px-0.5 py-0.5"
                   onMouseEnter={() => setHoveredTab(item.id)}
                 >
-                  {/* Sliding Pill Highlight (iOS Style) */}
-                  <AnimatePresence>
+                  {/* Sliding Pill Highlight */}
+                  <AnimatePresence initial={false}>
                     {(isHovered || isActive) && (
                       <motion.div
                         layoutId="active-pill"
                         className={`absolute inset-0 rounded-full ${isActive ? 'bg-black/10' : 'bg-black/5'}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 450, damping: 45, mass: 1 }}
+                        style={{ willChange: 'transform, opacity' }}
                       />
                     )}
                   </AnimatePresence>
@@ -71,132 +124,178 @@ export default function Navbar() {
                   {item.isMenu ? (
                     <button
                       onClick={() => setIsMenuOpen(!isMenuOpen)}
-                      className={`flex flex-col items-center gap-1.5 px-4 md:px-7 py-2.5 rounded-full transition-colors duration-300 relative z-10 cursor-pointer ${isActive ? 'text-black' : 'text-black/60 hover:text-black'}`}
+                      className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-colors duration-300 relative z-10 cursor-pointer ${isActive ? 'text-black' : 'text-black/50 hover:text-black'}`}
                     >
-                      <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className="transition-transform duration-300" />
-                      <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
+                      <item.icon size={19} strokeWidth={isActive ? 2.5 : 2} className="mb-0.5" />
+                      <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
                     </button>
                   ) : (
                     <Link
                       href={item.href!}
-                      className={`flex flex-col items-center gap-1.5 px-4 md:px-7 py-2.5 rounded-full transition-colors duration-300 relative z-10 ${isActive ? 'text-black' : 'text-black/60 hover:text-black'}`}
+                      className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-colors duration-300 relative z-10 ${isActive ? 'text-black' : 'text-black/50 hover:text-black'}`}
                     >
-                      <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className="transition-transform duration-300" />
-                      <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
+                      <item.icon size={19} strokeWidth={isActive ? 2.5 : 2} className="mb-0.5" />
+                      <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
                     </Link>
                   )}
                 </div>
               );
             })}
 
-            {/* User Account / Profile */}
+            {/* User Account Capsule */}
             <div
-              className="relative px-1 py-1"
+              className="relative px-0.5 py-0.5"
               onMouseEnter={() => setHoveredTab('user')}
             >
-              <AnimatePresence>
+              <AnimatePresence initial={false}>
                 {(hoveredTab === 'user' || isUserMenuOpen) && (
                   <motion.div
                     layoutId="active-pill"
                     className={`absolute inset-0 rounded-full ${isUserMenuOpen ? 'bg-black/10' : 'bg-black/5'}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 45 }}
+                    style={{ willChange: 'transform, opacity' }}
                   />
                 )}
               </AnimatePresence>
 
               {isLoading ? (
-                <div className="size-10 bg-black/5 animate-pulse rounded-full" />
+                <div className="size-10 md:size-12 bg-black/5 animate-pulse rounded-full" />
               ) : user ? (
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className={`flex flex-col items-center gap-1.5 px-4 md:px-7 py-2.5 rounded-full transition-all duration-300 relative z-10 cursor-pointer ${isUserMenuOpen ? 'text-black' : 'text-black/60 hover:text-black'}`}
+                  className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-all duration-300 relative z-10 cursor-pointer ${isUserMenuOpen ? 'text-black' : 'text-black/50 hover:text-black'}`}
                 >
-                  <User size={20} strokeWidth={isUserMenuOpen ? 2.5 : 2} />
-                  <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Tôi</span>
+                  <User size={19} strokeWidth={isUserMenuOpen ? 2.5 : 2} className="mb-0.5" />
+                  <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-center">Tôi</span>
                 </button>
               ) : (
                 <Link
                   href="/login"
-                  className="flex flex-col items-center gap-1.5 px-4 md:px-7 py-2.5 rounded-full transition-all duration-300 relative z-10 text-black/60 hover:text-black"
+                  className="flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-all duration-300 relative z-10 text-black/50 hover:text-black"
                 >
-                  <User size={20} strokeWidth={2} />
-                  <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Login</span>
+                  <User size={19} strokeWidth={2} className="mb-0.5" />
+                  <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Login</span>
                 </Link>
               )}
             </div>
           </div>
         </motion.div>
 
-        {/* Separate Utility Capsule (Search) - iOS High Contrast */}
-        <motion.button
-          initial={{ x: 50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-          className="pointer-events-auto size-[54px] md:size-[64px] rounded-full bg-white/90 backdrop-blur-[32px] text-black flex items-center justify-center shadow-[0_12px_44px_rgba(0,0,0,0.12)] hover:scale-105 transition-transform active:scale-95 cursor-pointer ring-1 ring-white/60"
-        >
-          <Search size={24} strokeWidth={2.5} />
-        </motion.button>
+        {/* Separate Utility Capsule (Search) */}
+        {!isMenuOpen && (
+          <motion.button
+            initial={{ x: 50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 50, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+            className="pointer-events-auto size-[54px] md:size-[64px] rounded-full bg-white/90 backdrop-blur-[32px] text-black flex items-center justify-center shadow-[0_12px_44px_rgba(0,0,0,0.12)] hover:scale-105 transition-transform active:scale-95 cursor-pointer ring-1 ring-white/60"
+          >
+            <Search size={22} strokeWidth={2.5} />
+          </motion.button>
+        )}
       </nav>
 
-      {/* Full-Width Mega Menu (Tràn màn hình) */}
+      {/* Full-Screen Mega Menu (Responsive & Scrollable) */}
       <AnimatePresence>
         {isMenuOpen && (
-          <div className="fixed inset-0 z-[990] flex items-start justify-center pointer-events-none">
+          <div className="fixed inset-0 z-[1100] flex items-start justify-center overflow-hidden">
+            {/* Background Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
-              className="absolute inset-0 bg-white/20 backdrop-blur-md pointer-events-auto"
+              className="absolute inset-0 bg-white/10 backdrop-blur-2xl pointer-events-auto"
             />
 
+            {/* Drawer Container */}
             <motion.div
-              initial={{ y: -100, opacity: 0 }}
+              initial={{ y: -50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -100, opacity: 0 }}
+              exit={{ y: -50, opacity: 0 }}
               transition={{ type: "spring", bounce: 0, duration: 0.5 }}
-              className="w-full bg-white/95 backdrop-blur-[48px] shadow-2xl pt-[120px] pb-16 px-6 md:px-16 pointer-events-auto max-h-[92vh] overflow-y-auto border-b border-black/5"
+              className="w-full h-full bg-white/98 md:bg-white/95 backdrop-blur-[64px] shadow-2xl pointer-events-auto overflow-y-auto overscroll-behavior-contain custom-scrollbar relative z-[1101]"
             >
-              <div className="max-w-[1740px] mx-auto">
-                <div className="flex items-center justify-between mb-12">
+              <div className="max-w-[1740px] mx-auto min-h-full px-6 md:px-16 pt-24 md:pt-[100px] pb-24">
+
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 md:mb-16 gap-6">
                   <div>
-                    <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black mb-2" style={{ fontFamily: 'Manrope, ui-sans-serif, system-ui, sans-serif' }}>Danh mục toàn ngành</h2>
-                    <p className="text-black/50 font-bold uppercase tracking-widest text-[12px]">Khám phá giải pháp dịch vụ chuyên biệt</p>
+                    <motion.div
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      className="flex items-center gap-4 mb-4"
+                    >
+                      <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-contain" />
+                      <span className="text-xl font-black uppercase tracking-[0.2em] text-black/20">Sàn Dịch Vụ</span>
+                    </motion.div>
+                    <motion.h2
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                      className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter text-black mb-2"
+                      style={{ fontFamily: 'Manrope, ui-sans-serif, system-ui, sans-serif' }}
+                    >
+                      Danh mục toàn ngành
+                    </motion.h2>
+                    <motion.p
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="text-black/50 font-bold uppercase tracking-[0.2em] text-[11px] md:text-[14px]"
+                    >
+                      Giải pháp dịch vụ tinh hoa kết nối toàn cầu
+                    </motion.p>
                   </div>
-                  <button onClick={() => setIsMenuOpen(false)} className="size-14 rounded-full bg-black/5 flex items-center justify-center cursor-pointer hover:bg-black/10 transition-colors">
-                    <X size={28} className="text-black" />
-                  </button>
+
+                  {/* Close Button - Cố định lề phải Mobile/Desktop */}
+                  <motion.button
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="size-14 md:size-16 rounded-full bg-black/5 flex items-center justify-center cursor-pointer hover:bg-black/10 transition-all self-end md:self-center"
+                  >
+                    <X size={32} className="text-black" />
+                  </motion.button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-10">
-                  {PILLARS.map((pillar) => {
+                {/* Grid Content - Cực kỳ Responsive */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 sm:gap-10 md:gap-14">
+                  {PILLARS.map((pillar, pillarIdx) => {
                     const Icon = iconMap[pillar.id] || Rocket;
                     return (
-                      <div key={pillar.id} className="group/pillar">
-                        <div className="flex items-center gap-4 mb-8">
-                          <div className="size-14 rounded-2xl bg-black/5 flex items-center justify-center text-black shadow-sm group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-300">
-                            <Icon size={26} strokeWidth={2.5} />
+                      <motion.div
+                        key={pillar.id}
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.3 + (pillarIdx * 0.05) }}
+                        className="group/pillar bg-black/[0.02] p-6 rounded-[32px] md:bg-transparent md:p-0"
+                      >
+                        <div className="flex items-center gap-4 mb-6 md:mb-8">
+                          <div className="size-12 md:size-14 rounded-[20px] md:rounded-[24px] bg-black/5 flex items-center justify-center text-black group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-500">
+                            <Icon size={24} strokeWidth={2.5} />
                           </div>
-                          <h4 className="text-[18px] font-black uppercase text-black tracking-tighter leading-tight">{pillar.title}</h4>
+                          <h4 className="text-[17px] md:text-[19px] font-black uppercase text-black tracking-tighter">{pillar.title}</h4>
                         </div>
-                        <ul className="space-y-4">
+                        <ul className="space-y-4 md:space-y-5 ml-2 md:ml-0">
                           {pillar.industries.map((ind, idx) => (
                             <li key={idx}>
                               <Link
                                 href={`/danh-muc/${createSlug(ind)}`}
                                 onClick={() => setIsMenuOpen(false)}
-                                className="text-[16px] font-bold text-black/50 hover:text-black transition-all flex items-center gap-3 group/item translate-x-0 hover:translate-x-2 duration-300"
+                                className="text-[15px] md:text-[16px] font-bold text-black/50 hover:text-black transition-all flex items-center gap-3 group/item hover:translate-x-2 duration-300"
                               >
-                                <div className="w-1.5 h-1.5 rounded-full bg-black/10 group-hover/item:bg-black transition-all" />
-                                {ind}
+                                <div className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-black/10 group-hover/item:bg-black transition-all" />
+                                <span className="flex-1 leading-tight">{ind}</span>
                               </Link>
                             </li>
                           ))}
                         </ul>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -206,42 +305,48 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* User Account Dropdown (Below top pill) */}
+      {/* Account Sidebar / Overlay */}
       <AnimatePresence>
         {isUserMenuOpen && (
-          <div className="fixed inset-0 z-[990] flex items-start justify-center pointer-events-none pt-[100px]">
+          <div className="fixed inset-0 z-[1200] flex items-start justify-center pointer-events-none pt-[100px]">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsUserMenuOpen(false)}
-              className="absolute inset-0 bg-transparent pointer-events-auto"
+              className="absolute inset-0 bg-black/5 backdrop-blur-sm pointer-events-auto"
             />
             <motion.div
               initial={{ y: -20, opacity: 0, scale: 0.95 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: -20, opacity: 0, scale: 0.95 }}
-              className="w-[320px] bg-white/95 backdrop-blur-[48px] rounded-[32px] shadow-2xl p-3 pointer-events-auto mt-4 ring-1 ring-black/5 overflow-hidden"
+              className="w-[340px] bg-white/98 backdrop-blur-[64px] rounded-[48px] shadow-2xl p-4 pointer-events-auto mt-4 ring-1 ring-black/5 overflow-hidden mx-4"
             >
-              <div className="p-6 border-b border-black/5 mb-3 rounded-[24px] bg-black/5 text-black">
-                <p className="text-sm font-black truncate">{user?.user?.full_name}</p>
-                <p className="text-xs text-black/50 font-bold tracking-tight truncate">{user?.user?.phone}</p>
+              <div className="p-8 border-b border-black/5 mb-4 rounded-[36px] bg-black/5 text-black">
+                <p className="text-base font-black truncate mb-0.5">{user?.user?.full_name || 'Người dùng'}</p>
+                <p className="text-sm text-black/50 font-bold tracking-tight">{user?.user?.phone || 'Chưa đăng ký'}</p>
               </div>
-              <div className="grid grid-cols-1 gap-1">
-                <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 hover:bg-black/5 rounded-2xl text-[15px] font-black text-black transition-all">
-                  <User size={18} strokeWidth={2.5} />
-                  Hồ sơ cá nhân
+              <div className="grid grid-cols-1 gap-2 p-1">
+                <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="flex items-center justify-between px-7 py-5 hover:bg-black/5 rounded-[32px] group italic transition-all">
+                  <div className="flex items-center gap-4 text-[16px] font-black text-black">
+                    <User size={18} strokeWidth={2.5} />
+                    Hồ sơ của tôi
+                  </div>
+                  <ChevronDown size={14} className="-rotate-90 text-black/20" />
                 </Link>
-                <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 hover:bg-black/5 rounded-2xl text-[15px] font-black text-black transition-all">
-                  <Settings size={18} strokeWidth={2.5} />
-                  Bảng điều khiển
+                <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center justify-between px-7 py-5 hover:bg-black/5 rounded-[32px] group transition-all">
+                  <div className="flex items-center gap-4 text-[16px] font-black text-black">
+                    <Settings size={18} strokeWidth={2.5} />
+                    Bảng điều khiển
+                  </div>
+                  <ChevronDown size={14} className="-rotate-90 text-black/20" />
                 </Link>
                 <button
                   onClick={() => { setIsUserMenuOpen(false); logout(); }}
-                  className="w-full flex items-center gap-4 px-6 py-4 hover:bg-red-50 rounded-2xl text-[15px] font-black text-red-600 transition-all text-left"
+                  className="w-full flex items-center gap-4 px-7 py-5 bg-red-50/50 hover:bg-red-50 rounded-[32px] text-[16px] font-black text-red-600 transition-all text-left mt-4"
                 >
                   <LogOut size={18} strokeWidth={2.5} />
-                  Đăng xuất
+                  Đăng xuất tài khoản
                 </button>
               </div>
             </motion.div>

@@ -4,7 +4,7 @@
 
 Đây là ứng dụng web Next.js (App Router) dùng để:
 - Giới thiệu hệ sinh thái dịch vụ `Sàn Dịch Vụ 24/7`.
-- Tổ chức danh mục theo **6 trụ cột dịch vụ** và các **ngành con** bên trong.
+- Tổ chức danh mục theo **5 trụ cột dịch vụ** và các **ngành con** bên trong.
 - Cung cấp chatbot tư vấn tiếng Việt có ngữ cảnh nghiệp vụ và bộ nhớ hội thoại ngắn hạn.
 
 Hệ thống tập trung vào 2 giá trị chính:
@@ -43,59 +43,67 @@ Hệ thống mô hình hóa dịch vụ theo cấu trúc:
 **Trụ cột (pillar) -> Danh sách ngành (industries)**.
 
 ### Trụ cột 1: Vận tải & Di chuyển
-- Taxi/xe hợp đồng/xe du lịch (4-45 chỗ)
-- Xe tiện chuyến, xe ghép, limousine
-- Xe khách tuyến cố định liên tỉnh
-- Xe tải vận chuyển hàng hóa, xe công
+- Taxi (4,7 chỗ)/ Xe hợp đồng / Xe du lịch (4-7-16-29-45 chỗ)
+- Xe tiện chuyến / Xe ghép / Xe Limousine (4-7-12 chỗ)
+- Xe khách chạy tuyến cố định (Liên tỉnh)
+- Xe tải vận chuyển hàng hóa, xe công (từ 0,5 tấn đến 20 tấn)
 - Xe cẩu, xe nâng, máy xúc
-- Cứu hộ giao thông (cẩu kéo ô tô)
-- Sửa xe ô tô lưu động
-- Lái xe ô tô hộ
+- Cứu hộ giao thông (Cẩu kéo ô tô)
+- Sửa xe ô tô lưu động (Vá lốp, sửa nhanh)
+- Lái xe ô tô hộ (Bạn uống say - Tôi lái)
 - Lái xe máy hộ
-- Lái xe theo ngày/chuyến
-- Xe ôm công nghệ
+- Lái xe theo ngày, lái xe theo chuyến
+- Xe ôm công nghệ (Xe máy cá nhân)
 
-### Trụ cột 2: Xây dựng & Nội thất
-- Sửa chữa điện nước
-- Thợ nề/xây dựng
-- Sơn bả/chống thấm
-- Trần thạch cao
-- Nhôm kính/cửa cuốn
-- Cơ khí/hàn xì
-- Thợ mộc
-- Thông tắc cống/hút bể phốt
+### Trụ cột 2: Xây dựng, Nội thất và Kỹ thuật
+- Sửa chữa Điện nước (Xử lý sự cố 24/7)
+- Thợ Nề / Xây dựng (Xây mới, sửa chữa, phá dỡ)
+- Sơn bả / Chống thấm
+- Trần thạch cao (Thi công vách, trần)
+- Nhôm kính / Cửa cuốn (Lắp đặt, sửa chữa)
+- Cơ khí / Hàn xì (Hàng rào, cổng sắt)
+- Thợ Mộc (Sửa chữa lắp đặt đồ gỗ)
+- Thông tắc cống / Hút bể phốt
+- Sửa chữa, bảo dưỡng Điều hòa
+- Sửa chữa, lắp đặt Máy giặt / Máy sấy
+- Sửa chữa, lắp đặt Tủ lạnh / Tủ đông
+- Thay lõi Máy lọc nước
+- Sửa chữa Bếp từ / Bếp ga / Đồ gia dụng
+- Thợ Khóa (Mở khóa, đánh chìa, khóa thông minh)
+- Lắp đặt & Sửa chữa Camera / An ninh
+- Sửa chữa thiết bị văn phòng (Máy tính, máy in)
 
-### Trụ cột 3: Điện máy & Gia dụng
-- Sửa, bảo dưỡng điều hòa
-- Sửa, lắp đặt máy giặt/máy sấy
-- Sửa, lắp đặt tủ lạnh/tủ đông
-- Thay lõi máy lọc nước
-- Sửa bếp từ/bếp ga/đồ gia dụng
-- Thợ khóa
-- Lắp đặt/sửa camera an ninh
-- Sửa thiết bị văn phòng (máy tính, máy in)
-
-### Trụ cột 4: Giúp việc & Chăm sóc
-- Giúp việc theo giờ/ngày/tháng
+### Trụ cột 3: Giúp việc, Chăm sóc & Làm đẹp
+- Giúp việc theo giờ / ngày / tháng
 - Trông giữ trẻ em tại nhà
 - Chăm sóc người thân tại nhà
 - Nuôi bệnh tại bệnh viện
-- Nấu cỗ tại nhà
-- Vệ sinh công nghiệp/trọn gói
-- Vệ sinh theo ngày/giờ
-
-### Trụ cột 5: Y tế & Giáo dục
-- Điều dưỡng tại nhà
-- Lấy mẫu máu xét nghiệm tại nhà
-- Gia sư văn hóa
-- Gia sư năng khiếu
-
-### Trụ cột 6: Làm đẹp & Spa
-- Cắt tóc/làm tóc tại nhà
-- Làm móng tại nhà
-- Trang điểm tại nhà
+- Dịch vụ Nấu cỗ tại nhà
+- Vệ sinh công nghiệp, vệ sinh trọn gói
+- Vệ sinh theo ngày, theo giờ
+- Cắt tóc / Làm tóc tại nhà
+- Làm móng (Nails) tại nhà
+- Trang điểm (Makeup) tại nhà
 - Massage trị liệu tại nhà
 - Chăm sóc da mặt tại nhà
+
+### Trụ cột 4: Y tế & Giáo dục
+- Điều dưỡng tại nhà (Tiêm, truyền, vật lý trị liệu)
+- Lấy mẫu máu xét nghiệm tại nhà
+- Gia sư văn hóa (Toán, Văn, Anh...)
+- Gia sư năng khiếu (Đàn, họa, võ, bơi)
+
+### Trụ cột 5: Du lịch, Khách sạn và Bảo hiểm
+- Đặt vé máy bay nội địa / quốc tế
+- Đặt phòng khách sạn, homestay, resort
+- Đặt tour ghép / tour riêng theo nhu cầu
+- Thuê xe tự lái / xe du lịch có tài xế
+- Đưa đón sân bay 2 chiều
+- Hỗ trợ visa, hộ chiếu và lịch trình
+- Hướng dẫn viên du lịch theo điểm đến
+- Combo du lịch trọn gói (vé + phòng + xe)
+- Bảo hiểm du lịch
+- Dịch vụ SIM / eSIM du lịch
 
 ---
 
@@ -124,4 +132,4 @@ Kết quả: chatbot vừa trả lời theo tri thức nghiệp vụ, vừa ghi 
 ## 6) Kết luận ngắn
 
 Dự án được tổ chức tốt theo hướng **website giới thiệu + hệ tư vấn AI theo tri thức ngành**.  
-Phần cốt lõi nghiệp vụ nằm ở mô hình **6 trụ cột dịch vụ** và danh sách ngành con, còn phần giá trị kỹ thuật nằm ở luồng chatbot có kiểm soát prompt, lọc reasoning và ghi nhớ hồ sơ khách hàng.
+Phần cốt lõi nghiệp vụ nằm ở mô hình **5 trụ cột dịch vụ** và danh sách ngành con, còn phần giá trị kỹ thuật nằm ở luồng chatbot có kiểm soát prompt, lọc reasoning và ghi nhớ hồ sơ khách hàng.

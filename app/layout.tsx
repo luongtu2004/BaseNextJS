@@ -4,6 +4,8 @@ import './globals.css'; // Global styles
 import SmoothScroll from '@/components/SmoothScroll';
 import Chatbot from '@/components/Chatbot';
 
+import { Providers } from './Providers';
+
 const inter = Inter({
   subsets: ['latin', 'vietnamese'],
   variable: '--font-sans',
@@ -14,14 +16,21 @@ export const metadata: Metadata = {
   description: 'Kết nối 45+ ngành nghề dịch vụ từ Vận tải, Xây dựng, Điện lạnh đến Y tế và Làm đẹp ngay tại nhà.',
 };
 
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={`${inter.variable}`}>
       <body className="font-sans bg-background-light text-slate-900 antialiased" suppressHydrationWarning>
-        <SmoothScroll>
-          {children}
-        </SmoothScroll>
-        <Chatbot />
+        <Providers>
+          <Navbar />
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
+          <Footer />
+          <Chatbot />
+        </Providers>
       </body>
     </html>
   );

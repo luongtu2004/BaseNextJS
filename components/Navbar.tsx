@@ -25,15 +25,24 @@ export default function Navbar() {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const { user, isLoading, logout } = useAuth();
 
-  // Khóa cuộn trang khi mở menu toàn màn hình
+  // KHÓA CUỘN TRIỆT ĐỂ (html + body)
   useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+
     if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      root.style.overflow = 'hidden';
+      body.style.overflow = 'hidden';
+      body.style.paddingRight = 'var(--scrollbar-width, 0px)';
     } else {
-      document.body.style.overflow = 'unset';
+      root.style.overflow = '';
+      body.style.overflow = '';
+      body.style.paddingRight = '';
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      root.style.overflow = '';
+      body.style.overflow = '';
+      body.style.paddingRight = '';
     };
   }, [isMenuOpen]);
 
@@ -52,7 +61,7 @@ export default function Navbar() {
         <motion.div
           initial={{ y: -100, opacity: 0 }}
           animate={{
-            y: isMenuOpen ? -150 : 0, // Ẩn nhanh khi mở Menu trên Mobile/Desktop để lấy không gian
+            y: isMenuOpen ? -150 : 0,
             opacity: isMenuOpen ? 0 : 1
           }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -61,7 +70,6 @@ export default function Navbar() {
           style={{ willChange: 'transform, opacity' }}
         >
           <div className="flex items-center w-full justify-around px-1 relative">
-            {/* Logo Link Branding */}
             <div
               className="relative px-0.5 py-0.5"
               onMouseEnter={() => setHoveredTab('logo')}
@@ -106,7 +114,6 @@ export default function Navbar() {
                   className="relative px-0.5 py-0.5"
                   onMouseEnter={() => setHoveredTab(item.id)}
                 >
-                  {/* Sliding Pill Highlight */}
                   <AnimatePresence initial={false}>
                     {(isHovered || isActive) && (
                       <motion.div
@@ -142,7 +149,6 @@ export default function Navbar() {
               );
             })}
 
-            {/* User Account Capsule */}
             <div
               className="relative px-0.5 py-0.5"
               onMouseEnter={() => setHoveredTab('user')}
@@ -184,7 +190,6 @@ export default function Navbar() {
           </div>
         </motion.div>
 
-        {/* Separate Utility Capsule (Search) */}
         {!isMenuOpen && (
           <motion.button
             initial={{ x: 50, opacity: 0 }}
@@ -198,73 +203,54 @@ export default function Navbar() {
         )}
       </nav>
 
-      {/* Full-Screen Mega Menu (Responsive & Scrollable) */}
+      {/* COMPACT MODE: Mega Menu tối ưu không gian & khoảng cách chuẩn quốc tế */}
       <AnimatePresence>
         {isMenuOpen && (
-          <div className="fixed inset-0 z-[1100] flex items-start justify-center overflow-hidden">
-            {/* Background Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMenuOpen(false)}
-              className="absolute inset-0 bg-white/10 backdrop-blur-2xl pointer-events-auto"
-            />
+          <div className="fixed inset-0 z-[9999] overflow-y-auto pointer-events-auto bg-white/98 md:bg-white/95 backdrop-blur-[64px] shadow-2xl custom-scrollbar overscroll-behavior-contain">
 
-            {/* Drawer Container */}
             <motion.div
               initial={{ y: -50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -50, opacity: 0 }}
-              transition={{ type: "spring", bounce: 0, duration: 0.5 }}
-              className="w-full h-full bg-white/98 md:bg-white/95 backdrop-blur-[64px] shadow-2xl pointer-events-auto overflow-y-auto overscroll-behavior-contain custom-scrollbar relative z-[1101]"
+              transition={{ type: "spring", bounce: 0.1, duration: 0.5 }}
+              className="w-full min-h-full px-6 md:px-16 pt-16 md:pt-20 pb-20 relative"
             >
-              <div className="max-w-[1740px] mx-auto min-h-full px-6 md:px-16 pt-24 md:pt-[100px] pb-24">
-
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 md:mb-16 gap-6">
+              <div className="max-w-[1740px] mx-auto">
+                {/* Header Menu - Gọn gàng hơn */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 md:mb-12 gap-6">
                   <div>
                     <motion.div
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
-                      className="flex items-center gap-4 mb-4"
+                      className="flex items-center gap-3 mb-2 opacity-50"
                     >
-                      <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-contain" />
-                      <span className="text-xl font-black uppercase tracking-[0.2em] text-black/20">Sàn Dịch Vụ</span>
+                      <Image src="/logo.png" alt="Logo" width={32} height={32} className="object-contain" />
+                      <span className="text-sm font-black uppercase tracking-[0.2em]">Sàn Dịch Vụ</span>
                     </motion.div>
                     <motion.h2
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.1 }}
-                      className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter text-black mb-2"
+                      className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter text-black mb-1"
                       style={{ fontFamily: 'Manrope, ui-sans-serif, system-ui, sans-serif' }}
                     >
                       Danh mục toàn ngành
                     </motion.h2>
-                    <motion.p
-                      initial={{ x: -20, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                      className="text-black/50 font-bold uppercase tracking-[0.2em] text-[11px] md:text-[14px]"
-                    >
-                      Giải pháp dịch vụ tinh hoa kết nối toàn cầu
-                    </motion.p>
                   </div>
 
-                  {/* Close Button - Cố định lề phải Mobile/Desktop */}
                   <motion.button
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileHover={{ scale: 1.1 }}
                     onClick={() => setIsMenuOpen(false)}
-                    className="size-14 md:size-16 rounded-full bg-black/5 flex items-center justify-center cursor-pointer hover:bg-black/10 transition-all self-end md:self-center"
+                    className="size-12 md:size-14 rounded-full bg-black/5 flex items-center justify-center cursor-pointer hover:bg-red-50 hover:text-red-600 transition-all self-end md:self-center"
                   >
-                    <X size={32} className="text-black" />
+                    <X size={28} />
                   </motion.button>
                 </div>
 
-                {/* Grid Content - Cực kỳ Responsive */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 sm:gap-10 md:gap-14">
+                {/* Grid Nội dung - Thu hẹp Gap & Spacing chuẩn quốc tế */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-x-12 gap-y-10 px-1">
                   {PILLARS.map((pillar, pillarIdx) => {
                     const Icon = iconMap[pillar.id] || Rocket;
                     return (
@@ -272,25 +258,25 @@ export default function Navbar() {
                         key={pillar.id}
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.3 + (pillarIdx * 0.05) }}
-                        className="group/pillar bg-black/[0.02] p-6 rounded-[32px] md:bg-transparent md:p-0"
+                        transition={{ delay: 0.2 + (pillarIdx * 0.05) }}
+                        className="group/pillar bg-black/[0.015] md:bg-transparent p-5 md:p-0 rounded-[28px]"
                       >
-                        <div className="flex items-center gap-4 mb-6 md:mb-8">
-                          <div className="size-12 md:size-14 rounded-[20px] md:rounded-[24px] bg-black/5 flex items-center justify-center text-black group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-500">
-                            <Icon size={24} strokeWidth={2.5} />
+                        <div className="flex items-center gap-3 mb-4 md:mb-6">
+                          <div className="size-10 md:size-11 rounded-[16px] md:rounded-[18px] bg-black/5 flex items-center justify-center text-black group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-300">
+                            <Icon size={20} strokeWidth={2.5} />
                           </div>
-                          <h4 className="text-[17px] md:text-[19px] font-black uppercase text-black tracking-tighter">{pillar.title}</h4>
+                          <h4 className="text-[16px] md:text-[17px] font-black uppercase text-black tracking-tighter leading-none">{pillar.title}</h4>
                         </div>
-                        <ul className="space-y-4 md:space-y-5 ml-2 md:ml-0">
+                        <ul className="space-y-2.5 ml-1 md:ml-0">
                           {pillar.industries.map((ind, idx) => (
                             <li key={idx}>
                               <Link
                                 href={`/danh-muc/${createSlug(ind)}`}
                                 onClick={() => setIsMenuOpen(false)}
-                                className="text-[15px] md:text-[16px] font-bold text-black/50 hover:text-black transition-all flex items-center gap-3 group/item hover:translate-x-2 duration-300"
+                                className="text-[14px] font-extrabold text-black/50 hover:text-black transition-all flex items-center gap-2.5 group/item hover:translate-x-1 duration-200 leading-normal"
                               >
-                                <div className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-black/10 group-hover/item:bg-black transition-all" />
-                                <span className="flex-1 leading-tight">{ind}</span>
+                                <div className="w-1 h-1 rounded-full bg-black/10 group-hover/item:bg-black transition-all shrink-0" />
+                                <span className="flex-1 truncate md:whitespace-normal group-hover:underline underline-offset-4 decoration-black/10 transition-all">{ind}</span>
                               </Link>
                             </li>
                           ))}
@@ -305,7 +291,6 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Account Sidebar / Overlay */}
       <AnimatePresence>
         {isUserMenuOpen && (
           <div className="fixed inset-0 z-[1200] flex items-start justify-center pointer-events-none pt-[100px]">

@@ -86,3 +86,87 @@ In this system, depth is a functional tool, not just a visual flourish.
 *   **Don't** use 1px dividers to separate list items; let the whitespace or subtle `surface` shifts define the rhythm.
 *   **Don't** cram content. If it feels tight, increase the `surface-container` padding to at least `spacing-6` (2rem).
 *   **Don't** use standard "Drop Shadows." If an element needs elevation, it needs "Ambient Light."
+
+---
+
+## 7. Mobile App: Navigation Architecture & Endpoint Mapping
+
+The mobile experience (iOS/Android) follows a streamlined flow designed for the "Translucent Editorial" aesthetic, mapping specifically to the Phase 1, 3, and 4 backend modules.
+
+### 7.1. The Entry Flow
+
+#### [Screen] Splash Screen
+*   **Purpose**: Branding and session initialization.
+*   **Logic**: Checks for existing JWT. If valid, syncs user state; else, redirects to Login.
+*   **Endpoints**: 
+    - `GET /health` (Basic availability)
+    - `GET /api/v1/common/me` (Session validation/Self-recovery)
+
+#### [Screen] Authentication & Login
+*   **Purpose**: Secured entry.
+*   **Interaction**: Phased entry (Phone -> Password/OTP).
+*   **Endpoints**:
+    - `POST /api/v1/auth/login/password` (Primary login)
+    - `POST /api/v1/auth/otp/send` & `verify` (Forgot pass / OTP login)
+    - `POST /api/v1/auth/register` (New user sign-up)
+
+---
+
+### 7.2. The Main Experience (Bottom Navigation)
+
+#### [Tab 1] Explore (Home)
+*   **Purpose**: Discovery of industries and news.
+*   **UI Components**: Horizontal category chips, Vertical news cards.
+*   **Endpoints**:
+    - `GET /api/v1/customer/industry-categories` (Category grid)
+    - `GET /api/v1/common/posts` (Featured articles/news)
+
+#### [Tab 2] Services (Search)
+*   **Purpose**: Finding specific help.
+*   **UI Components**: Search bar with glass effect, provider list.
+*   **Endpoints**:
+    - `GET /api/v1/customer/providers` (Search & scroll list)
+
+#### [Tab 3] Orders (Implied)
+*   **Purpose**: Tracking service requests. *Note: Full CRUD for orders is prioritized in Phase 5; Phase 1 focuses on discovery.*
+
+#### [Tab 4] Profile
+*   **Purpose**: User management and provider workspace entry.
+*   **UI Components**: High-end list with large radii backgrounds.
+*   **Endpoints**:
+    - `GET /api/v1/common/me` (Personal info)
+    - `GET /api/v1/common/me/roles` (Role-based UI switching)
+
+---
+
+### 7.3. Detail & Interaction Flow
+
+#### [Screen] Industry/Category Detail
+*   **Purpose**: Refining choice within a sector (e.g., Construction -> Plumbing).
+*   **Interaction**: Drills down from the Explore tab.
+*   **Endpoints**:
+    - `GET /api/v1/customer/industry-categories/{id}/service-categories`
+
+#### [Screen] Provider Public Profile
+*   **Purpose**: Evaluating an expert.
+*   **UI Components**: Sticky floating CTA (Book/Contact).
+*   **Endpoints**:
+    - `GET /api/v1/customer/providers/{id}` (Bio & ratings)
+    - `GET /api/v1/customer/providers/{id}/services` (List of offerings)
+
+#### [Screen] Article Detail
+*   **Purpose**: Immersive reading experience.
+*   **Endpoints**:
+    - `GET /api/v1/common/posts/{slug}`
+
+---
+
+### 7.4. Partner Flow (Provider Workspace)
+*Accessed via a "Switch to Partner" action in the Profile Tab.*
+
+*   **Provider Dashboard**: Summary of offerings.
+*   **Workspace Settings**: `PUT /api/v1/provider/me/profile/individual` or `business`.
+*   **Service Management**: 
+    - `GET /api/v1/provider/services` (All services)
+    - `POST /api/v1/provider/services` (Add new capability)
+    - `GET /api/v1/provider/service-options` (Fetch taxonomy for selection)

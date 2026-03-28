@@ -19,6 +19,7 @@ Hệ thống đã được tích hợp đầy đủ chức năng đăng nhập v
 ```
 
 **Response:**
+
 ```json
 {
   "otp_session_id": "uuid-string",
@@ -41,6 +42,7 @@ Hệ thống đã được tích hợp đầy đủ chức năng đăng nhập v
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "jwt-token",
@@ -86,6 +88,7 @@ Hệ thống đã được tích hợp đầy đủ chức năng đăng nhập v
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "new-jwt-token"
@@ -101,6 +104,7 @@ Hệ thống đã được tích hợp đầy đủ chức năng đăng nhập v
 ```
 
 **Response:**
+
 ```json
 {
   "success": true
@@ -110,11 +114,13 @@ Hệ thống đã được tích hợp đầy đủ chức năng đăng nhập v
 ### 7. Lấy thông tin user hiện tại (`GET /api/v1/common/me`)
 
 **Headers:**
+
 ```
 Authorization: Bearer {access_token}
 ```
 
 **Response:**
+
 ```json
 {
   "id": "uuid",
@@ -132,64 +138,87 @@ Authorization: Bearer {access_token}
 }
 ```
 
-## Frontend Usage
+## Frontend Usage (Next.js App Router)
 
-### Đăng ký
+### Sử dụng AuthContext (Global Session)
 
-```typescript
-// Bước 1: Gửi OTP
-const res = await fetchAPI('/api/v1/auth/otp/send', {
-  method: 'POST',
-  body: JSON.stringify({ phone }),
-});
+Thay vì thao tác trực tiếp với token, toàn bộ ứng dụng sử dụng `AuthContext` để quản lý trạng thái đăng nhập.
 
-// Bước 2: Đăng ký với OTP + thông tin
-const res = await fetchAPI('/api/v1/auth/register', {
-  method: 'POST',
-  body: JSON.stringify({
-    phone,
-    full_name,
-    password,
-    otp_code,
-    otp_session_id,
-  }),
-});
+```tsx
+'use client';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Lưu token
-setToken(res.access_token);
-```
+export default function MyComponent() {
+  const { user, isAuthenticated, login, logout } = useAuth();
 
-### Đăng nhập
+  if (!isAuthenticated) return <p>Vui lòng đăng nhập</p>;
 
-```typescript
-const res = await fetchAPI('/api/v1/auth/login/password', {
-  method: 'POST',
-  body: JSON.stringify({ phone, password }),
-});
-
-setToken(res.access_token);
-
-// Redirect theo role
-if (session.roles.includes('admin')) {
-  router.push('/admin');
-} else {
-  router.push('/');
+  return (
+    <div>
+      <p>Xin chào, {user?.full_name}</p>
+      <button onClick={logout}>Đăng xuất</button>
+    </div>
+  );
 }
 ```
 
-### Lấy thông tin user
+### Đăng ký
 
-```typescript
-const session = await getSession();
-// session.user, session.roles
+```tsx
+const { login } = useAuth(); // Import từ useAuth
+
+// Bước 1: Gửi yêu cầu đăng ký (API trực tiếp, bỏ qua bước gửi OTP ở giao diện hiện tại)
+const { data, error } = await register({
+  phone,
+  full_name,
+  password,
+  otp_code: "", // Có thể bypass ở chế độ dev nếu API cho phép
+  otp_session_id: ""
+});
+
+// Bước 2: Cập nhật state Global (login function sẽ lo việc gọi /api/v1/common/me)
+if (data?.access_token) {
+  // api.ts sẽ tự động lưu token vào js-cookie vì HTTP response
+  await login(data.access_token);
+  router.replace('/'); // Dùng replace thay vì push để chống back-loop
+}
+```
+
+### Đăng nhập bằng mật khẩu
+
+```tsx
+const { login } = useAuth();
+
+const res = await loginApi(phone, password);
+
+if (res.access_token) {
+  await login(res.access_token); // Update AuthContext state
+  // Middleware sẽ tự động direct về /admin hoặc / tùy thuộc vào roles ở lần tải trang sau.
+  // Hoặc ta có thể check Role để replace route luôn.
+  router.replace('/'); 
+}
 ```
 
 ### Đăng xuất
 
+Hàm `logout` trong `useAuth` tự động gọi API revoke token `/auth/logout`, xóa cookies và cập nhật UI.
+
 ```typescript
-clearToken();
-router.push('/login');
+const { logout } = useAuth();
+
+<button onClick={() => {
+    logout();
+    router.replace('/login');
+}}>Đăng Xuất</button>
 ```
+
+### Bảo vệ Route (Middleware)
+
+Hệ thống Next.js được đặt một file `middleware.ts` ở thư mục gốc để bảo vệ route tại Server Side.
+
+- Rediect user khách khỏi `/admin`, `/profile` về `/login`.
+- Đẩy user đã Login khỏi `/login`, `/register` về `/`.
+- Đọc token bằng API `cookies()` ngay tại rìa chạy Edge.
 
 ## Cấu hình Environment
 
@@ -282,15 +311,18 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ## Troubleshooting
 
 ### Lỗi "Invalid OTP"
+
 - Kiểm tra OTP đã hết hạn chưa (5 phút)
 - Kiểm tra số lần thử quá 5 lần
 - Check console backend để lấy OTP chính xác
 
 ### Lỗi "Invalid credentials"
+
 - Kiểm tra số điện thoại và mật khẩu
 - Đảm bảo user đã đăng ký trước đó
 
 ### Lỗi "Phone already registered"
+
 - Số điện thoại đã tồn tại trong hệ thống
 - Sử dụng số điện thoại khác hoặc đăng nhập
 

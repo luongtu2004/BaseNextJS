@@ -15,16 +15,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-blue-400/10 blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[120px]" />
       </div>
-
-      <header className="relative z-10 p-6 flex justify-center lg:justify-start">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="size-10 bg-blue-600 rounded-xl flex items-center justify-center text-white group-hover:bg-blue-700 transition-colors duration-300 shadow-sm">
-            <LayoutGrid size={22} />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase">Sàn Dịch Vụ</span>
-        </Link>
-      </header>
-
       <main className="flex-1 flex items-center justify-center p-4 relative z-10">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100">
           {children}

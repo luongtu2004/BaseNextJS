@@ -1,12 +1,13 @@
 'use client';
 
-import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane, User, LogOut } from 'lucide-react';
+import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane, User, LogOut, Search, Settings, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { PILLARS } from '@/lib/constants';
 import { createSlug } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePathname } from 'next/navigation';
 
 const iconMap: Record<string, any> = {
   transportation: Rocket,
@@ -17,181 +18,236 @@ const iconMap: Record<string, any> = {
 };
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const { user, isLoading, logout } = useAuth();
 
-  const handleOpen = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsMenuOpen(true);
-  };
-
-  const handleClose = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      setIsMenuOpen(false);
-    }, 150);
-  };
-
-  // Close user menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.user-dropdown-container')) {
-        setIsUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const navItems = [
+    { title: 'Trang chủ', href: '/', icon: Home, id: 'home' },
+    { title: 'Danh mục', icon: LayoutGrid, id: 'catalogue', isMenu: true },
+    { title: 'Đối tác', href: '/partner', icon: HeartHandshake, id: 'partner' },
+    { title: 'Liên hệ', href: '/contact', icon: Rocket, id: 'contact' },
+  ];
 
   return (
-    <nav className="relative z-[1000] bg-surface/80 backdrop-blur-[20px] h-16">
-      <div className="max-w-[1740px] mx-auto px-4 md:px-8 h-full flex items-center justify-between relative">
-        <div className="flex items-center gap-10">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="size-9 bg-on-surface rounded-xl flex items-center justify-center text-white group-hover:bg-primary transition-colors duration-300">
-              <LayoutGrid size={20} />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900 uppercase">Sàn Dịch Vụ</span>
-          </Link>
-          
-          <div className="hidden md:flex items-center gap-8 h-full">
-            <Link href="/" className="text-[13px] font-medium text-slate-500 hover:text-slate-900 transition-colors">Trang chủ</Link>
-            
-            {/* Mega Menu Trigger Container - Removed 'relative' to allow center positioning against navbar */}
-            <div
-              className="h-full flex items-center"
-              onMouseEnter={handleOpen}
-              onMouseLeave={handleClose}
-            >
-              <button
-                className={`flex items-center gap-1.5 text-[13px] font-medium transition-all cursor-pointer h-full px-2 ${isMenuOpen ? 'text-primary' : 'text-slate-500 hover:text-slate-900'}`}
-              >
-                Danh mục <ChevronDown size={14} className={`transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
+    <>
+      <nav className="fixed top-6 left-0 right-0 z-[1000] px-4 pointer-events-none flex justify-center items-start gap-4">
 
-              {/* Mega Menu Content - Positioned absolutely relative to the max-w container */}
-              <AnimatePresence>
-                {isMenuOpen && (
-                  <div
-                    className="absolute top-16 left-1/2 -translate-x-1/2 w-full max-w-[1740px] z-[1001] pt-0 px-4 md:px-8"
-                    onMouseEnter={handleOpen}
-                    onMouseLeave={handleClose}
-                  >
-                    {/* Interaction Bridge */}
-                    <div className="absolute top-[-10px] left-0 right-0 h-[10px] bg-transparent" />
-                    
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="bg-surface/85 backdrop-blur-[24px] rounded-3xl shadow-[0_18px_56px_rgba(26,28,31,0.12)] ghost-border p-12 overflow-visible"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                        {PILLARS.map((pillar, index) => {
-                          const Icon = iconMap[pillar.id] || Rocket;
-                          const shouldCenterLastCard =
-                            PILLARS.length % 3 === 2 && index === PILLARS.length - 1;
-                          return (
-                            <div
-                              key={pillar.id}
-                              className={`group/pillar bg-surface-container-low rounded-2xl ghost-border p-5 ${shouldCenterLastCard ? 'lg:col-start-2' : ''}`}
-                            >
-                              <div className="flex items-center gap-3 mb-4">
-                                <div className="size-10 rounded-xl bg-surface-container-lowest flex items-center justify-center text-on-surface-variant group-hover/pillar:bg-primary-fixed-dim/30 group-hover/pillar:text-primary transition-all duration-300 shadow-sm ghost-border">
-                                  <Icon size={20} />
-                                </div>
-                                <h4 className="text-[14px] font-bold text-slate-900 tracking-tight uppercase">{pillar.title}</h4>
-                              </div>
-                              
-                              <ul className="grid grid-cols-1 gap-y-2 pl-1">
-                                {pillar.industries.map((ind, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 group/item">
-                                    <div className="mt-[7px] w-1 h-1 rounded-full bg-slate-200 group-hover/item:bg-primary transition-colors shrink-0" />
-                                    <Link
-                                      href={`/danh-muc/${createSlug(ind)}`}
-                                      className="text-[13px] text-slate-500 hover:text-primary transition-colors leading-tight"
-                                      title={ind}
-                                    >
-                                      {ind}
-                                    </Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
+        {/* Main Navigation Pill - Chuẩn iOS 26 "Thủy tinh trắng" */}
+        <motion.div
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          className="pointer-events-auto bg-white/80 backdrop-blur-[48px] rounded-full shadow-[0_12px_44px_rgba(0,0,0,0.12)] ring-1 ring-white/60 flex items-center p-1.5 overflow-visible relative min-w-[360px] md:min-w-[480px]"
+          onMouseLeave={() => setHoveredTab(null)}
+        >
+          <div className="flex items-center w-full justify-around px-1 relative">
+            {navItems.map((item) => {
+              const isActive = item.isMenu ? isMenuOpen : pathname === item.href;
+              const isHovered = hoveredTab === item.id;
 
-            <Link href="#" className="text-[13px] font-medium text-slate-500 hover:text-slate-900 transition-colors">Trở thành đối tác</Link>
-            <Link href="#" className="text-[13px] font-medium text-slate-500 hover:text-slate-900 transition-colors">Liên hệ</Link>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          {isLoading ? (
-            <div className="h-9 w-24 bg-slate-200 animate-pulse rounded-full" />
-          ) : user ? (
-            <div className="relative user-dropdown-container">
-              <button
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 btn-primary-gradient px-5 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105 text-white"
-              >
-                <User size={16} />
-                <span className="max-w-[100px] truncate">{user.user?.full_name || 'Tài khoản'}</span>
-                <ChevronDown size={14} className={`transition-transform duration-300 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
+              return (
+                <div
+                  key={item.id}
+                  className="relative px-1 py-1"
+                  onMouseEnter={() => setHoveredTab(item.id)}
+                >
+                  {/* Sliding Pill Highlight (iOS Style) */}
+                  <AnimatePresence>
+                    {(isHovered || isActive) && (
+                      <motion.div
+                        layoutId="active-pill"
+                        className={`absolute inset-0 rounded-full ${isActive ? 'bg-black/10' : 'bg-black/5'}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                      />
+                    )}
+                  </AnimatePresence>
 
-              <AnimatePresence>
-                {isUserMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
-                    className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 py-2 overflow-hidden z-[1002]"
-                  >
-                    <div className="px-4 py-3 border-b border-slate-100 mb-1">
-                      <p className="text-sm font-bold text-slate-900 truncate">{user.user?.full_name}</p>
-                      <p className="text-xs text-slate-500 truncate">{user.user?.phone}</p>
-                    </div>
-                    <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors">
-                      <LayoutGrid size={16} className="text-slate-400" />
-                      Bảng điều khiển
-                    </Link>
-                    <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors">
-                      <User size={16} className="text-slate-400" />
-                      Hồ sơ cá nhân
-                    </Link>
-                    <div className="h-[1px] bg-slate-100 my-1"></div>
+                  {item.isMenu ? (
                     <button
-                      onClick={() => { setIsUserMenuOpen(false); logout(); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-sm font-medium text-red-600 transition-colors"
+                      onClick={() => setIsMenuOpen(!isMenuOpen)}
+                      className={`flex flex-col items-center gap-1.5 px-4 md:px-7 py-2.5 rounded-full transition-colors duration-300 relative z-10 cursor-pointer ${isActive ? 'text-black' : 'text-black/60 hover:text-black'}`}
                     >
-                      <LogOut size={16} />
-                      Đăng xuất
+                      <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className="transition-transform duration-300" />
+                      <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
                     </button>
-                  </motion.div>
+                  ) : (
+                    <Link
+                      href={item.href!}
+                      className={`flex flex-col items-center gap-1.5 px-4 md:px-7 py-2.5 rounded-full transition-colors duration-300 relative z-10 ${isActive ? 'text-black' : 'text-black/60 hover:text-black'}`}
+                    >
+                      <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className="transition-transform duration-300" />
+                      <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* User Account / Profile */}
+            <div
+              className="relative px-1 py-1"
+              onMouseEnter={() => setHoveredTab('user')}
+            >
+              <AnimatePresence>
+                {(hoveredTab === 'user' || isUserMenuOpen) && (
+                  <motion.div
+                    layoutId="active-pill"
+                    className={`absolute inset-0 rounded-full ${isUserMenuOpen ? 'bg-black/10' : 'bg-black/5'}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                  />
                 )}
               </AnimatePresence>
+
+              {isLoading ? (
+                <div className="size-10 bg-black/5 animate-pulse rounded-full" />
+              ) : user ? (
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className={`flex flex-col items-center gap-1.5 px-4 md:px-7 py-2.5 rounded-full transition-all duration-300 relative z-10 cursor-pointer ${isUserMenuOpen ? 'text-black' : 'text-black/60 hover:text-black'}`}
+                >
+                  <User size={20} strokeWidth={isUserMenuOpen ? 2.5 : 2} />
+                  <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Tôi</span>
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex flex-col items-center gap-1.5 px-4 md:px-7 py-2.5 rounded-full transition-all duration-300 relative z-10 text-black/60 hover:text-black"
+                >
+                  <User size={20} strokeWidth={2} />
+                  <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Login</span>
+                </Link>
+              )}
             </div>
-          ) : (
-            <Link href="/login" className="btn-primary-gradient px-6 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105 text-white">
-              Đăng nhập
-            </Link>
-          )}
-          <button className="md:hidden text-slate-900">
-            <Menu size={24} />
-          </button>
-        </div>
-      </div>
-    </nav>
+          </div>
+        </motion.div>
+
+        {/* Separate Utility Capsule (Search) - iOS High Contrast */}
+        <motion.button
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+          className="pointer-events-auto size-[54px] md:size-[64px] rounded-full bg-white/90 backdrop-blur-[32px] text-black flex items-center justify-center shadow-[0_12px_44px_rgba(0,0,0,0.12)] hover:scale-105 transition-transform active:scale-95 cursor-pointer ring-1 ring-white/60"
+        >
+          <Search size={24} strokeWidth={2.5} />
+        </motion.button>
+      </nav>
+
+      {/* Full-Width Mega Menu (Tràn màn hình) */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <div className="fixed inset-0 z-[990] flex items-start justify-center pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMenuOpen(false)}
+              className="absolute inset-0 bg-white/20 backdrop-blur-md pointer-events-auto"
+            />
+
+            <motion.div
+              initial={{ y: -100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -100, opacity: 0 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+              className="w-full bg-white/95 backdrop-blur-[48px] shadow-2xl pt-[120px] pb-16 px-6 md:px-16 pointer-events-auto max-h-[92vh] overflow-y-auto border-b border-black/5"
+            >
+              <div className="max-w-[1740px] mx-auto">
+                <div className="flex items-center justify-between mb-12">
+                  <div>
+                    <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black mb-2" style={{ fontFamily: 'Manrope, ui-sans-serif, system-ui, sans-serif' }}>Danh mục toàn ngành</h2>
+                    <p className="text-black/50 font-bold uppercase tracking-widest text-[12px]">Khám phá giải pháp dịch vụ chuyên biệt</p>
+                  </div>
+                  <button onClick={() => setIsMenuOpen(false)} className="size-14 rounded-full bg-black/5 flex items-center justify-center cursor-pointer hover:bg-black/10 transition-colors">
+                    <X size={28} className="text-black" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-10">
+                  {PILLARS.map((pillar) => {
+                    const Icon = iconMap[pillar.id] || Rocket;
+                    return (
+                      <div key={pillar.id} className="group/pillar">
+                        <div className="flex items-center gap-4 mb-8">
+                          <div className="size-14 rounded-2xl bg-black/5 flex items-center justify-center text-black shadow-sm group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-300">
+                            <Icon size={26} strokeWidth={2.5} />
+                          </div>
+                          <h4 className="text-[18px] font-black uppercase text-black tracking-tighter leading-tight">{pillar.title}</h4>
+                        </div>
+                        <ul className="space-y-4">
+                          {pillar.industries.map((ind, idx) => (
+                            <li key={idx}>
+                              <Link
+                                href={`/danh-muc/${createSlug(ind)}`}
+                                onClick={() => setIsMenuOpen(false)}
+                                className="text-[16px] font-bold text-black/50 hover:text-black transition-all flex items-center gap-3 group/item translate-x-0 hover:translate-x-2 duration-300"
+                              >
+                                <div className="w-1.5 h-1.5 rounded-full bg-black/10 group-hover/item:bg-black transition-all" />
+                                {ind}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* User Account Dropdown (Below top pill) */}
+      <AnimatePresence>
+        {isUserMenuOpen && (
+          <div className="fixed inset-0 z-[990] flex items-start justify-center pointer-events-none pt-[100px]">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsUserMenuOpen(false)}
+              className="absolute inset-0 bg-transparent pointer-events-auto"
+            />
+            <motion.div
+              initial={{ y: -20, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -20, opacity: 0, scale: 0.95 }}
+              className="w-[320px] bg-white/95 backdrop-blur-[48px] rounded-[32px] shadow-2xl p-3 pointer-events-auto mt-4 ring-1 ring-black/5 overflow-hidden"
+            >
+              <div className="p-6 border-b border-black/5 mb-3 rounded-[24px] bg-black/5 text-black">
+                <p className="text-sm font-black truncate">{user?.user?.full_name}</p>
+                <p className="text-xs text-black/50 font-bold tracking-tight truncate">{user?.user?.phone}</p>
+              </div>
+              <div className="grid grid-cols-1 gap-1">
+                <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 hover:bg-black/5 rounded-2xl text-[15px] font-black text-black transition-all">
+                  <User size={18} strokeWidth={2.5} />
+                  Hồ sơ cá nhân
+                </Link>
+                <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 hover:bg-black/5 rounded-2xl text-[15px] font-black text-black transition-all">
+                  <Settings size={18} strokeWidth={2.5} />
+                  Bảng điều khiển
+                </Link>
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); logout(); }}
+                  className="w-full flex items-center gap-4 px-6 py-4 hover:bg-red-50 rounded-2xl text-[15px] font-black text-red-600 transition-all text-left"
+                >
+                  <LogOut size={18} strokeWidth={2.5} />
+                  Đăng xuất
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

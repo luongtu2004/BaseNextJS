@@ -15,17 +15,26 @@ This document specifies the mobile interface design (iPhone 15 Pro / iOS 17 styl
 
 ## 2. Screen Previews & API Mapping
 
-### 2.1. Home Screen (Trang chủ)
-![Home Screen](mobile_ui_previews/home_screen.png)
+### 2.1. Entry Flow (Splash & Auth)
 
-| UI Component | Data Source (Backend API) | Interaction |
-|--------------|---------------------------|-------------|
-| **Industry Categories** | `GET /customer/industry-categories` | Tap to drill down to services. |
-| **News & Tips Cards** | `GET /common/posts` | Horizontal scroll. |
-| **Search Bar** | `GET /customer/providers` | Direct entry to search tab. |
-| **Global View** | `GET /health` | Initial availability check. |
+#### Splash Screen
+![Splash Screen](mobile_ui_previews/splash_screen.png)
+- **Logic**: Initial brand immersion and session check.
+- **API**: `GET /api/v1/common/me` for recovery.
 
-### 2.2. Notifications Screen (Thông báo)
+#### Login Screen (Đăng nhập)
+![Login Screen](mobile_ui_previews/login_screen.png)
+- **Interaction**: Clean editorial inputs with 24px radius.
+- **API**: `POST /api/v1/auth/login/password`.
+
+#### Register Screen (Đăng ký)
+![Register Screen](mobile_ui_previews/register_screen.png)
+- **Interaction**: Two-step flow integrated into one clean view.
+- **API**: `POST /api/v1/auth/register`.
+
+---
+
+### 2.2. Home Screen (Trang chủ)
 ![Notifications Screen](mobile_ui_previews/notifications_screen.png)
 
 | UI Component | Data Source (Backend API) | Interaction |

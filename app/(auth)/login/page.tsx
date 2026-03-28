@@ -31,7 +31,7 @@ export default function LoginPage() {
       // 2. Lưu token
       if (res && res.access_token) {
         await login(res.access_token);
-        
+
         // Redirect
         const session = await getSession();
         if (session && session.roles.includes('admin')) {
@@ -51,7 +51,7 @@ export default function LoginPage() {
     <>
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-slate-900 mb-2" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>Đăng nhập</h1>
-        <p className="text-slate-500 text-sm" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>Chào mừng bạn trở lại hệ thống</p>
+        <p className="text-slate-500 text-sm" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>Chào mừng bạn trở lại sàn dịch vụ</p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-4">

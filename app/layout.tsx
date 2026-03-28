@@ -4,6 +4,8 @@ import './globals.css'; // Global styles
 import SmoothScroll from '@/components/SmoothScroll';
 import Chatbot from '@/components/Chatbot';
 
+import { Providers } from './Providers';
+
 const inter = Inter({
   subsets: ['latin', 'vietnamese'],
   variable: '--font-sans',
@@ -18,10 +20,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={`${inter.variable}`}>
       <body className="font-sans bg-background-light text-slate-900 antialiased" suppressHydrationWarning>
-        <SmoothScroll>
-          {children}
-        </SmoothScroll>
-        <Chatbot />
+        <Providers>
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
+          <Chatbot />
+        </Providers>
       </body>
     </html>
   );

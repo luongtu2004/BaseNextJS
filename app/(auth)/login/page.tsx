@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { fetchAPI, setToken } from '@/lib/api';
+import { fetchAPI } from '@/lib/api';
 import { getSession } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Phone, Lock, Loader2, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -28,16 +30,14 @@ export default function LoginPage() {
 
       // 2. Lưu token
       if (res && res.access_token) {
-        setToken(res.access_token);
+        await login(res.access_token);
         
-        // 3. Lấy thông tin user (để check role)
+        // Redirect
         const session = await getSession();
-        
-        // 4. Redirect
         if (session && session.roles.includes('admin')) {
-          router.push('/admin');
+          router.replace('/admin');
         } else {
-          router.push('/');
+          router.replace('/');
         }
       }
     } catch (err: any) {

@@ -1,12 +1,12 @@
 'use client';
 
-import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane, User } from 'lucide-react';
+import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane, User, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { PILLARS } from '@/lib/constants';
 import { createSlug } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
-import { getSession } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const iconMap: Record<string, any> = {
   transportation: Rocket,
@@ -18,8 +18,9 @@ const iconMap: Record<string, any> = {
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { user, isLoading, logout } = useAuth();
 
   const handleOpen = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -33,12 +34,16 @@ export default function Navbar() {
     }, 150);
   };
 
+  // Close user menu on outside click
   useEffect(() => {
-    const loadUser = async () => {
-      const session = await getSession();
-      setUser(session);
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.user-dropdown-container')) {
+        setIsUserMenuOpen(false);
+      }
     };
-    loadUser();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -132,12 +137,53 @@ export default function Navbar() {
         </div>
         
         <div className="flex items-center gap-4">
-          {user ? (
-            <Link href="/admin" className="btn-primary-gradient px-6 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105">
-              {user.user?.full_name || 'Dashboard'}
-            </Link>
+          {isLoading ? (
+            <div className="h-9 w-24 bg-slate-200 animate-pulse rounded-full" />
+          ) : user ? (
+            <div className="relative user-dropdown-container">
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 btn-primary-gradient px-5 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105 text-white"
+              >
+                <User size={16} />
+                <span className="max-w-[100px] truncate">{user.user?.full_name || 'Tài khoản'}</span>
+                <ChevronDown size={14} className={`transition-transform duration-300 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
+                    className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 py-2 overflow-hidden z-[1002]"
+                  >
+                    <div className="px-4 py-3 border-b border-slate-100 mb-1">
+                      <p className="text-sm font-bold text-slate-900 truncate">{user.user?.full_name}</p>
+                      <p className="text-xs text-slate-500 truncate">{user.user?.phone}</p>
+                    </div>
+                    <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors">
+                      <LayoutGrid size={16} className="text-slate-400" />
+                      Bảng điều khiển
+                    </Link>
+                    <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors">
+                      <User size={16} className="text-slate-400" />
+                      Hồ sơ cá nhân
+                    </Link>
+                    <div className="h-[1px] bg-slate-100 my-1"></div>
+                    <button
+                      onClick={() => { setIsUserMenuOpen(false); logout(); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-sm font-medium text-red-600 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Đăng xuất
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ) : (
-            <Link href="/login" className="btn-primary-gradient px-6 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105">
+            <Link href="/login" className="btn-primary-gradient px-6 py-2 rounded-full text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:brightness-105 text-white">
               Đăng nhập
             </Link>
           )}

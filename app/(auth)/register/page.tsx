@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { fetchAPI, setToken } from '@/lib/api';
+import { fetchAPI } from '@/lib/api';
 import { getSession } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Phone, Lock, User, KeyRound, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { login } = useAuth();
   
   // Step 1 states
   const [step, setStep] = useState<1 | 2>(1);
@@ -68,13 +70,13 @@ export default function RegisterPage() {
       });
 
       if (res && res.access_token) {
-        setToken(res.access_token);
+        await login(res.access_token);
         const session = await getSession();
         
         if (session && session.roles.includes('admin')) {
-          router.push('/admin');
+          router.replace('/admin');
         } else {
-          router.push('/');
+          router.replace('/');
         }
       }
     } catch (err: any) {

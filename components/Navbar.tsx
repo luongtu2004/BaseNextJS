@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane, User, LogOut, Search, Settings, X } from 'lucide-react';
+import { LayoutGrid, Menu, ChevronDown, Rocket, Home, HeartHandshake, Stethoscope, Plane, User, LogOut, Search, Settings, X, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
@@ -197,11 +197,18 @@ export default function Navbar() {
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 50, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 40 }}
             onClick={toggleChat}
-            className="pointer-events-auto size-[54px] md:size-[64px] rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-[0_12px_44px_rgba(16,185,129,0.25)] hover:scale-110 active:scale-95 transition-all cursor-pointer ring-1 ring-white/60 hover:bg-emerald-600"
+            layoutId="chatbot-modal"
+            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
+            className="pointer-events-auto size-[54px] md:size-[64px] rounded-full bg-white/80 backdrop-blur-[32px] text-emerald-500 flex items-center justify-center shadow-[0_12px_44px_rgba(0,0,0,0.12)] hover:scale-110 active:scale-95 transition-all cursor-pointer ring-1 ring-white/60 hover:bg-white/95"
           >
-            <Search size={22} className="size-5 md:size-[22px]" strokeWidth={2.5} />
+            <motion.div
+              layoutId="chatbot-icon"
+              className="size-full flex items-center justify-center"
+            >
+              <Sparkles size={24} className="size-6 md:size-[26px]" strokeWidth={2.2} />
+            </motion.div>
           </motion.button>
         )}
       </nav>

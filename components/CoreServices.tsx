@@ -39,19 +39,19 @@ export default function CoreServices() {
             <motion.span
               className="text-slate-900 font-bold tracking-[0.2em] uppercase text-[20px]"
             >
-              <TypingText 
-                text="Hệ sinh thái chính" 
-                delay={0.1} 
-                showCursor={false} 
+              <TypingText
+                text="Hệ sinh thái chính"
+                delay={0.1}
+                showCursor={false}
                 onComplete={() => setHeaderStep(1)}
               />
             </motion.span>
             <div className="hidden md:block w-px h-6 bg-slate-900/20" />
             <h2 className="text-[20px] font-black text-slate-900 tracking-tight uppercase">
-              <TypingText 
+              <TypingText
                 text={`${PILLARS.length} Trụ Cột Dịch Vụ`}
-                delay={0.2} 
-                showCursor={false} 
+                delay={0.2}
+                showCursor={false}
                 start={headerStep >= 1}
                 onComplete={() => setHeaderStep(2)}
               />

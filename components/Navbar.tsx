@@ -8,6 +8,7 @@ import { PILLARS } from '@/lib/constants';
 import { createSlug } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChat } from '@/contexts/ChatContext';
 import { usePathname } from 'next/navigation';
 
 const iconMap: Record<string, any> = {
@@ -24,6 +25,7 @@ export default function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const { user, isLoading, logout } = useAuth();
+  const { toggleChat } = useChat();
 
   // KHÓA CUỘN TRIỆT ĐỂ (html + body)
   useEffect(() => {
@@ -55,17 +57,17 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-6 left-0 right-0 z-[1000] px-4 pointer-events-none flex justify-center items-start gap-4">
+      <nav className="fixed bottom-6 md:top-6 md:bottom-auto left-0 right-0 z-[1000] px-4 pointer-events-none flex flex-row items-end md:items-start justify-center gap-4">
 
         {/* Main Navigation Pill - Chuẩn iOS 26 High Contrast */}
         <motion.div
-          initial={{ y: -100, opacity: 0 }}
+          initial={{ y: 0, opacity: 0 }}
           animate={{
             y: isMenuOpen ? -150 : 0,
             opacity: isMenuOpen ? 0 : 1
           }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className={`pointer-events-auto bg-white/85 backdrop-blur-[48px] rounded-full shadow-[0_16px_48px_-12px_rgba(0,0,0,0.15)] ring-1 ring-white/60 flex items-center p-1.5 overflow-visible relative min-w-[320px] md:min-w-[520px] ${isMenuOpen ? 'pointer-events-none' : ''}`}
+          className={`pointer-events-auto bg-white/85 backdrop-blur-[48px] rounded-full shadow-[0_16px_48px_-12px_rgba(0,0,0,0.15)] ring-1 ring-white/60 flex items-center p-1.5 overflow-visible relative min-w-[280px] md:min-w-[520px] ${isMenuOpen ? 'pointer-events-none' : ''}`}
           onMouseLeave={() => setHoveredTab(null)}
           style={{ willChange: 'transform, opacity' }}
         >
@@ -100,7 +102,7 @@ export default function Navbar() {
                     priority
                   />
                 </div>
-                <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-black/40">Sàn DV</span>
+                <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-black/40">Sàn DV</span>
               </Link>
             </div>
 
@@ -134,7 +136,7 @@ export default function Navbar() {
                       className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-colors duration-300 relative z-10 cursor-pointer ${isActive ? 'text-black' : 'text-black/50 hover:text-black'}`}
                     >
                       <item.icon size={19} strokeWidth={isActive ? 2.5 : 2} className="mb-0.5" />
-                      <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
+                      <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
                     </button>
                   ) : (
                     <Link
@@ -142,7 +144,7 @@ export default function Navbar() {
                       className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-colors duration-300 relative z-10 ${isActive ? 'text-black' : 'text-black/50 hover:text-black'}`}
                     >
                       <item.icon size={19} strokeWidth={isActive ? 2.5 : 2} className="mb-0.5" />
-                      <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
+                      <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
                     </Link>
                   )}
                 </div>
@@ -175,7 +177,7 @@ export default function Navbar() {
                   className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-all duration-300 relative z-10 cursor-pointer ${isUserMenuOpen ? 'text-black' : 'text-black/50 hover:text-black'}`}
                 >
                   <User size={19} strokeWidth={isUserMenuOpen ? 2.5 : 2} className="mb-0.5" />
-                  <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-center">Tôi</span>
+                  <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-center">Tôi</span>
                 </button>
               ) : (
                 <Link
@@ -183,7 +185,7 @@ export default function Navbar() {
                   className="flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-all duration-300 relative z-10 text-black/50 hover:text-black"
                 >
                   <User size={19} strokeWidth={2} className="mb-0.5" />
-                  <span className="text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Login</span>
+                  <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Login</span>
                 </Link>
               )}
             </div>
@@ -196,9 +198,10 @@ export default function Navbar() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 50, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-            className="pointer-events-auto size-[54px] md:size-[64px] rounded-full bg-white/90 backdrop-blur-[32px] text-black flex items-center justify-center shadow-[0_12px_44px_rgba(0,0,0,0.12)] hover:scale-105 transition-transform active:scale-95 cursor-pointer ring-1 ring-white/60"
+            onClick={toggleChat}
+            className="pointer-events-auto size-[54px] md:size-[64px] rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-[0_12px_44px_rgba(16,185,129,0.25)] hover:scale-110 active:scale-95 transition-all cursor-pointer ring-1 ring-white/60 hover:bg-emerald-600"
           >
-            <Search size={22} strokeWidth={2.5} />
+            <Search size={22} className="size-5 md:size-[22px]" strokeWidth={2.5} />
           </motion.button>
         )}
       </nav>
@@ -265,7 +268,7 @@ export default function Navbar() {
                           <div className="size-10 md:size-11 rounded-[16px] md:rounded-[18px] bg-black/5 flex items-center justify-center text-black group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-300">
                             <Icon size={20} strokeWidth={2.5} />
                           </div>
-                          <h4 className="text-[16px] md:text-[17px] font-black uppercase text-black tracking-tighter leading-none">{pillar.title}</h4>
+                          <h4 className="text-[16px] md:text-[17px] font-black uppercase text-black tracking-tighter leading-tight">{pillar.title}</h4>
                         </div>
                         <ul className="space-y-2.5 ml-1 md:ml-0">
                           {pillar.industries.map((ind, idx) => (
@@ -293,7 +296,7 @@ export default function Navbar() {
 
       <AnimatePresence>
         {isUserMenuOpen && (
-          <div className="fixed inset-0 z-[1200] flex items-start justify-center pointer-events-none pt-[100px]">
+          <div className="fixed inset-0 z-[1200] flex items-end md:items-start justify-center pointer-events-none pb-[120px] md:pb-0 md:pt-[120px]">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -305,7 +308,7 @@ export default function Navbar() {
               initial={{ y: -20, opacity: 0, scale: 0.95 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: -20, opacity: 0, scale: 0.95 }}
-              className="w-[340px] bg-white/98 backdrop-blur-[64px] rounded-[48px] shadow-2xl p-4 pointer-events-auto mt-4 ring-1 ring-black/5 overflow-hidden mx-4"
+              className="w-[340px] bg-white/98 backdrop-blur-[64px] rounded-[48px] shadow-2xl p-4 pointer-events-auto mb-4 md:mt-4 ring-1 ring-black/5 overflow-hidden mx-4"
             >
               <div className="p-8 border-b border-black/5 mb-4 rounded-[36px] bg-black/5 text-black">
                 <p className="text-base font-black truncate mb-0.5">{user?.user?.full_name || 'Người dùng'}</p>

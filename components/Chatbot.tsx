@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { useChat } from '@/contexts/ChatContext';
 
 interface Message {
   role: 'user' | 'assistant' | 'error';
@@ -10,7 +11,7 @@ interface Message {
 }
 
 const Chatbot: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isChatOpen: isOpen, setChatOpen: setIsOpen } = useChat();
   const [isFullScreen, setIsFullScreen] = useState(true); // Always fullscreen by default
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -143,29 +144,17 @@ const Chatbot: React.FC = () => {
 
   return (
     <>
-      {/* Floating Chat Button */}
-      <motion.button
-        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-emerald-500 text-white shadow-2xl hover:bg-emerald-600 transition-colors"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(!isOpen)}
-        initial={{ opacity: 0, scale: 0.5, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        aria-label={isOpen ? 'Đóng chat' : 'Mở chat'}
-      >
-        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
-      </motion.button>
-
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4 md:p-8"
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 md:p-8"
           >
             {/* Main Chat Container - Always Fullscreen Mode Layout */}
-            <div className="w-full max-w-5xl h-full max-h-[850px] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+            <div className="w-full max-w-5xl h-full max-h-[850px] flex flex-col bg-white rounded-[48px] shadow-2xl overflow-hidden border border-slate-200">
               {/* Header */}
               <div className="flex-none p-4 md:p-6 flex justify-between items-center bg-white border-b border-slate-100">
                 <div className="flex items-center gap-3 md:gap-4">

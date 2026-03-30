@@ -72,39 +72,6 @@ export default function Navbar() {
           style={{ willChange: 'transform, opacity' }}
         >
           <div className="flex items-center w-full justify-around px-1 relative">
-            <div
-              className="relative px-0.5 py-0.5"
-              onMouseEnter={() => setHoveredTab('logo')}
-            >
-              <AnimatePresence initial={false}>
-                {hoveredTab === 'logo' && (
-                  <motion.div
-                    layoutId="active-pill"
-                    className="absolute inset-0 rounded-full bg-black/5"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ type: 'spring', stiffness: 450, damping: 45 }}
-                    style={{ willChange: 'transform, opacity' }}
-                  />
-                )}
-              </AnimatePresence>
-              <Link
-                href="/"
-                className="flex flex-col items-center gap-1 px-3 md:px-6 py-2 rounded-full relative z-10 transition-transform hover:scale-110 duration-300"
-              >
-                <div className="size-5 md:size-6 relative flex items-center justify-center mb-0.5">
-                  <Image
-                    src="/logo.png"
-                    alt="Logo"
-                    fill
-                    className="object-contain"
-                    priority
-                  />
-                </div>
-              </Link>
-            </div>
-
             {navItems.map((item) => {
               const isActive = (item.isMenu && isMenuOpen) || (!item.isMenu && item.href === pathname);
               const isHovered = hoveredTab === item.id;
@@ -142,7 +109,19 @@ export default function Navbar() {
                       href={item.href!}
                       className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-colors duration-300 relative z-10 ${isActive ? 'text-black' : 'text-black/50 hover:text-black'}`}
                     >
-                      <item.icon size={19} strokeWidth={isActive ? 2.5 : 2} className="mb-0.5" />
+                      {item.id === 'home' ? (
+                        <div className="size-5 md:size-6 relative flex items-center justify-center mb-0.5">
+                          <Image
+                            src="/logo.png"
+                            alt="Logo"
+                            fill
+                            className="object-contain"
+                            priority
+                          />
+                        </div>
+                      ) : (
+                        <item.icon size={19} strokeWidth={isActive ? 2.5 : 2} className="mb-0.5" />
+                      )}
                       <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">{item.title}</span>
                     </Link>
                   )}
@@ -328,13 +307,15 @@ export default function Navbar() {
                   </div>
                   <ChevronDown size={14} className="-rotate-90 text-black/20" />
                 </Link>
-                <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center justify-between px-7 py-5 hover:bg-black/5 rounded-[32px] group transition-all">
-                  <div className="flex items-center gap-4 text-[16px] font-black text-black">
-                    <Settings size={18} strokeWidth={2.5} />
-                    Bảng điều khiển
-                  </div>
-                  <ChevronDown size={14} className="-rotate-90 text-black/20" />
-                </Link>
+                {user?.roles?.includes('admin') && (
+                  <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center justify-between px-7 py-5 hover:bg-black/5 rounded-[32px] group transition-all">
+                    <div className="flex items-center gap-4 text-[16px] font-black text-black">
+                      <Settings size={18} strokeWidth={2.5} />
+                      Bảng điều khiển
+                    </div>
+                    <ChevronDown size={14} className="-rotate-90 text-black/20" />
+                  </Link>
+                )}
                 <button
                   onClick={() => { setIsUserMenuOpen(false); logout(); }}
                   className="w-full flex items-center gap-4 px-7 py-5 bg-red-50/50 hover:bg-red-50 rounded-[32px] text-[16px] font-black text-red-600 transition-all text-left mt-4"

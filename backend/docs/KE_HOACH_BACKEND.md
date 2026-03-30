@@ -402,13 +402,13 @@ Xác minh danh tính user ở cấp tài khoản. Flow: Tạo hồ sơ -> Upload
 
 | # | Method | Path | Notes | Trạng thái |
 |---|--------|------|-------|------------|
-| C1 | GET | `/api/v1/common/me/verification-status` | Lấy trạng thái hiện tại | TODO |
-| C2 | GET | `/api/v1/common/me/identity-verifications` | Lịch sử hồ sơ | TODO |
-| C3 | POST | `/api/v1/common/me/identity-verifications` | Tạo hồ sơ draft | TODO |
-| C4 | GET | `/api/v1/common/me/identity-verifications/{id}` | Chi tiết hồ sơ | TODO |
-| C5 | POST | `/api/v1/common/me/identity-verifications/{id}/files` | Upload file (CCCD, selfie) | TODO |
-| C6 | POST | `/api/v1/common/me/identity-verifications/{id}/submit` | Nộp hồ sơ | TODO |
-| C7 | POST | `/api/v1/common/me/identity-verifications/{id}/cancel` | Hủy hồ sơ nháp | TODO |
+| C1 | GET | `/api/v1/common/me/verification-status` | Lấy trạng thái hiện tại | OK |
+| C2 | GET | `/api/v1/common/me/identity-verifications` | Lịch sử hồ sơ | OK |
+| C3 | POST | `/api/v1/common/me/identity-verifications` | Tạo hồ sơ draft | OK |
+| C4 | GET | `/api/v1/common/me/identity-verifications/{id}` | Chi tiết hồ sơ | OK |
+| C5 | POST | `/api/v1/common/me/identity-verifications/{id}/files` | Upload file (CCCD, selfie) | OK |
+| C6 | POST | `/api/v1/common/me/identity-verifications/{id}/submit` | Nộp hồ sơ | OK |
+| C7 | POST | `/api/v1/common/me/identity-verifications/{id}/cancel` | Hủy hồ sơ nháp | OK |
 
 ### MODULE P — Provider Owner (Profile & Documents)
 

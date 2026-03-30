@@ -206,6 +206,59 @@ async def update_user_status(
     }
 
 
+@router.put("/{user_id}")
+async def update_user(
+    user_id: uuid.UUID,
+    payload: UserUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    admin_user = Depends(get_current_admin_user),
+) -> dict:
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if payload.full_name is not None:
+        user.full_name = payload.full_name
+    if payload.gender is not None:
+        user.gender = payload.gender
+    if payload.dob is not None:
+        user.dob = payload.dob
+    if payload.avatar_url is not None:
+        user.avatar_url = payload.avatar_url
+    
+    await db.commit()
+    await db.refresh(user)
+    
+    return {"success": True, "message": "User updated successfully"}
+
+
+@router.delete("/{user_id}")
+async def delete_user(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user = Depends(get_current_admin_user),
+) -> dict:
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Soft delete instead of hard delete for history/security
+    old_status = user.status
+    user.status = "deleted"
+    
+    # Log status change
+    status_log = UserStatusLog(
+        user_id=user_id,
+        old_status=old_status,
+        new_status="deleted",
+        changed_by=admin_user.id,
+    )
+    db.add(status_log)
+    
+    await db.commit()
+    return {"success": True, "message": "User marked as deleted"}
+
+
 @router.post("/create-provider-owner")
 async def create_provider_owner(
     payload: UserCreateRequest,

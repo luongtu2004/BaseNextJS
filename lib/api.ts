@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
 
 /** Lấy token đã lưu trong Cookies */
 export function getToken(): string | undefined {

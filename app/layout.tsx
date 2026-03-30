@@ -18,17 +18,16 @@ export const metadata: Metadata = {
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import LayoutWrapper from '@/components/LayoutWrapper';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={`${inter.variable}`}>
       <body className="font-sans bg-background-light text-slate-900 antialiased" suppressHydrationWarning>
         <Providers>
-          <Navbar />
-          <SmoothScroll>
+          <LayoutWrapper>
             {children}
-          </SmoothScroll>
-          <Footer />
+          </LayoutWrapper>
           <Chatbot />
         </Providers>
       </body>

@@ -384,4 +384,107 @@ backend/
 
 ---
 
+## Phase 5 — API SPEC VER 2 (Trust & Qualification)
+
+**Mục tiêu Ver 2:**
+Tập trung vào lớp Trust & Qualification:
+- User xác minh danh tính.
+- Provider hoàn thiện hồ sơ.
+- Provider upload document/chứng chỉ.
+- Hệ thống kiểm tra provider service có đủ điều kiện hoạt động hay không.
+- Admin có công cụ duyệt và quản lý.
+
+*(Các API từ Ver 1 như Auth, Customer search, Become-provider, Admin taxonomy, Provider basic profile/service CRUD không làm lại, chỉ sử dụng lại).*
+
+### MODULE C — Common (User Identity Verification)
+
+Xác minh danh tính user ở cấp tài khoản. Flow: Tạo hồ sơ -> Upload CCCD/Selfie -> Submit -> Admin duyệt.
+
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| C1 | GET | `/api/v1/common/me/verification-status` | Lấy trạng thái hiện tại | TODO |
+| C2 | GET | `/api/v1/common/me/identity-verifications` | Lịch sử hồ sơ | TODO |
+| C3 | POST | `/api/v1/common/me/identity-verifications` | Tạo hồ sơ draft | TODO |
+| C4 | GET | `/api/v1/common/me/identity-verifications/{id}` | Chi tiết hồ sơ | TODO |
+| C5 | POST | `/api/v1/common/me/identity-verifications/{id}/files` | Upload file (CCCD, selfie) | TODO |
+| C6 | POST | `/api/v1/common/me/identity-verifications/{id}/submit` | Nộp hồ sơ | TODO |
+| C7 | POST | `/api/v1/common/me/identity-verifications/{id}/cancel` | Hủy hồ sơ nháp | TODO |
+
+### MODULE P — Provider Owner (Profile & Documents)
+
+Bắt buộc provider hoàn thiện hồ sơ, upload giấy tờ và xem xét điều kiện dịch vụ.
+
+**Profile Completion:**
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| P1 | GET | `/api/v1/provider/me` | Dùng lại từ Ver 1 | OK |
+| P2 | PUT | `/api/v1/provider/me` | Cập nhật basic fields | OK |
+| P3 | GET | `/api/v1/provider/me/profile` | Dùng lại từ Ver 1 | OK |
+| P4 | PUT | `/api/v1/provider/me/profile/individual` | Cập nhật hồ sơ cá nhân | TODO |
+| P5 | PUT | `/api/v1/provider/me/profile/business` | Cập nhật hồ sơ doanh nghiệp | TODO |
+| P6 | GET | `/api/v1/provider/me/profile/completion` | Xem % hoàn thiện & fields thiếu | TODO |
+
+**Provider Documents:**
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| P7 | GET | `/api/v1/provider/me/documents` | Danh sách giấy tờ | TODO |
+| P8 | POST | `/api/v1/provider/me/documents` | Tạo document mới (pending) | TODO |
+| P9 | POST | `/api/v1/provider/me/documents/{id}/files` | Upload file (front, back, extra) | TODO |
+| P10 | GET | `/api/v1/provider/me/documents/{id}` | Chi tiết giấy tờ | TODO |
+| P11 | PUT | `/api/v1/provider/me/documents/{id}` | Cập nhật khi pending/rejected | TODO |
+| P12 | DELETE | `/api/v1/provider/me/documents/{id}` | Xóa / hủy document | TODO |
+| P13 | GET | `/api/v1/provider/me/documents/summary` | Trạng thái document | TODO |
+
+**Service Qualification:**
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| P14 | GET | `/api/v1/provider/me/services` | Dùng lại từ Ver 1 | OK |
+| P15 | GET | `/api/v1/provider/me/services/{id}/requirements` | Xem requirement của service | TODO |
+| P16 | GET | `/api/v1/provider/me/services/{id}/qualification` | Check đủ điều kiện chưa | TODO |
+| P17 | PUT | `/api/v1/provider/me/services/{id}/documents` | Gắn document vào service | TODO |
+| P18 | GET | `/api/v1/provider/me/services/{id}/documents` | Lấy tài liệu đã gắn | TODO |
+
+### MODULE A — Admin (Verification & Qualification Console)
+
+Admin quản lý các phiên bản xét duyệt.
+
+**User Verification Console:**
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| A21 | GET | `/api/v1/admin/user-verifications` | Danh sách hồ sơ xác minh | TODO |
+| A22 | GET | `/api/v1/admin/user-verifications/{id}` | Chi tiết hồ sơ | TODO |
+| A23 | POST | `/api/v1/admin/user-verifications/{id}/approve` | Duyệt | TODO |
+| A24 | POST | `/api/v1/admin/user-verifications/{id}/reject` | Từ chối | TODO |
+| A25 | POST | `/api/v1/admin/user-verifications/{id}/request-resubmission` | Yêu cầu bổ sung | TODO |
+
+**Provider Document Review:**
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| A26 | GET | `/api/v1/admin/provider-documents` | Danh sách giấy tờ provider | TODO |
+| A27 | GET | `/api/v1/admin/provider-documents/{id}` | Chi tiết giấy tờ | TODO |
+| A28 | POST | `/api/v1/admin/provider-documents/{id}/approve` | Duyệt chứng chỉ | TODO |
+| A29 | POST | `/api/v1/admin/provider-documents/{id}/reject` | Từ chối chứng chỉ | TODO |
+
+**Provider Qualification Console:**
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| A30 | GET | `/api/v1/admin/provider-services/qualification` | Các dịch vụ cần check | TODO |
+| A31 | GET | `/api/v1/admin/provider-services/{id}/qualification` | Chi tiết qualification | TODO |
+| A32 | POST | `/api/v1/admin/provider-services/{id}/qualification/recheck` | Ép check lại điều kiện | TODO |
+
+**Provider Completion:**
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| A33 | GET | `/api/v1/admin/providers/incomplete` | Provider chưa hoàn thiện hồ sơ | TODO |
+| A34 | GET | `/api/v1/admin/providers/{id}/completion` | Thống kê thiếu gì | TODO |
+
+### MODULE I — Internal (Auto eKYC / Callback)
+
+| # | Method | Path | Notes | Trạng thái |
+|---|--------|------|-------|------------|
+| I1 | POST | `/api/v1/internal/ekyc/callback` | Webhook từ vendor OCR/eKYC | TODO |
+| I2 | POST | `/api/v1/internal/ekyc/process/{id}` | Gọi xử lý nền bằng worker | TODO |
+
+---
+
 *Có thể chỉnh sửa theo tiến độ; mỗi lần thêm bảng migration nên cập nhật tài liệu.*

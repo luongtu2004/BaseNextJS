@@ -58,8 +58,8 @@ export default function ProfilePage() {
 
               <div className="relative mt-4 mb-8 inline-block group">
                 <div className="size-32 rounded-[40px] bg-black/5 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden">
-                  {user.user.avatar_url ? (
-                    <img src={user.user.avatar_url} alt={user.user.full_name} className="size-full object-cover" />
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt={user.full_name} className="size-full object-cover" />
                   ) : (
                     <User size={48} className="text-black/10" />
                   )}
@@ -69,11 +69,11 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              <h2 className="text-2xl font-black uppercase tracking-tighter mb-1">{user.user.full_name || 'Người dùng mới'}</h2>
+              <h2 className="text-2xl font-black uppercase tracking-tighter mb-1">{user.full_name || 'Người dùng mới'}</h2>
               <div className="flex items-center justify-center gap-2 mb-8">
-                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${user.user.phone_verified ? 'text-blue-600 bg-blue-500/10' : 'text-black/30 bg-black/5'
-                  }`}>
-                  {user.user.phone_verified ? 'Đã xác thực SĐT' : 'Chưa xác thực'}
+                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${user.phone_verified ? 'text-blue-600 bg-blue-500/10' : 'text-black/30 bg-black/5'
+                   }`}>
+                   {user.phone_verified ? 'Đã xác thực SĐT' : 'Chưa xác thực'}
                 </span>
                 {user.roles.includes('admin') && (
                   <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white bg-black">
@@ -161,7 +161,7 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                   <p className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-1">Họ và tên</p>
                   <div className="bg-black/[0.02] p-5 rounded-[24px] border border-black/5">
-                    <p className="font-bold text-black">{user.user.full_name || 'Chưa cập nhật'}</p>
+                    <p className="font-bold text-black">{user.full_name || 'Chưa cập nhật'}</p>
                   </div>
                 </div>
 
@@ -169,14 +169,14 @@ export default function ProfilePage() {
                   <p className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-1">Số điện thoại</p>
                   <div className="bg-black/[0.02] p-5 rounded-[24px] border border-black/5 flex items-center gap-3">
                     <Phone size={16} className="text-black/20" />
-                    <p className="font-mono font-bold text-black">{user.user.phone}</p>
+                    <p className="font-mono font-bold text-black">{user.phone}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-1">Giới tính</p>
                   <div className="bg-black/[0.02] p-5 rounded-[24px] border border-black/5">
-                    <p className="font-bold text-black">{user.user.gender === '0' ? 'Nam' : user.user.gender === '1' ? 'Nữ' : 'Chưa xác định'}</p>
+                    <p className="font-bold text-black">{user.gender === '0' || user.gender === 0 ? 'Nam' : user.gender === '1' || user.gender === 1 ? 'Nữ' : 'Chưa xác định'}</p>
                   </div>
                 </div>
 
@@ -185,7 +185,7 @@ export default function ProfilePage() {
                   <div className="bg-black/[0.02] p-5 rounded-[24px] border border-black/5 flex items-center gap-3">
                     <Calendar size={16} className="text-black/20" />
                     <p className="font-bold text-black">
-                      {user.user.dob ? new Date(user.user.dob).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                      {user.dob ? new Date(user.dob).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
                     </p>
                   </div>
                 </div>
@@ -214,7 +214,7 @@ export default function ProfilePage() {
                     Nâng cao độ tin cậy của tài khoản bằng cách xác thực số điện thoại để sử dụng toàn bộ tính năng trên hệ thống.
                   </p>
                 </div>
-                {!user.user.phone_verified ? (
+                {!user.phone_verified ? (
                   <Link href="/identity/verify" className="bg-white text-black px-10 py-5 rounded-[24px] font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5 whitespace-nowrap">
                     Bắt đầu xác thực
                   </Link>

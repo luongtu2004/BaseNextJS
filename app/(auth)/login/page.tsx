@@ -8,6 +8,7 @@ import { getSession } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -54,6 +55,9 @@ export default function LoginPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
     >
+      <div className="flex justify-center mb-8">
+        <Logo iconSize={48} showText={false} />
+      </div>
       <div className="text-center mb-10">
         <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-3 tracking-tight uppercase" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
           Đăng nhập

@@ -8,6 +8,7 @@ import { getSession } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, Lock, User, KeyRound, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Logo from '@/components/Logo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -93,6 +94,9 @@ export default function RegisterPage() {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6 }}
     >
+      <div className="flex justify-center mb-8">
+        <Logo iconSize={48} showText={false} />
+      </div>
       <div className="text-center mb-10 relative">
         <AnimatePresence>
           {step === 2 && (

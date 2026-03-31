@@ -12,7 +12,7 @@ interface Message {
 
 const Chatbot: React.FC = () => {
   const { isChatOpen: isOpen, setChatOpen: setIsOpen } = useChat();
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(true); // Always fullscreen by default
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -47,9 +47,7 @@ const Chatbot: React.FC = () => {
   // Update animating state when isOpen changes
   useEffect(() => {
     if (isOpen) {
-      setIsAnimating(true);
-    } else {
-      setIsAnimating(false);
+      setIsClosing(false);
     }
   }, [isOpen]);
 
@@ -103,10 +101,14 @@ const Chatbot: React.FC = () => {
   }, [isOpen]);
 
   const handleClose = () => {
-    setIsOpen(false);
-    if (dontShowAgain) {
-      localStorage.setItem('chatbot_dismissed', 'true');
-    }
+    setIsClosing(true);
+    // Xoá layoutId trước, sau đó mới tắt thực sự để dùng exit animation cho nền trắng
+    setTimeout(() => {
+      setIsOpen(false);
+      if (dontShowAgain) {
+        localStorage.setItem('chatbot_dismissed', 'true');
+      }
+    }, 20);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -170,8 +172,10 @@ const Chatbot: React.FC = () => {
 
           {/* Expansion Shell */}
           <motion.div
-            layoutId="chatbot-modal"
-            onLayoutAnimationComplete={() => setIsAnimating(false)}
+            layoutId={isClosing ? undefined : "chatbot-modal"}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2, ease: "easeOut" } }}
             transition={{
               type: "spring",
               stiffness: 400,
@@ -186,13 +190,12 @@ const Chatbot: React.FC = () => {
             className="w-full max-w-5xl h-full max-h-[850px] flex flex-col bg-white rounded-[40px] md:rounded-[48px] shadow-2xl overflow-hidden border border-slate-200 pointer-events-auto relative z-10"
           >
               <AnimatePresence>
-                {!isAnimating && (
                   <motion.div
                     key="chat-content"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
                     className="flex flex-col h-full w-full"
                   >
               {/* Header */}
@@ -322,7 +325,6 @@ const Chatbot: React.FC = () => {
                   </div>
                 </form>
               </motion.div>
-            )}
           </AnimatePresence>
         </motion.div>
       </div>

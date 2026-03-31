@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { usePathname } from 'next/navigation';
 
+import Logo from '@/components/Logo';
 import { fetchAPI } from '@/lib/api';
 
 interface ServiceCategory {
@@ -142,15 +143,7 @@ export default function Navbar() {
                       className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-colors duration-300 relative z-10 ${isActive ? 'text-black' : 'text-black/50 hover:text-black'}`}
                     >
                       {item.id === 'home' ? (
-                        <div className="size-5 md:size-6 relative flex items-center justify-center mb-0.5">
-                          <Image
-                            src="/logo.png"
-                            alt="Logo"
-                            fill
-                            className="object-contain"
-                            priority
-                          />
-                        </div>
+                        <Logo iconSize={24} showText={false} className="mb-0.5" />
                       ) : (
                         <item.icon size={19} strokeWidth={isActive ? 2.5 : 2} className="mb-0.5" />
                       )}
@@ -265,10 +258,9 @@ export default function Navbar() {
                     <motion.div
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
-                      className="flex items-center gap-3 mb-2 opacity-50"
+                      className="mb-8"
                     >
-                      <Image src="/logo.png" alt="Logo" width={32} height={32} className="object-contain" />
-                      <span className="text-sm font-black uppercase tracking-[0.2em]">Sàn Dịch Vụ</span>
+                      <Logo iconSize={40} textSize="text-2xl" />
                     </motion.div>
                     <motion.h2
                       initial={{ x: -20, opacity: 0 }}

@@ -420,29 +420,29 @@ Bắt buộc provider hoàn thiện hồ sơ, upload giấy tờ và xem xét đ
 | P1 | GET | `/api/v1/provider/me` | Dùng lại từ Ver 1 | OK |
 | P2 | PUT | `/api/v1/provider/me` | Cập nhật basic fields | OK |
 | P3 | GET | `/api/v1/provider/me/profile` | Dùng lại từ Ver 1 | OK |
-| P4 | PUT | `/api/v1/provider/me/profile/individual` | Cập nhật hồ sơ cá nhân | TODO |
-| P5 | PUT | `/api/v1/provider/me/profile/business` | Cập nhật hồ sơ doanh nghiệp | TODO |
-| P6 | GET | `/api/v1/provider/me/profile/completion` | Xem % hoàn thiện & fields thiếu | TODO |
+| P4 | PUT | `/api/v1/provider/me/profile/individual` | Cập nhật hồ sơ cá nhân | OK |
+| P5 | PUT | `/api/v1/provider/me/profile/business` | Cập nhật hồ sơ doanh nghiệp | OK |
+| P6 | GET | `/api/v1/provider/me/profile/completion` | Xem % hoàn thiện & fields thiếu | OK |
 
 **Provider Documents:**
 | # | Method | Path | Notes | Trạng thái |
 |---|--------|------|-------|------------|
-| P7 | GET | `/api/v1/provider/me/documents` | Danh sách giấy tờ | TODO |
-| P8 | POST | `/api/v1/provider/me/documents` | Tạo document mới (pending) | TODO |
-| P9 | POST | `/api/v1/provider/me/documents/{id}/files` | Upload file (front, back, extra) | TODO |
-| P10 | GET | `/api/v1/provider/me/documents/{id}` | Chi tiết giấy tờ | TODO |
-| P11 | PUT | `/api/v1/provider/me/documents/{id}` | Cập nhật khi pending/rejected | TODO |
-| P12 | DELETE | `/api/v1/provider/me/documents/{id}` | Xóa / hủy document | TODO |
-| P13 | GET | `/api/v1/provider/me/documents/summary` | Trạng thái document | TODO |
+| P7 | GET | `/api/v1/provider/me/documents` | Danh sách giấy tờ | OK |
+| P8 | POST | `/api/v1/provider/me/documents` | Tạo document mới (pending) | OK |
+| P9 | POST | `/api/v1/provider/me/documents/{id}/files` | Upload file (front, back, extra) | OK |
+| P10 | GET | `/api/v1/provider/me/documents/{id}` | Chi tiết giấy tờ | OK |
+| P11 | PUT | `/api/v1/provider/me/documents/{id}` | Cập nhật khi pending/rejected | OK |
+| P12 | DELETE | `/api/v1/provider/me/documents/{id}` | Xóa / hủy document | OK |
+| P13 | GET | `/api/v1/provider/me/documents/summary` | Trạng thái document | OK |
 
 **Service Qualification:**
 | # | Method | Path | Notes | Trạng thái |
 |---|--------|------|-------|------------|
 | P14 | GET | `/api/v1/provider/me/services` | Dùng lại từ Ver 1 | OK |
-| P15 | GET | `/api/v1/provider/me/services/{id}/requirements` | Xem requirement của service | TODO |
-| P16 | GET | `/api/v1/provider/me/services/{id}/qualification` | Check đủ điều kiện chưa | TODO |
-| P17 | PUT | `/api/v1/provider/me/services/{id}/documents` | Gắn document vào service | TODO |
-| P18 | GET | `/api/v1/provider/me/services/{id}/documents` | Lấy tài liệu đã gắn | TODO |
+| P15 | GET | `/api/v1/provider/me/services/{id}/requirements` | Xem requirement của service | OK |
+| P16 | GET | `/api/v1/provider/me/services/{id}/qualification` | Check đủ điều kiện chưa | OK |
+| P17 | PUT | `/api/v1/provider/me/services/{id}/documents` | Gắn document vào service | OK |
+| P18 | GET | `/api/v1/provider/me/services/{id}/documents` | Lấy tài liệu đã gắn | OK |
 
 ### MODULE A — Admin (Verification & Qualification Console)
 

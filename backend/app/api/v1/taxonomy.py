@@ -55,7 +55,7 @@ async def get_skills(
 @router.post("/seed-taxonomy", response_model=dict[str, str])
 async def seed_taxonomy_data(db: AsyncSession = Depends(get_db)):
     """Seed dữ liệu taxonomy từ constants.ts vào PostgreSQL"""
-    from lib.constants import PILLARS
+    from app.core.constants import PILLARS
     
     for pillar in PILLARS:
         # Tạo Industry Category

@@ -21,7 +21,9 @@ class IndustryCategory(Base):
     )
     code: Mapped[str | None] = mapped_column(String(50), unique=True)
     name: Mapped[str | None] = mapped_column(String(50))
+    slug: Mapped[str | None] = mapped_column(String(255), unique=True)
     description: Mapped[str | None] = mapped_column(Text)
+    icon_url: Mapped[str | None] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
@@ -50,7 +52,9 @@ class ServiceCategory(Base):
     )
     code: Mapped[str | None] = mapped_column(String(50))
     name: Mapped[str | None] = mapped_column(String(255))
+    slug: Mapped[str | None] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text)
+    icon_url: Mapped[str | None] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")

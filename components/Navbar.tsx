@@ -11,6 +11,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { usePathname } from 'next/navigation';
 
+import { fetchAPI } from '@/lib/api';
+
+interface ServiceCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface IndustryCategory {
+  id: string;
+  code: string;
+  name: string;
+  slug: string;
+  icon_url: string | null;
+  service_categories: ServiceCategory[];
+}
+
 const iconMap: Record<string, any> = {
   transportation: Rocket,
   construction_electronics: Home,
@@ -26,6 +43,21 @@ export default function Navbar() {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const { user, isLoading, logout } = useAuth();
   const { toggleChat } = useChat();
+
+  const [categories, setCategories] = useState<IndustryCategory[]>([]);
+  const [loadingCats, setLoadingCats] = useState(false);
+
+  useEffect(() => {
+    if (isMenuOpen && categories.length === 0 && !loadingCats) {
+      setLoadingCats(true);
+      fetchAPI<IndustryCategory[]>('/api/v1/customer/industry-categories')
+        .then(data => {
+          if (Array.isArray(data)) setCategories(data);
+        })
+        .catch(console.error)
+        .finally(() => setLoadingCats(false));
+    }
+  }, [isMenuOpen, categories.length, loadingCats]);
 
   // KHÓA CUỘN TRIỆT ĐỂ (html + body)
   useEffect(() => {
@@ -242,40 +274,68 @@ export default function Navbar() {
                 </div>
 
                 {/* Grid Nội dung - Thu hẹp Gap & Spacing chuẩn quốc tế */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-x-12 gap-y-10 px-1">
-                  {PILLARS.map((pillar, pillarIdx) => {
-                    const Icon = iconMap[pillar.id] || Rocket;
-                    return (
-                      <motion.div
-                        key={pillar.id}
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.2 + (pillarIdx * 0.05) }}
-                        className="group/pillar bg-black/[0.015] md:bg-transparent p-5 md:p-0 rounded-[28px]"
-                      >
-                        <div className="flex items-center gap-3 mb-4 md:mb-6">
-                          <div className="size-10 md:size-11 rounded-[16px] md:rounded-[18px] bg-black/5 flex items-center justify-center text-black group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-300">
-                            <Icon size={20} strokeWidth={2.5} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-x-12 gap-y-10 px-1">
+                  {loadingCats ? (
+                    <div className="col-span-full py-20 flex justify-center text-black/20 font-bold uppercase tracking-widest text-sm italic">
+                      Đang tải danh mục...
+                    </div>
+                  ) : (
+                    categories.map((cat, catIdx) => {
+                      const Icon = iconMap[cat.code] || Rocket;
+                      return (
+                        <motion.div
+                          key={cat.id}
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.2 + (catIdx * 0.05) }}
+                          className="group/pillar bg-black/[0.015] md:bg-transparent p-5 md:p-0 rounded-[28px]"
+                        >
+                          <div className="flex items-center gap-3 mb-4 md:mb-6">
+                            <div className="size-10 md:size-11 rounded-[16px] md:rounded-[18px] bg-black/5 flex items-center justify-center text-black group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-300">
+                              <Icon size={20} strokeWidth={2.5} />
+                            </div>
+                            <h4 className="text-[16px] md:text-[17px] font-black uppercase text-black tracking-tighter leading-tight">{cat.name}</h4>
                           </div>
-                          <h4 className="text-[16px] md:text-[17px] font-black uppercase text-black tracking-tighter leading-tight">{pillar.title}</h4>
+                          <ul className="space-y-2.5 ml-1 md:ml-0">
+                            {cat.service_categories?.map((svc) => (
+                              <li key={svc.id}>
+                                <Link
+                                  href={`/danh-muc/${svc.slug}`}
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className="text-[14px] font-extrabold text-black/50 hover:text-black transition-all flex items-center gap-2.5 group/item hover:translate-x-1 duration-200 leading-normal"
+                                >
+                                  <div className="w-1 h-1 rounded-full bg-black/10 group-hover/item:bg-black transition-all shrink-0" />
+                                  <span className="flex-1 truncate md:whitespace-normal group-hover:underline underline-offset-4 decoration-black/10 transition-all">{svc.name}</span>
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </motion.div>
+                      );
+                    })
+                  )}
+                  {/* Promotional Section - Fixed column for images */}
+                  <div className="hidden lg:block lg:col-span-1 border-l border-black/5 pl-8 ml-4">
+                    <h4 className="text-[14px] font-black uppercase text-black/40 tracking-wider mb-6">Dành cho bạn</h4>
+                    <div className="space-y-6">
+                      <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden group cursor-pointer shadow-sm border border-black/5">
+                        <Image src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=2070&auto=format&fit=crop" alt="Khuyến mãi giúp việc" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <span className="px-2 py-1 bg-primary text-white text-[10px] font-black uppercase rounded-lg mb-2 inline-block">Ưu đãi</span>
+                          <p className="text-white text-[13px] font-bold leading-tight">Giảm 50% dọn dẹp nhà cửa cuối tuần</p>
                         </div>
-                        <ul className="space-y-2.5 ml-1 md:ml-0">
-                          {pillar.industries.map((ind, idx) => (
-                            <li key={idx}>
-                              <Link
-                                href={`/danh-muc/${createSlug(ind)}`}
-                                onClick={() => setIsMenuOpen(false)}
-                                className="text-[14px] font-extrabold text-black/50 hover:text-black transition-all flex items-center gap-2.5 group/item hover:translate-x-1 duration-200 leading-normal"
-                              >
-                                <div className="w-1 h-1 rounded-full bg-black/10 group-hover/item:bg-black transition-all shrink-0" />
-                                <span className="flex-1 truncate md:whitespace-normal group-hover:underline underline-offset-4 decoration-black/10 transition-all">{ind}</span>
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      </motion.div>
-                    );
-                  })}
+                      </div>
+                      <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden group cursor-pointer shadow-sm border border-black/5">
+                        <Image src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2069&auto=format&fit=crop" alt="Dịch vụ điện lạnh" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <span className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black uppercase rounded-lg mb-2 inline-block">Bảo dưỡng</span>
+                          <p className="text-white text-[13px] font-bold leading-tight">Vệ sinh máy lạnh chỉ từ 150k/máy</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -300,8 +360,8 @@ export default function Navbar() {
               className="w-[340px] bg-white/98 backdrop-blur-[64px] rounded-[48px] shadow-2xl p-4 pointer-events-auto mb-4 md:mt-4 ring-1 ring-black/5 overflow-hidden mx-4"
             >
               <div className="p-8 border-b border-black/5 mb-4 rounded-[36px] bg-black/5 text-black">
-                <p className="text-base font-black truncate mb-0.5">{user?.user?.full_name || 'Người dùng'}</p>
-                <p className="text-sm text-black/50 font-bold tracking-tight">{user?.user?.phone || 'Chưa đăng ký'}</p>
+                <p className="text-base font-black truncate mb-0.5">{user?.full_name || 'Người dùng'}</p>
+                <p className="text-sm text-black/50 font-bold tracking-tight">{user?.phone || 'Chưa đăng ký'}</p>
               </div>
               <div className="grid grid-cols-1 gap-2 p-1">
                 <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="flex items-center justify-between px-7 py-5 hover:bg-black/5 rounded-[32px] group italic transition-all">

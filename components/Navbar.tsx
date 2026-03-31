@@ -305,7 +305,7 @@ export default function Navbar() {
                             <div className="size-10 md:size-11 rounded-[16px] md:rounded-[18px] bg-black/5 flex items-center justify-center text-black group-hover/pillar:bg-black group-hover/pillar:text-white transition-all duration-300">
                               <Icon size={20} strokeWidth={2.5} />
                             </div>
-                            <h4 className="text-[16px] md:text-[17px] font-black uppercase text-black tracking-tighter leading-tight">{cat.name}</h4>
+                            <h4 className="text-[16px] md:text-[17px] font-black uppercase text-black tracking-tighter leading-snug">{cat.name}</h4>
                           </div>
                           <ul className="space-y-2.5 ml-1 md:ml-0">
                             {cat.service_categories?.map((svc) => (

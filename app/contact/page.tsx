@@ -164,15 +164,34 @@ export default function ContactPage() {
       </section>
 
       {/* ─── Map Section ─── */}
-      <section className="h-[500px] w-full bg-slate-200 relative overflow-hidden">
+      <section className="h-[500px] w-full bg-slate-200 relative overflow-hidden isolate shadow-inner group">
         <iframe
           src="https://maps.google.com/maps?q=Nguyen%20Hue%20Walking%20Street,%20Ho%20Chi%20Minh&t=&z=15&ie=UTF8&iwloc=&output=embed"
-          className="absolute inset-0 w-full h-full border-0"
+          className="absolute inset-0 w-full h-full border-0 transform-gpu grayscale-[0.2] contrast-[1.1] opacity-90 transition-opacity duration-700 pointer-events-none group-focus-within:pointer-events-auto group-active:pointer-events-auto"
           allowFullScreen={false}
           loading="lazy"
+          title="Sàn Dịch Vụ Office Map"
           referrerPolicy="no-referrer-when-downgrade"
+          style={{ 
+            willChange: 'transform, opacity',
+            backfaceVisibility: 'hidden',
+          }}
         />
-        <div className="absolute inset-0 pointer-events-none shadow-[inset_0_20px_40px_rgba(0,0,0,0.1)]" />
+        
+        {/* Anti-Scrollover Overlay: Blocks interaction until focused/clicked */}
+        {/* When the user clicks, the focus-within pseudo-class enables the iframe interactions */}
+        <div 
+          className="absolute inset-0 z-10 transition-all duration-500 bg-white/5 backdrop-blur-[1px] group-focus-within:opacity-0 group-focus-within:pointer-events-none group-active:opacity-0 group-active:pointer-events-none flex flex-col items-center justify-center cursor-pointer"
+          tabIndex={0}
+        >
+          <div className="px-6 py-3 bg-white/90 backdrop-blur-md rounded-full shadow-2xl border border-black/5 text-primary text-sm font-black flex items-center gap-3 active:scale-95 transition-transform">
+             <div className="size-2 bg-emerald-500 rounded-full animate-pulse" />
+             NHẤN ĐỂ TƯƠNG TÁC VỚI BẢN ĐỒ
+          </div>
+        </div>
+
+        {/* Shadow Overlay */}
+        <div className="absolute inset-0 z-20 pointer-events-none shadow-[inset_0_20px_60px_rgba(0,0,0,0.1)]" />
       </section>
 
     </main>

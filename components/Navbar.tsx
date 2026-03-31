@@ -82,7 +82,7 @@ export default function Navbar() {
 
   const navItems = [
     { title: 'Trang chủ', href: '/', icon: Home, id: 'home' },
-    { title: 'Danh mục', icon: LayoutGrid, id: 'catalogue', isMenu: true },
+    { title: 'Danh mục', icon: LayoutGrid, id: 'catalogue', isMenu: true, activePrefix: '/danh-muc' },
     { title: 'Đối tác', href: '/partner', icon: HeartHandshake, id: 'partner' },
     { title: 'Liên hệ', href: '/contact', icon: Rocket, id: 'contact' },
   ];
@@ -105,7 +105,7 @@ export default function Navbar() {
         >
           <div className="flex items-center w-full justify-around px-1 relative">
             {navItems.map((item) => {
-              const isActive = (item.isMenu && isMenuOpen) || (!item.isMenu && item.href === pathname);
+              const isActive = (item.isMenu && isMenuOpen) || (!item.isMenu && item.href === pathname) || (item.activePrefix && pathname.startsWith(item.activePrefix));
               const isHovered = hoveredTab === item.id;
 
               return (
@@ -166,38 +166,57 @@ export default function Navbar() {
               onMouseEnter={() => setHoveredTab('user')}
             >
               <AnimatePresence initial={false}>
-                {(hoveredTab === 'user' || isUserMenuOpen) && (
-                  <motion.div
-                    layoutId="active-pill"
-                    className={`absolute inset-0 rounded-full ${isUserMenuOpen ? 'bg-black/10' : 'bg-black/5'}`}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ type: 'spring', stiffness: 450, damping: 45 }}
-                    style={{ willChange: 'transform, opacity' }}
-                  />
-                )}
+                {(() => {
+                  const isAuthRoute = pathname === '/login' || pathname === '/register';
+                  const isUserActive = isUserMenuOpen || isAuthRoute;
+                  const showHighlight = hoveredTab === 'user' || isUserActive;
+
+                  return showHighlight && (
+                    <motion.div
+                      layoutId="active-pill"
+                      className={`absolute inset-0 rounded-full ${isUserActive ? 'bg-black/10' : 'bg-black/5'}`}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ type: 'spring', stiffness: 450, damping: 45 }}
+                      style={{ willChange: 'transform, opacity' }}
+                    />
+                  );
+                })()}
               </AnimatePresence>
 
-              {isLoading ? (
-                <div className="size-10 md:size-12 bg-black/5 animate-pulse rounded-full" />
-              ) : user ? (
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-all duration-300 relative z-10 cursor-pointer ${isUserMenuOpen ? 'text-black' : 'text-black/50 hover:text-black'}`}
-                >
-                  <User size={19} strokeWidth={isUserMenuOpen ? 2.5 : 2} className="mb-0.5" />
-                  <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-center">Tôi</span>
-                </button>
-              ) : (
-                <Link
-                  href="/login"
-                  className="flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-all duration-300 relative z-10 text-black/50 hover:text-black"
-                >
-                  <User size={19} strokeWidth={2} className="mb-0.5" />
-                  <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Login</span>
-                </Link>
-              )}
+              {(() => {
+                const isAuthRoute = pathname === '/login' || pathname === '/register';
+                const isUserActive = isUserMenuOpen || isAuthRoute;
+                const textColor = isUserActive ? 'text-black' : 'text-black/50 hover:text-black';
+                const sw = isUserActive ? 2.5 : 2;
+
+                if (isLoading) {
+                  return <div className="size-10 md:size-12 bg-black/5 animate-pulse rounded-full" />;
+                }
+
+                if (user) {
+                  return (
+                    <button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-all duration-300 relative z-10 cursor-pointer ${textColor}`}
+                    >
+                      <User size={19} strokeWidth={sw} className="mb-0.5" />
+                      <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none text-center">Tôi</span>
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    href="/login"
+                    className={`flex flex-col items-center gap-1 px-3 md:px-7 py-2 rounded-full transition-all duration-300 relative z-10 ${textColor}`}
+                  >
+                    <User size={19} strokeWidth={sw} className="mb-0.5" />
+                    <span className="hidden md:block text-[9px] md:text-[11px] font-black uppercase tracking-tighter leading-none">Login</span>
+                  </Link>
+                );
+              })()}
             </div>
           </div>
         </motion.div>

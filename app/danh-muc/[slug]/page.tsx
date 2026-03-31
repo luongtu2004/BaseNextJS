@@ -1,47 +1,66 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { PILLARS } from '@/lib/constants';
-import { createSlug } from '@/lib/utils';
+import { fetchAPI } from '@/lib/api';
 import { notFound } from 'next/navigation';
-import { ChevronRight, Calendar, User, ArrowRight, LayoutGrid, Sparkles } from 'lucide-react';
+import { ChevronRight, Calendar, User, ArrowRight, LayoutGrid, Sparkles, Loader2, Info } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'motion/react';
 
-// Find the title matching the slug
-type PillarType = { id: string; title: string; description: string; image: string; industries: string[] };
-type MatchResult = 
-  | { type: 'pillar'; data: PillarType; title: string }
-  | { type: 'industry'; data: string; parent: PillarType; title: string };
-
-function findCategoryBySlug(slug: string): MatchResult | null {
-  for (const pillar of PILLARS) {
-    if (createSlug(pillar.title) === slug) {
-      return { type: 'pillar', data: pillar, title: pillar.title };
-    }
-    for (const ind of pillar.industries) {
-      if (createSlug(ind) === slug) {
-        return { type: 'industry', data: ind, parent: pillar, title: ind };
-      }
-    }
-  }
-  return null;
+interface CategoryData {
+  type: 'industry' | 'service';
+  data: any;
+  parent?: any;
 }
 
 export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
-  const match = findCategoryBySlug(resolvedParams.slug);
+  const [category, setCategory] = useState<CategoryData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  if (!match) {
+  useEffect(() => {
+    async function loadCategory() {
+      try {
+        setIsLoading(true);
+        const result = await fetchAPI<CategoryData>(`/api/v1/customer/categories/${resolvedParams.slug}`);
+        if (result) {
+          setCategory(result);
+        } else {
+          setError(true);
+        }
+      } catch (err) {
+        console.error('Error loading category:', err);
+        setError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCategory();
+  }, [resolvedParams.slug]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fbfbfd]">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
+  if (error || !category) {
     notFound();
   }
 
-  const { title } = match;
+  const { data, type, parent } = category;
+  const title = data.name;
+  const description = data.description || `Khám phá các dịch vụ và thông tin hữu ích về ${title}.`;
+  
+  // Use a fallback image if icon_url is missing
+  const heroImage = data.icon_url || (type === 'service' && parent?.icon_url ? parent.icon_url : '/hero_banner.png');
 
-  // Generate some mock articles based on the title
+  // Generate some mock articles based on the real title (Posts will be integrated later)
   const mockArticles = [
     {
       id: 1,
@@ -56,7 +75,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
       id: 2,
       title: `Bảng giá chuẩn cho dịch vụ ${title} năm 2026`,
       excerpt: `Cập nhật chi tiết bảng giá mới nhất thị trường cho các gói dịch vụ thuộc nhóm ${title.toLowerCase()}. Minh bạch, rõ ràng và không phát sinh chi phí.`,
-      image: match.type === 'industry' ? match.parent.image : match.data.image,
+      image: heroImage,
       date: '15 Tháng 3, 2026',
       author: 'Ban Biên Tập',
       category: title
@@ -70,20 +89,10 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
       author: 'CSKH',
       category: title
     },
-    {
-      id: 4,
-      title: `Top 5 đối tác cung cấp ${title} đánh giá cao nhất`,
-      excerpt: `Cùng điểm qua danh sách các đơn vị đối tác được khách hàng của Sàn Dịch Vụ đánh giá 5 sao trong tháng vừa qua về chất lượng phục vụ.`,
-      image: match.type === 'industry' ? match.parent.image : match.data.image,
-      date: '05 Tháng 3, 2026',
-      author: 'Đánh giá cộng đồng',
-      category: title
-    },
   ];
 
   return (
     <main className="min-h-screen bg-[#fbfbfd]">
-      {/* Hero Banner for Category */}
       <section className="relative pt-32 pb-20 bg-slate-900 text-white overflow-hidden">
         <div className="absolute inset-0 bg-primary/10" />
         <div className="absolute inset-0 bg-[url('/hero_banner.png')] opacity-20 bg-cover bg-center" />
@@ -107,14 +116,22 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
             <ChevronRight size={14} />
             <span className="text-primary-light">Danh mục</span>
             <ChevronRight size={14} />
-            <span className="text-white truncate max-w-[200px] md:max-w-none">{title}</span>
+            {type === 'service' && parent && (
+              <>
+                <Link href={`/danh-muc/${parent.slug}`} className="hover:text-white transition-all truncate max-w-[150px]">
+                  {parent.name}
+                </Link>
+                <ChevronRight size={14} />
+              </>
+            )}
+            <span className="text-white truncate max-w-[200px] md:max-w-none font-bold italic">{title}</span>
           </motion.div>
           
           <motion.h1 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight leading-tight max-w-4xl uppercase"
+            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight leading-tight max-w-5xl uppercase"
           >
             {title}
           </motion.h1>
@@ -124,20 +141,18 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
             transition={{ delay: 0.3, duration: 0.8 }}
             className="text-xl text-slate-300 max-w-2xl font-medium leading-relaxed"
           >
-            Khám phá các bài viết, hướng dẫn và thông tin hữu ích nhất về lĩnh vực <span className="text-white font-bold">{title}</span>.
+            {description}
           </motion.p>
         </motion.div>
       </section>
 
-      {/* Content Section */}
       <section className="py-20">
         <div className="max-w-[1740px] mx-auto px-4 md:px-8">
           <div className="flex flex-col lg:flex-row gap-12">
             
-            {/* Main Content: Article List */}
             <div className="flex-1">
               <div className="flex items-center justify-between mb-10 pb-6 border-b border-slate-200">
-                <h2 className="text-2xl font-bold text-slate-900 uppercase">Bài viết & Tài liệu</h2>
+                <h2 className="text-2xl font-bold text-slate-900 uppercase">Tin tức & Hướng dẫn</h2>
                 <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{mockArticles.length} bài viết</span>
               </div>
 
@@ -158,58 +173,28 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       />
-                      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-900 uppercase tracking-wide">
-                        {article.category}
-                      </div>
                     </div>
                     
                     <div className="p-8 flex-1 flex flex-col">
                       <div className="flex items-center gap-4 text-xs font-medium text-slate-500 mb-4">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar size={14} />
-                          {article.date}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <User size={14} />
-                          {article.author}
-                        </div>
+                        <div className="flex items-center gap-1.5"><Calendar size={14} /> {article.date}</div>
+                        <div className="flex items-center gap-1.5"><User size={14} /> {article.author}</div>
                       </div>
-                      
                       <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                         {article.title}
                       </h3>
-                      
                       <p className="text-slate-600 mb-6 line-clamp-3 leading-relaxed flex-1 text-[15px]">
                         {article.excerpt}
                       </p>
-                      
                       <Link href="#" className="inline-flex items-center gap-2 text-sm font-bold text-primary group/link mt-auto w-fit">
-                        Đọc tiếp 
-                        <ArrowRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
+                        Chi tiết <ArrowRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
                       </Link>
                     </div>
                   </motion.article>
                 ))}
               </div>
-              
-              {/* Pagination (Mock) */}
-              <div className="mt-16 flex justify-center">
-                <div className="flex items-center gap-2">
-                  <button className="size-10 rounded-full flex items-center justify-center border border-slate-200 text-slate-400 cursor-not-allowed">
-                    <ChevronRight size={18} className="rotate-180" />
-                  </button>
-                  <button className="size-10 rounded-full flex items-center justify-center bg-slate-900 text-white font-medium">1</button>
-                  <button className="size-10 rounded-full flex items-center justify-center border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 font-medium transition-all">2</button>
-                  <button className="size-10 rounded-full flex items-center justify-center border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 font-medium transition-all">3</button>
-                  <span className="px-2 text-slate-400">...</span>
-                  <button className="size-10 rounded-full flex items-center justify-center border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all">
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
             </div>
 
-            {/* Sidebar */}
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -217,62 +202,52 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="w-full lg:w-[400px] shrink-0 space-y-8"
             >
-              {/* Related Categories / Industries */}
               <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-900 mb-6 uppercase tracking-tight">
-                  {match.type === 'industry' ? 'Cùng Thể Loại' : 'Các Ngành Nghề'}
+                  {type === 'service' ? 'Ngành cùng Trụ cột' : 'Các Ngành nghề'}
                 </h3>
                 <div className="flex flex-col gap-3">
-                  {match.type === 'industry' ? (
-                    // Show other industries in the same pillar
-                    match.parent.industries.map((ind, idx) => {
-                      const isCurrent = ind === title;
+                  {type === 'industry' ? (
+                    data.service_categories?.map((s: any, idx: number) => (
+                      <Link 
+                        key={idx} 
+                        href={`/danh-muc/${s.slug}`}
+                        className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 text-slate-600 hover:text-slate-900 font-medium transition-all"
+                      >
+                        <span className="text-sm truncate mr-4">{s.name}</span>
+                        <ChevronRight size={16} className="opacity-40" />
+                      </Link>
+                    ))
+                  ) : (
+                    parent?.service_categories?.map((s: any, idx: number) => {
+                      const isCurrent = s.slug === resolvedParams.slug;
                       return (
                         <Link 
                           key={idx} 
-                          href={`/danh-muc/${createSlug(ind)}`}
+                          href={`/danh-muc/${s.slug}`}
                           className={`flex items-center justify-between p-3 rounded-xl transition-all ${isCurrent ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 font-medium'}`}
                         >
-                          <span className="text-sm truncate mr-4">{ind}</span>
+                          <span className="text-sm truncate mr-4">{s.name}</span>
                           <ChevronRight size={16} className={isCurrent ? 'opacity-100' : 'opacity-40'} />
                         </Link>
                       );
                     })
-                  ) : (
-                    // Show industries for this pillar
-                    match.data.industries.map((ind, idx) => (
-                      <Link 
-                        key={idx} 
-                        href={`/danh-muc/${createSlug(ind)}`}
-                        className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 text-slate-600 hover:text-slate-900 font-medium transition-all"
-                      >
-                        <span className="text-sm truncate mr-4">{ind}</span>
-                        <ChevronRight size={16} className="opacity-40" />
-                      </Link>
-                    ))
                   )}
                 </div>
               </div>
 
-              {/* Promotional Banner (Mock) */}
               <div className="relative bg-slate-900 rounded-3xl p-8 overflow-hidden text-white flex flex-col items-start min-h-[300px] justify-end group">
                 <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="absolute top-0 right-0 -mr-8 -mt-8 size-40 bg-primary/30 blur-3xl rounded-full" />
-                
                 <div className="relative z-10">
                   <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold mb-4 uppercase tracking-wider">
-                    <Sparkles size={14} className="text-primary-light" />
-                    Ưu đãi hội viên
+                    <Sparkles size={14} className="text-primary-light" /> Dịch vụ chuyên nghiệp
                   </div>
-                  <h3 className="text-2xl font-black mb-3 leading-tight">Đăng ký ngay để nhận tư vấn miễn phí</h3>
-                  <p className="text-slate-300 text-sm mb-6 max-w-[250px]">Nhận báo giá chi tiết và các chương trình khuyến mãi độc quyền từ các đối tác.</p>
-                  <button className="bg-white text-slate-900 px-6 py-2.5 rounded-full text-sm font-bold hover:bg-primary hover:text-white transition-all w-full">
-                    Yêu cầu tư vấn
-                  </button>
+                  <h3 className="text-2xl font-black mb-3 leading-tight">Yêu cầu tư vấn dịch vụ {title}</h3>
+                  <button className="bg-white text-slate-900 px-6 py-2.5 rounded-full text-sm font-bold hover:bg-primary hover:text-white transition-all w-full">Gửi yêu cầu</button>
                 </div>
               </div>
             </motion.div>
-
           </div>
         </div>
       </section>

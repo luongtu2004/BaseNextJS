@@ -12,9 +12,10 @@ class CustomerIndustryCategory(BaseModel):
     id: uuid.UUID
     name: str | None
     code: str | None
-    slug: str | None = Field(default=None, validation_alias="code")
+    slug: str | None = None
     description: str | None
     icon_url: str | None = None
+    service_categories: list[CustomerServiceCategory] = []
 
 
 class CustomerServiceCategory(BaseModel):
@@ -23,7 +24,7 @@ class CustomerServiceCategory(BaseModel):
     industry_category_id: uuid.UUID
     name: str | None
     code: str | None
-    slug: str | None = Field(default=None, validation_alias="code")
+    slug: str | None = None
     description: str | None
     icon_url: str | None = None
 

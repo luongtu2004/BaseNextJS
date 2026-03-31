@@ -22,7 +22,9 @@ interface IndustryCategory {
   id: string;
   code: string;
   name: string;
+  slug: string;
   description: string | null;
+  icon_url: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -31,7 +33,9 @@ interface ServiceCategory {
   id: string;
   code: string;
   name: string;
+  slug: string;
   description: string | null;
+  icon_url: string | null;
   is_active: boolean;
 }
 
@@ -46,7 +50,7 @@ export default function TaxonomyPage() {
   // Industry form
   const [showIndustryForm, setShowIndustryForm] = useState(false);
   const [editIndustry, setEditIndustry] = useState<IndustryCategory | null>(null);
-  const [industryForm, setIndustryForm] = useState({ code: '', name: '', description: '' });
+  const [industryForm, setIndustryForm] = useState({ code: '', name: '', slug: '', description: '', icon_url: '' });
   const [saving, setSaving] = useState(false);
 
   const loadIndustries = async () => {
@@ -87,21 +91,31 @@ export default function TaxonomyPage() {
 
   const openCreateIndustry = () => {
     setEditIndustry(null);
-    setIndustryForm({ code: '', name: '', description: '' });
+    setIndustryForm({ code: '', name: '', slug: '', description: '', icon_url: '' });
     setShowIndustryForm(true);
   };
 
   const openEditIndustry = (ind: IndustryCategory) => {
     setEditIndustry(ind);
-    setIndustryForm({ code: ind.code, name: ind.name, description: ind.description ?? '' });
+    setIndustryForm({ 
+      code: ind.code, 
+      name: ind.name, 
+      slug: ind.slug || '', 
+      description: ind.description ?? '',
+      icon_url: ind.icon_url ?? ''
+    });
     setShowIndustryForm(true);
   };
 
   const handleNameChange = (name: string) => {
-    const code = name.toLowerCase()
+    const base = name.toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd').replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '_');
-    setIndustryForm((f) => ({ ...f, name, code }));
+      .replace(/đ/g, 'd').replace(/[^a-z0-9\s]/g, '').trim();
+    
+    const code = base.replace(/\s+/g, '_');
+    const slug = base.replace(/\s+/g, '-');
+    
+    setIndustryForm((f) => ({ ...f, name, code, slug }));
   };
 
   const handleIndustrySubmit = async (e: React.FormEvent) => {
@@ -191,14 +205,39 @@ export default function TaxonomyPage() {
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
+                      <Fingerprint size={12} /> Mã định danh (Code)
+                    </label>
+                    <input
+                      value={industryForm.code}
+                      onChange={(e) => setIndustryForm({ ...industryForm, code: e.target.value })}
+                      className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-mono font-bold outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
+                      <Fingerprint size={12} /> Đường dẫn (Slug)
+                    </label>
+                    <input
+                      value={industryForm.slug}
+                      onChange={(e) => setIndustryForm({ ...industryForm, slug: e.target.value })}
+                      className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-mono font-bold outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
-                    <Fingerprint size={12} /> Mã định danh (Code)
+                    <Layers size={12} /> URL Biểu tượng (Icon URL)
                   </label>
                   <input
-                    value={industryForm.code}
-                    onChange={(e) => setIndustryForm({ ...industryForm, code: e.target.value })}
-                    className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-mono font-bold outline-none transition-all"
+                    value={industryForm.icon_url}
+                    onChange={(e) => setIndustryForm({ ...industryForm, icon_url: e.target.value })}
+                    placeholder="/pillar_icon.png"
+                    className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-bold outline-none transition-all"
                   />
                 </div>
 

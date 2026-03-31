@@ -255,6 +255,24 @@ async def upload_document_file(
     return {"message": "File uploaded successfully", "file_url": file_url}
 
 
+@router.get("/me/documents/summary")
+async def get_documents_summary(
+    provider: Provider = Depends(get_current_provider),
+    db: AsyncSession = Depends(get_db)
+):
+    """Thống kê trạng thái giấy tờ (P13)"""
+    stmt = select(ProviderDocument).where(ProviderDocument.provider_id == provider.id)
+    docs = (await db.execute(stmt)).scalars().all()
+    
+    summary = {
+        "total": len(docs),
+        "approved": len([d for d in docs if d.verification_status == "approved"]),
+        "pending": len([d for d in docs if d.verification_status == "pending"]),
+        "rejected": len([d for d in docs if d.verification_status == "rejected"]),
+    }
+    return summary
+
+
 @router.get("/me/documents/{document_id}", response_model=ProviderDocumentResponse)
 async def get_document_detail(
     document_id: uuid.UUID,
@@ -312,22 +330,6 @@ async def delete_document(
     return {"message": "Document deleted"}
 
 
-@router.get("/me/documents/summary")
-async def get_documents_summary(
-    provider: Provider = Depends(get_current_provider),
-    db: AsyncSession = Depends(get_db)
-):
-    """Thống kê trạng thái giấy tờ (P13)"""
-    stmt = select(ProviderDocument).where(ProviderDocument.provider_id == provider.id)
-    docs = (await db.execute(stmt)).scalars().all()
-    
-    summary = {
-        "total": len(docs),
-        "approved": len([d for d in docs if d.verification_status == "approved"]),
-        "pending": len([d for d in docs if d.verification_status == "pending"]),
-        "rejected": len([d for d in docs if d.verification_status == "rejected"]),
-    }
-    return summary
 
 
 # ==================== Service Qualification ====================

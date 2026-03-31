@@ -114,6 +114,62 @@ async def list_providers(
     return result
 
 
+# ==================== Provider Document Review ====================
+
+@router.get("/documents")
+async def list_provider_documents(
+    status: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Danh sách giấy tờ của các provider (A26)"""
+    conditions = []
+    if status:
+        conditions.append(ProviderDocument.verification_status == status)
+    
+    stmt = (
+        select(ProviderDocument)
+        .order_by(ProviderDocument.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    if conditions:
+        stmt = stmt.where(and_(*conditions))
+    
+    rows = (await db.execute(stmt)).scalars().all()
+    return rows
+
+
+# ==================== Provider Qualification Console ====================
+
+@router.get("/provider-services/qualification")
+async def list_pending_qualifications(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Các dịch vụ cần check điều kiện (A30)"""
+    # Lấy các dịch vụ có trạng thái pending chuyên môn
+    stmt = select(ProviderService).where(ProviderService.verification_status == "pending")
+    rows = (await db.execute(stmt)).scalars().all()
+    return rows
+
+
+# ==================== Provider Completion Tracking ====================
+
+@router.get("/incomplete")
+async def list_incomplete_providers(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Provider chưa hoàn thiện hồ sơ (A33)"""
+    # Logic đơn giản: Lấy các provider có verification_status = pending
+    stmt = select(Provider).where(Provider.verification_status == "pending")
+    rows = (await db.execute(stmt)).scalars().all()
+    return rows
+
+
 @router.get("/{provider_id}")
 async def get_provider(
     provider_id: uuid.UUID,
@@ -424,30 +480,6 @@ async def manual_create_provider(
 
 # ==================== Provider Document Review ====================
 
-@router.get("/documents")
-async def list_provider_documents(
-    status: str | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(get_current_admin_user),
-):
-    """Danh sách giấy tờ của các provider (A26)"""
-    conditions = []
-    if status:
-        conditions.append(ProviderDocument.verification_status == status)
-    
-    stmt = (
-        select(ProviderDocument)
-        .order_by(ProviderDocument.created_at.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    )
-    if conditions:
-        stmt = stmt.where(and_(*conditions))
-    
-    rows = (await db.execute(stmt)).scalars().all()
-    return rows
 
 
 @router.get("/documents/{id}")
@@ -486,16 +518,6 @@ async def review_provider_document(
 
 # ==================== Provider Qualification Console ====================
 
-@router.get("/provider-services/qualification")
-async def list_pending_qualifications(
-    db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(get_current_admin_user),
-):
-    """Các dịch vụ cần check điều kiện (A30)"""
-    # Lấy các dịch vụ có trạng thái pending chuyên môn
-    stmt = select(ProviderService).where(ProviderService.verification_status == "pending")
-    rows = (await db.execute(stmt)).scalars().all()
-    return rows
 
 
 @router.get("/provider-services/{id}/qualification")
@@ -544,16 +566,6 @@ async def recheck_qualification(
 
 # ==================== Provider Completion Tracking ====================
 
-@router.get("/incomplete")
-async def list_incomplete_providers(
-    db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(get_current_admin_user),
-):
-    """Provider chưa hoàn thiện hồ sơ (A33)"""
-    # Logic đơn giản: Lấy các provider có verification_status = pending
-    stmt = select(Provider).where(Provider.verification_status == "pending")
-    rows = (await db.execute(stmt)).scalars().all()
-    return rows
 
 
 @router.get("/{id}/completion-summary")

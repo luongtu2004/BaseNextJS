@@ -1,17 +1,20 @@
 import { fetchAPI, setToken, clearToken } from './api';
 
 export interface UserSession {
-  user: {
-    id: string;
-    phone: string;
-    full_name: string;
-    gender?: string;
-    dob?: string;
-    avatar_url?: string;
-    phone_verified: boolean;
-    status: string;
-  };
+  id: string;
+  phone: string;
+  full_name: string;
+  gender?: string | number;
+  dob?: string;
+  avatar_url?: string;
+  phone_verified?: boolean;
+  status?: string;
   roles: string[];
+  profile?: {
+    bio?: string;
+    preferred_language?: string;
+    timezone?: string;
+  };
 }
 
 /**

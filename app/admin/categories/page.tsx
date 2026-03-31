@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { fetchAPI } from '@/lib/api';
-import { 
-  Plus, 
-  Edit3, 
-  Power, 
-  PowerOff, 
-  X, 
-  Save, 
+import {
+  Plus,
+  Edit3,
+  Power,
+  PowerOff,
+  X,
+  Save,
   FolderTree,
   Hash,
   Link as LinkIcon,
@@ -113,7 +113,7 @@ export default function CategoriesPage() {
             Quản lý cấu trúc nội dung với <span className="text-black">{categories.length}</span> danh mục
           </p>
         </div>
-        <button 
+        <button
           onClick={openCreate}
           className="bg-black text-white px-8 py-4 rounded-[24px] font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/10"
         >
@@ -124,7 +124,7 @@ export default function CategoriesPage() {
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-600 px-6 py-4 rounded-[24px] text-sm font-bold flex items-center gap-3">
-           <PowerOff size={18} /> {error}
+          <PowerOff size={18} /> {error}
         </div>
       )}
 
@@ -132,14 +132,14 @@ export default function CategoriesPage() {
       <AnimatePresence>
         {showForm && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowForm(false)}
               className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -159,12 +159,12 @@ export default function CategoriesPage() {
                   <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
                     <FolderTree size={12} /> Tên danh mục *
                   </label>
-                  <input 
-                    value={form.name} 
+                  <input
+                    value={form.name}
                     onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="Nhập tên danh mục..."
                     className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-bold placeholder:text-black/20 outline-none transition-all"
-                    required 
+                    required
                   />
                 </div>
 
@@ -173,8 +173,8 @@ export default function CategoriesPage() {
                     <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
                       <Hash size={12} /> Code
                     </label>
-                    <input 
-                      value={form.code} 
+                    <input
+                      value={form.code}
                       onChange={(e) => setForm({ ...form, code: e.target.value })}
                       className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-mono font-bold outline-none transition-all"
                     />
@@ -183,8 +183,8 @@ export default function CategoriesPage() {
                     <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
                       <LinkIcon size={12} /> Slug
                     </label>
-                    <input 
-                      value={form.slug} 
+                    <input
+                      value={form.slug}
                       onChange={(e) => setForm({ ...form, slug: e.target.value })}
                       className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-mono font-bold outline-none transition-all"
                     />
@@ -195,25 +195,25 @@ export default function CategoriesPage() {
                   <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
                     <AlignLeft size={12} /> Mô tả
                   </label>
-                  <textarea 
-                    value={form.description} 
+                  <textarea
+                    value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    rows={3} 
+                    rows={3}
                     placeholder="Thông tin thêm về danh mục..."
                     className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-bold placeholder:text-black/20 outline-none transition-all resize-none"
                   />
                 </div>
 
                 <div className="flex gap-3 justify-end mt-10">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowForm(false)}
                     className="px-8 py-4 rounded-[20px] text-xs font-black uppercase tracking-widest border border-black/5 hover:bg-black/5 transition-all text-black/40 hover:text-black"
                   >
                     Hủy bỏ
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={saving}
                     className="px-10 py-4 bg-black text-white rounded-[20px] text-xs font-black uppercase tracking-widest disabled:opacity-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-black/10"
                   >
@@ -245,19 +245,18 @@ export default function CategoriesPage() {
                 <FolderTree size={24} />
               </div>
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={() => openEdit(cat)}
                   className="size-10 rounded-full border border-black/5 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-all"
                 >
                   <Edit3 size={18} />
                 </button>
-                <button 
+                <button
                   onClick={() => handleToggleActive(cat)}
-                  className={`size-10 rounded-full border border-black/5 flex items-center justify-center transition-all ${
-                    cat.is_active 
-                      ? 'text-emerald-500/40 hover:text-emerald-500 hover:bg-emerald-50' 
-                      : 'text-black/40 hover:text-black hover:bg-black/5'
-                  }`}
+                  className={`size-10 rounded-full border border-black/5 flex items-center justify-center transition-all ${cat.is_active
+                    ? 'text-emerald-500/40 hover:text-emerald-500 hover:bg-emerald-50'
+                    : 'text-black/40 hover:text-black hover:bg-black/5'
+                    }`}
                 >
                   {cat.is_active ? <Power size={18} /> : <PowerOff size={18} />}
                 </button>
@@ -274,14 +273,13 @@ export default function CategoriesPage() {
                 <span className="px-3 py-1 rounded-full bg-black/[0.03] text-black/40 font-mono text-[10px] font-bold invisible group-hover:visible transition-all">/{cat.slug}</span>
               </div>
             </div>
-            
+
             <div className="mt-6 pt-6 border-t border-black/5 flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-black/20">
                 {new Date(cat.created_at).toLocaleDateString('vi-VN')}
               </span>
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                cat.is_active ? 'text-emerald-600 bg-emerald-500/10' : 'text-black/20 bg-black/5'
-              }`}>
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${cat.is_active ? 'text-emerald-600 bg-emerald-500/10' : 'text-black/20 bg-black/5'
+                }`}>
                 <div className={`size-1.5 rounded-full ${cat.is_active ? 'bg-emerald-600' : 'bg-black/20'}`} />
                 {cat.is_active ? 'Active' : 'Hidden'}
               </div>

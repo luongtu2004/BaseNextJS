@@ -69,7 +69,7 @@ export default function Navbar() {
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className={`pointer-events-auto bg-white/85 backdrop-blur-[48px] rounded-full shadow-[0_16px_48px_-12px_rgba(0,0,0,0.15)] ring-1 ring-white/60 flex items-center p-1.5 overflow-visible relative min-w-[280px] md:min-w-[520px] ${isMenuOpen ? 'pointer-events-none' : ''}`}
           onMouseLeave={() => setHoveredTab(null)}
-          style={{ willChange: 'transform, opacity' }}
+          style={{ willChange: 'transform, opacity', transform: 'translateZ(0)' }}
         >
           <div className="flex items-center w-full justify-around px-1 relative">
             {navItems.map((item) => {
@@ -91,7 +91,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ type: 'spring', stiffness: 450, damping: 45, mass: 1 }}
-                        style={{ willChange: 'transform, opacity' }}
+                        style={{ willChange: 'transform, opacity', transform: 'translateZ(0)' }}
                       />
                     )}
                   </AnimatePresence>
@@ -194,7 +194,11 @@ export default function Navbar() {
       {/* COMPACT MODE: Mega Menu tối ưu không gian & khoảng cách chuẩn quốc tế */}
       <AnimatePresence>
         {isMenuOpen && (
-          <div className="fixed inset-0 z-[9999] overflow-y-auto pointer-events-auto bg-white/98 md:bg-white/95 backdrop-blur-[64px] shadow-2xl custom-scrollbar overscroll-behavior-contain">
+          <div
+            className="fixed inset-0 z-[9999] overflow-y-auto pointer-events-auto bg-white/98 md:bg-white/95 backdrop-blur-[64px] shadow-2xl custom-scrollbar overscroll-behavior-contain"
+            onWheel={(e) => e.stopPropagation()}
+            data-lenis-prevent
+          >
 
             <motion.div
               initial={{ y: -50, opacity: 0 }}

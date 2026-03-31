@@ -53,7 +53,7 @@ VALUES -- Bài viết 1: Tin tức
         'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c01',
         'Hệ sinh thái Sàn Dịch Vụ chính thức phủ sóng toàn quốc',
         'he-sinh-thai-san-dich-vu-chinh-thuc-phu-song-toan-quoc',
-        'Chúng tôi tự hào mở rộng mạng lưới 45 ngành nghề dịch vụ đến mọi miền tổ quốc, nâng tầm chất lượng sống người Việt.',
+        'Chúng tôi tự hào mở rộng mạng lưới rất nhiều ngành nghề dịch vụ đến mọi miền tổ quốc, nâng tầm chất lượng sống người Việt.',
         'Nội dung chi tiết về việc mở rộng hệ sinh thái Sàn Dịch Vụ toàn quốc...',
         'https://lh3.googleusercontent.com/aida-public/AB6AXuBPsPSlnS35PI-XKZib3mcGm9qSTcEyr2h3rGd5h6TSFbO72E9rZeGMqFdZvLJrTCQy345Lqfs0wObZE-h2xbiyvzJzGzKVqzYDVoqU2rsuGG6H6MD1AYczMwwz4a7vGTJmlwVp9xFmHkV6lzMRb5b_RIr3AHfPwp3yygj1lqmN3kGa24R9FCugQ22qrd2b7SYadg6jKdTpBV_S0D46le-1dPgP_L0ZzGctvFra65z9UUb7VyyE6nw4JLUkiq_10-VJfuG6A73eIAqw',
         'published',

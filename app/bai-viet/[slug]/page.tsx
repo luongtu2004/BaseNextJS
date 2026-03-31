@@ -14,7 +14,7 @@ const mockArticles = [
     slug: 'he-sinh-thai-san-dich-vu-chinh-thuc-phu-song-toan-quoc',
     category: 'Tin tức',
     title: 'Hệ sinh thái Sàn Dịch Vụ chính thức phủ sóng toàn quốc',
-    description: 'Chúng tôi tự hào mở rộng mạng lưới 45 ngành nghề dịch vụ đến mọi miền tổ quốc, nâng tầm chất lượng sống người Việt.',
+    description: 'Chúng tôi tự hào mở rộng mạng lưới rất nhiều ngành nghề dịch vụ đến mọi miền tổ quốc, nâng tầm chất lượng sống người Việt.',
     content: `
       <p>Với sứ mệnh mang lại sự tiện nghi và chất lượng dịch vụ tốt nhất cho người dân Việt Nam, Sàn Dịch Vụ chính thức công bố việc mở rộng hoạt động trên toàn quốc. Động thái này đánh dấu một bước tiến quan trọng trong chiến lược phát triển của chúng tôi, nhằm kết nối nhanh chóng và hiệu quả giữa người dùng và các nhà cung cấp dịch vụ chuyên nghiệp.</p>
       

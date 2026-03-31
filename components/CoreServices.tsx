@@ -103,7 +103,7 @@ export default function CoreServices() {
             className="max-w-xl"
           >
             <p className="text-[18px] md:text-[22px] text-[#5d4037] font-medium leading-tight tracking-tight italic opacity-80">
-              "Sự hội tụ của 45 ngành nghề dịch vụ chuyên nghiệp, đáp ứng mọi khía cạnh trong cuộc sống của bạn."
+              "Sự hội tụ của rất nhiều ngành nghề dịch vụ chuyên nghiệp, đáp ứng mọi khía cạnh trong cuộc sống của bạn."
             </p>
           </motion.div>
         </div>
@@ -129,10 +129,10 @@ export default function CoreServices() {
                   initial={{ opacity: 0, y: 100, scale: 0.8, rotateX: 10 }}
                   whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
-                  transition={{ 
-                    duration: 1.2, 
-                    ease: [0.22, 1, 0.36, 1], 
-                    delay: 0.1 
+                  transition={{
+                    duration: 1.2,
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: 0.1
                   }}
                   className={`flex flex-col lg:flex-row items-center gap-12 lg:gap-24 ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}
                   style={{ perspective: "1500px" }}

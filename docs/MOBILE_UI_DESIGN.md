@@ -32,17 +32,69 @@ This document specifies the mobile interface design (iPhone 15 Pro / iOS 17 styl
 - **Interaction**: Two-step flow integrated into one clean view.
 - **API**: `POST /api/v1/auth/register`.
 
+#### OTP Verification (Xác minh)
+![OTP Verification](mobile_ui_previews/otp_verification.png)
+- **Interaction**: 6-digit discrete entry fields. Resend timer (60s).
+- **API**: `POST /api/v1/auth/otp/verify`.
+
 ---
 
 ### 2.2. Home Screen (Trang chủ)
-![Notifications Screen](mobile_ui_previews/notifications_screen.png)
+![Home Screen](mobile_ui_previews/notifications_screen.png)
 
 | UI Component | Data Source (Backend API) | Interaction |
 |--------------|---------------------------|-------------|
-| **Promo/News Feed** | `GET /common/posts` | Tapping reads the full article. |
+| **Promo/News Feed** | `GET /api/v1/common/posts` | Tapping reads the full article. |
 | **System Updates** | (Implied/Future Order updates) | Pull-to-refresh to sync. |
 
-### 2.3. Settings & Profile Screen (Cài đặt)
+### 2.3. Discovery & Search (Khám phá)
+
+#### Category Browser (Trình duyệt dịch vụ)
+![Category Browser](mobile_ui_previews/category_browser.png)
+
+| UI Component | Data Source (Backend API) | Interaction |
+|--------------|---------------------------|-------------|
+| **Industry Pillars** | `GET /api/v1/customer/industry-categories` | Horizontal scroll of high-level categories. |
+| **Service Grid** | `GET /api/v1/customer/categories/{slug}` | 2-column grid of sub-categories with 48px radius. |
+
+#### Search Results (Kết quả tìm kiếm)
+![Search Results](mobile_ui_previews/search_results.png)
+
+| UI Component | Data Source (Backend API) | Interaction |
+|--------------|---------------------------|-------------|
+| **AI Search Bar** | `GET /api/v1/customer/search` | Natural language query support. |
+| **Provider Cards** | `GET /api/v1/customer/search` | 40px radius cards with Rating, Jobs count, and Bio. |
+| **Filters** | Client-side / API query params | Quick filter chips: "Rating", "Distance", "Price". |
+
+### 2.4. Provider Details (Chi tiết nhà cung cấp)
+![Provider Profile](mobile_ui_previews/provider_profile.png)
+
+| UI Component | Data Source (Backend API) | Interaction |
+|--------------|---------------------------|-------------|
+| **Expertise Tags** | `GET /api/v1/customer/providers/{id}` | Highlights specific skills of the partner. |
+| **Trust Metrics** | `GET /api/v1/customer/providers/{id}` | Verification badge and success history. |
+| **Contact Action** | Phone/WhatsApp Link | Floating Action Button (FAB) for immediate connection. |
+
+### 2.5. Partner Workspace (Dành cho thợ)
+
+#### Partner Dashboard
+![Partner Dashboard](mobile_ui_previews/partner_dashboard.png)
+
+| UI Component | Data Source (Backend API) | Interaction |
+|--------------|---------------------------|-------------|
+| **Status Toggle** | `PUT /api/v1/provider/profile` | Switch between "Online" (Ready) and "Offline". |
+| **Success Stats** | `GET /api/v1/provider/profile` | Summary of completed jobs and current ratings. |
+
+#### Service Management (Đăng ký dịch vụ)
+![Service Management](mobile_ui_previews/service_management.png)
+
+| UI Component | Data Source (Backend API) | Interaction |
+|--------------|---------------------------|-------------|
+| **Owned Services** | `GET /api/v1/provider/services` | List of current offerings. |
+| **Add New Service** | `POST /api/v1/provider/services` | Wizard/Form with 48px radio buttons/inputs. |
+| **Attributes** | `POST /api/v1/provider/service-attributes` | Detailed skill-level tagging. |
+
+### 2.6. Settings & Profile Screen (Cài đặt)
 ![Settings Screen](mobile_ui_previews/settings_screen.png)
 
 | UI Component | Data Source (Backend API) | Interaction |

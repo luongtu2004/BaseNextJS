@@ -153,6 +153,7 @@ async def get_profile_completion(
     db: AsyncSession = Depends(get_db)
 ):
     """Xem % hoàn thiện hồ sơ & các trường còn thiếu (P6)"""
+    missing_fields = []
     fields_to_check = ["description"]
     if provider.provider_type == "individual":
         fields_to_check.extend(["full_name", "cccd", "exe_year"])

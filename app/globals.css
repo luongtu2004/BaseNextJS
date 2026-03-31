@@ -5,15 +5,16 @@
   --color-primary: #00523b;
   --color-primary-container: #1a6b51;
   --color-primary-fixed-dim: #8ad6b6;
-  --color-surface: #f9f9fe;
+  --color-surface: #ffffff;
   --color-surface-container-low: #f3f3f8;
   --color-surface-container-lowest: #ffffff;
   --color-on-surface: #1a1c1f;
   --color-on-surface-variant: #3f4944;
   --color-outline-variant: #bec9c2;
   --color-surface-tint: #00523b;
-  --color-background-light: #f9f9fe;
+  --color-background-light: #ffffff;
   --color-background-dark: #000000;
+  --color-secondary-brown: #5d4037;
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 
   @keyframes shimmer {
@@ -27,9 +28,17 @@
   }
 
   @keyframes progress-bar-animation {
-    0% { transform: translateX(-100%) scaleX(0.2); }
-    50% { transform: translateX(0) scaleX(0.5); }
-    100% { transform: translateX(100%) scaleX(0.2); }
+    0% {
+      transform: translateX(-100%) scaleX(0.2);
+    }
+
+    50% {
+      transform: translateX(0) scaleX(0.5);
+    }
+
+    100% {
+      transform: translateX(100%) scaleX(0.2);
+    }
   }
 }
 

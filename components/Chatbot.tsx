@@ -30,15 +30,18 @@ const Chatbot: React.FC = () => {
     scrollToBottom();
   }, [messages, isStreaming]);
 
-  // Check for first visit and auto-open; load stored user profile
+  // Check for first visit and auto-open (DISABLED as per user request)
   useEffect(() => {
+    // Disabled auto-open logic
+    /*
     const hasBeenDismissed = localStorage.getItem('chatbot_dismissed');
     if (!hasBeenDismissed) {
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 3500); // 3.5s delay to allow banner animations to finish
+      }, 3500);
       return () => clearTimeout(timer);
     }
+    */
   }, []);
 
   // Update animating state when isOpen changes

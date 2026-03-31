@@ -17,7 +17,7 @@ from app.schemas.admin import ProviderCreateRequest, ProviderUpdateRequest
 router = APIRouter(tags=["admin-providers"])
 
 
-@router.get("/")
+@router.get("")
 async def list_providers(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),

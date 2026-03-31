@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { fetchAPI } from '@/lib/api';
-import { 
-  Plus, 
-  ChevronDown, 
-  ChevronRight, 
-  Settings2, 
-  Power, 
-  PowerOff, 
-  X, 
-  Save, 
+import {
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  Settings2,
+  Power,
+  PowerOff,
+  X,
+  Save,
   Layers,
   Fingerprint,
   FileText,
@@ -52,7 +52,7 @@ export default function TaxonomyPage() {
   const loadIndustries = async () => {
     setLoading(true);
     try {
-      const data = await fetchAPI<IndustryCategory[]>('/api/v1/admin/industry-categories');
+      const data = await fetchAPI<IndustryCategory[]>('/api/v1/admin/taxonomy/industry-categories');
       setIndustries(Array.isArray(data) ? data : []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Lỗi tải dữ liệu');
@@ -69,7 +69,7 @@ export default function TaxonomyPage() {
     if (!services[industryId]) {
       setLoadingServices((s) => ({ ...s, [industryId]: true }));
       try {
-        const data = await fetchAPI<ServiceCategory[]>(`/api/v1/admin/service-categories?industry_category_id=${industryId}`);
+        const data = await fetchAPI<ServiceCategory[]>(`/api/v1/admin/taxonomy/service-categories?industry_category_id=${industryId}`);
         setServices((s) => ({ ...s, [industryId]: Array.isArray(data) ? data : [] }));
       } catch { /* ignore */ }
       setLoadingServices((s) => ({ ...s, [industryId]: false }));
@@ -78,7 +78,7 @@ export default function TaxonomyPage() {
 
   const toggleIndustryStatus = async (ind: IndustryCategory) => {
     try {
-      await fetchAPI(`/api/v1/admin/industry-categories/${ind.id}/status`, {
+      await fetchAPI(`/api/v1/admin/taxonomy/industry-categories/${ind.id}/status`, {
         method: 'PATCH', body: JSON.stringify({ is_active: !ind.is_active }),
       });
       loadIndustries();
@@ -109,11 +109,11 @@ export default function TaxonomyPage() {
     setSaving(true);
     try {
       if (editIndustry) {
-        await fetchAPI(`/api/v1/admin/industry-categories/${editIndustry.id}`, {
+        await fetchAPI(`/api/v1/admin/taxonomy/industry-categories/${editIndustry.id}`, {
           method: 'PUT', body: JSON.stringify(industryForm),
         });
       } else {
-        await fetchAPI('/api/v1/admin/industry-categories', {
+        await fetchAPI('/api/v1/admin/taxonomy/industry-categories', {
           method: 'POST', body: JSON.stringify(industryForm),
         });
       }
@@ -136,7 +136,7 @@ export default function TaxonomyPage() {
             Phân loại hệ sinh thái với <span className="text-black">{industries.length}</span> trụ cột ngành nghề
           </p>
         </div>
-        <button 
+        <button
           onClick={openCreateIndustry}
           className="bg-black text-white px-8 py-4 rounded-[24px] font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/10"
         >
@@ -147,7 +147,7 @@ export default function TaxonomyPage() {
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-600 px-6 py-4 rounded-[24px] text-sm font-bold flex items-center gap-3">
-           <PowerOff size={18} /> {error}
+          <PowerOff size={18} /> {error}
         </div>
       )}
 
@@ -155,14 +155,14 @@ export default function TaxonomyPage() {
       <AnimatePresence>
         {showIndustryForm && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowIndustryForm(false)}
               className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -182,12 +182,12 @@ export default function TaxonomyPage() {
                   <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
                     <Briefcase size={12} /> Tên ngành nghề *
                   </label>
-                  <input 
-                    value={industryForm.name} 
+                  <input
+                    value={industryForm.name}
                     onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="Nhập tên ngành nghề (VD: Xây dựng, CNTT...)"
                     className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-bold placeholder:text-black/20 outline-none transition-all"
-                    required 
+                    required
                   />
                 </div>
 
@@ -195,8 +195,8 @@ export default function TaxonomyPage() {
                   <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
                     <Fingerprint size={12} /> Mã định danh (Code)
                   </label>
-                  <input 
-                    value={industryForm.code} 
+                  <input
+                    value={industryForm.code}
                     onChange={(e) => setIndustryForm({ ...industryForm, code: e.target.value })}
                     className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-mono font-bold outline-none transition-all"
                   />
@@ -206,25 +206,25 @@ export default function TaxonomyPage() {
                   <label className="text-[11px] font-black uppercase tracking-widest text-black/40 ml-4 flex items-center gap-2">
                     <FileText size={12} /> Mô tả ngành
                   </label>
-                  <textarea 
-                    value={industryForm.description} 
+                  <textarea
+                    value={industryForm.description}
                     onChange={(e) => setIndustryForm({ ...industryForm, description: e.target.value })}
-                    rows={3} 
+                    rows={3}
                     placeholder="Thông tin thêm về ngành nghề này..."
                     className="w-full px-6 py-4 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-bold placeholder:text-black/20 outline-none transition-all resize-none"
                   />
                 </div>
 
                 <div className="flex gap-3 justify-end mt-10">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowIndustryForm(false)}
                     className="px-8 py-4 rounded-[20px] text-xs font-black uppercase tracking-widest border border-black/5 hover:bg-black/5 transition-all text-black/40 hover:text-black"
                   >
                     Hủy bỏ
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={saving}
                     className="px-10 py-4 bg-black text-white rounded-[20px] text-xs font-black uppercase tracking-widest disabled:opacity-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-black/10"
                   >
@@ -256,18 +256,16 @@ export default function TaxonomyPage() {
               <div className="flex items-center gap-6 flex-1 min-w-0">
                 <button
                   onClick={() => toggleExpand(ind.id)}
-                  className={`size-12 rounded-2xl flex items-center justify-center transition-all ${
-                    expandedId === ind.id ? 'bg-black text-white' : 'bg-black/[0.03] text-black/40 hover:text-black'
-                  }`}
+                  className={`size-12 rounded-2xl flex items-center justify-center transition-all ${expandedId === ind.id ? 'bg-black text-white' : 'bg-black/[0.03] text-black/40 hover:text-black'
+                    }`}
                 >
                   {expandedId === ind.id ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </button>
                 <div className="min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="text-xl font-black tracking-tighter uppercase">{ind.name}</h3>
-                    <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      ind.is_active ? 'text-emerald-600 bg-emerald-500/10' : 'text-black/20 bg-black/5'
-                    }`}>
+                    <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${ind.is_active ? 'text-emerald-600 bg-emerald-500/10' : 'text-black/20 bg-black/5'
+                      }`}>
                       <div className={`size-1.5 rounded-full ${ind.is_active ? 'bg-emerald-600' : 'bg-black/20'}`} />
                       {ind.is_active ? 'Active' : 'Hidden'}
                     </div>
@@ -276,19 +274,18 @@ export default function TaxonomyPage() {
                   <p className="text-[10px] font-black text-black/20 tracking-widest uppercase mt-1 font-mono">{ind.code}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={() => openEditIndustry(ind)} 
+                <button
+                  onClick={() => openEditIndustry(ind)}
                   className="size-11 rounded-full border border-black/5 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-all"
                 >
                   <Settings2 size={18} />
                 </button>
-                <button 
-                  onClick={() => toggleIndustryStatus(ind)} 
-                  className={`size-11 rounded-full border border-black/5 flex items-center justify-center transition-all ${
-                    ind.is_active ? 'text-emerald-500/40 hover:text-emerald-500 hover:bg-emerald-50' : 'text-black/40 hover:text-black hover:bg-black/5'
-                  }`}
+                <button
+                  onClick={() => toggleIndustryStatus(ind)}
+                  className={`size-11 rounded-full border border-black/5 flex items-center justify-center transition-all ${ind.is_active ? 'text-emerald-500/40 hover:text-emerald-500 hover:bg-emerald-50' : 'text-black/40 hover:text-black hover:bg-black/5'
+                    }`}
                 >
                   {ind.is_active ? <Power size={18} /> : <PowerOff size={18} />}
                 </button>
@@ -298,7 +295,7 @@ export default function TaxonomyPage() {
             {/* Service Categories (expanded) */}
             <AnimatePresence>
               {expandedId === ind.id && (
-                <motion.div 
+                <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}

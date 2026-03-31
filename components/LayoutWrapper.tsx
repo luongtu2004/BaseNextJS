@@ -8,6 +8,7 @@ import SmoothScroll from '@/components/SmoothScroll';
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
+  const isAuth = pathname?.startsWith('/login') || pathname?.startsWith('/register');
 
   if (isAdmin) {
     return (
@@ -23,7 +24,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       <SmoothScroll>
         {children}
       </SmoothScroll>
-      <Footer />
+      {!isAuth && <Footer />}
     </>
   );
 }

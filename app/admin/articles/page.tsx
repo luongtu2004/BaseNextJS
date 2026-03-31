@@ -3,16 +3,16 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchAPI } from '@/lib/api';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Edit3, 
-  Eye, 
-  EyeOff, 
-  CheckCircle2, 
-  ChevronLeft, 
+import {
+  Plus,
+  Search,
+  Filter,
+  MoreVertical,
+  Edit3,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Clock,
   FileText
@@ -55,7 +55,7 @@ export default function ArticlesPage() {
       const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
       if (statusFilter) params.set('status', statusFilter);
       const data = await fetchAPI<{ items: Article[]; total: number }>(
-        `/api/v1/admin/posts/?${params}`
+        `/api/v1/admin/posts?${params}`
       );
       setArticles(data.items || []);
       setTotal(data.total || 0);
@@ -102,8 +102,8 @@ export default function ArticlesPage() {
       <div className="bg-white rounded-[32px] p-4 border border-black/5 flex flex-wrap items-center gap-3 shadow-sm">
         <div className="flex-1 min-w-[300px] relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/20" size={18} />
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Tìm kiếm tiêu đề hoặc slug..."
             className="w-full pl-12 pr-4 py-3 bg-black/[0.02] border border-transparent focus:border-black/10 rounded-[20px] text-sm font-bold placeholder:text-black/20 outline-none transition-all"
           />
@@ -113,11 +113,10 @@ export default function ArticlesPage() {
             <button
               key={s}
               onClick={() => { setStatusFilter(s); setPage(1); }}
-              className={`whitespace-nowrap px-5 py-3 rounded-[20px] text-[11px] font-black uppercase tracking-widest transition-all ${
-                statusFilter === s
-                  ? 'bg-black text-white'
-                  : 'bg-black/[0.03] text-black/40 hover:bg-black/[0.06] hover:text-black'
-              }`}
+              className={`whitespace-nowrap px-5 py-3 rounded-[20px] text-[11px] font-black uppercase tracking-widest transition-all ${statusFilter === s
+                ? 'bg-black text-white'
+                : 'bg-black/[0.03] text-black/40 hover:bg-black/[0.06] hover:text-black'
+                }`}
             >
               {s === '' ? 'Tất cả' : (STATUS_LABELS[s]?.label ?? s)}
             </button>
@@ -182,8 +181,8 @@ export default function ArticlesPage() {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link 
-                            href={`/admin/articles/${article.id}`} 
+                          <Link
+                            href={`/admin/articles/${article.id}`}
                             className="size-10 rounded-full border border-black/5 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-all"
                             title="Chỉnh sửa"
                           >

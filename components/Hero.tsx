@@ -58,7 +58,7 @@ export default function Hero() {
             </motion.div>
 
             {/* Hero Heading — Increased line-height and spacing between lines */}
-            <h1 className="text-[32px] md:text-[48px] lg:text-[60px] font-black leading-[1.15] tracking-[-0.04em] mb-10 uppercase text-slate-900">
+            <h1 className="text-[32px] md:text-[48px] lg:text-[60px] font-black leading-[1.15] tracking-[-0.04em] mb-10 uppercase text-primary">
               <span className="block mb-6">
                 <TypingText
                   text="Giải Pháp Tận Tâm"
@@ -81,7 +81,7 @@ export default function Hero() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 1.6 }}
-              className="text-[17px] md:text-[21px] text-slate-500 font-medium max-w-xl mb-12 leading-[1.65] tracking-tight"
+              className="text-[17px] md:text-[21px] text-[#5d4037] font-medium max-w-xl mb-12 leading-[1.65] tracking-tight opacity-90"
             >
               Hệ sinh thái kết nối chuyên gia hàng đầu, đồng hành cùng bạn giải quyết mọi nhu cầu cuộc sống một cách chuyên nghiệp, minh bạch và tin cậy nhất.
             </motion.p>

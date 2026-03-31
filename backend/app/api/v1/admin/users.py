@@ -19,7 +19,7 @@ router = APIRouter(tags=["admin-users"])
 # Sử dụng get_current_admin_user từ app.api.deps
 
 
-@router.get("/")
+@router.get("")
 async def list_users(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),

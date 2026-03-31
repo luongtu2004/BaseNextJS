@@ -40,7 +40,7 @@ export async function fetchAPI<T = unknown>(
   if (!skipAuth) {
     const token = getToken();
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token.trim()}`;
     }
   }
 
@@ -55,6 +55,7 @@ export async function fetchAPI<T = unknown>(
       const err = await res.json();
       message = err?.detail || err?.message || message;
     } catch { /* ignore */ }
+
     throw new Error(message);
   }
 

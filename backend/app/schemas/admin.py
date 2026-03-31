@@ -140,3 +140,24 @@ class PostListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class VerificationReviewRequest(BaseModel):
+    reason: str | None = Field(None, description="Reason for rejection or resubmission request")
+
+
+class DocumentReviewRequest(BaseModel):
+    status: str = Field(..., description="approved or rejected")
+    reason: str | None = Field(None, description="Reason for rejection")
+
+
+class VerificationResponse(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    verification_type: str
+    status: str
+    submitted_at: datetime | None = None
+    reviewed_at: datetime | None = None
+    reviewed_by: uuid.UUID | None = None
+    rejection_reason: str | None = None
+    created_at: datetime

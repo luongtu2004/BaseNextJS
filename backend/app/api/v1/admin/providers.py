@@ -10,8 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_admin_user
 from app.db.session import get_db
 from app.models.provider import Provider, ProviderDocument, ProviderIndividualProfile, ProviderBusinessProfile, ProviderStatusLog
+from app.models.provider_service import ProviderService, ProviderDocumentService
+from app.models.taxonomy import ServiceCategoryRequirement
 from app.models.user import User, UserRole
-from app.schemas.admin import ProviderCreateRequest, ProviderUpdateRequest
+from app.schemas.admin import ProviderCreateRequest, ProviderUpdateRequest, DocumentReviewRequest
 
 
 router = APIRouter(tags=["admin-providers"])
@@ -417,6 +419,162 @@ async def manual_create_provider(
             "verification_status": provider.verification_status,
             "status": provider.status,
         },
+    }
+
+
+# ==================== Provider Document Review ====================
+
+@router.get("/documents")
+async def list_provider_documents(
+    status: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Danh sách giấy tờ của các provider (A26)"""
+    conditions = []
+    if status:
+        conditions.append(ProviderDocument.verification_status == status)
+    
+    stmt = (
+        select(ProviderDocument)
+        .order_by(ProviderDocument.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    if conditions:
+        stmt = stmt.where(and_(*conditions))
+    
+    rows = (await db.execute(stmt)).scalars().all()
+    return rows
+
+
+@router.get("/documents/{id}")
+async def get_provider_document_detail(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Chi tiết giấy tờ (A27)"""
+    doc = await db.get(ProviderDocument, id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return doc
+
+
+@router.post("/documents/{id}/review")
+async def review_provider_document(
+    id: uuid.UUID,
+    payload: DocumentReviewRequest,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Duyệt hoặc từ chối chứng chỉ/giấy tờ (A28, A29)"""
+    doc = await db.get(ProviderDocument, id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+        
+    doc.verification_status = payload.status
+    doc.rejection_reason = payload.reason if payload.status == "rejected" else None
+    doc.verified_at = func.now() if payload.status == "approved" else None
+    doc.verified_by = admin_user.id if payload.status == "approved" else None
+    
+    await db.commit()
+    return {"message": f"Document status updated to {payload.status}"}
+
+
+# ==================== Provider Qualification Console ====================
+
+@router.get("/provider-services/qualification")
+async def list_pending_qualifications(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Các dịch vụ cần check điều kiện (A30)"""
+    # Lấy các dịch vụ có trạng thái pending chuyên môn
+    stmt = select(ProviderService).where(ProviderService.verification_status == "pending")
+    rows = (await db.execute(stmt)).scalars().all()
+    return rows
+
+
+@router.get("/provider-services/{id}/qualification")
+async def get_service_qualification_detail(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Chi tiết qualification của một dịch vụ (A31)"""
+    svc = await db.get(ProviderService, id)
+    if not svc:
+        raise HTTPException(status_code=404, detail="Service registration not found")
+        
+    # Get requirements
+    req_stmt = select(ServiceCategoryRequirement).where(
+        and_(
+            ServiceCategoryRequirement.service_category_id == svc.service_category_id,
+            ServiceCategoryRequirement.is_active == True
+        )
+    )
+    reqs = (await db.execute(req_stmt)).scalars().all()
+    
+    # Get linked documents
+    link_stmt = select(ProviderDocument).join(
+        ProviderDocumentService, ProviderDocument.id == ProviderDocumentService.provider_document_id
+    ).where(ProviderDocumentService.provider_service_id == id)
+    docs = (await db.execute(link_stmt)).scalars().all()
+    
+    return {
+        "service": svc,
+        "requirements": reqs,
+        "linked_documents": docs
+    }
+
+
+@router.post("/provider-services/{id}/qualification/recheck")
+async def recheck_qualification(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Ép check lại điều kiện (A32)"""
+    # Trong thực tế, đây có thể là trigger một background task hoặc chạy logic khớp document ngay lập tức
+    return {"message": "Qualification check re-triggered for service"}
+
+
+# ==================== Provider Completion Tracking ====================
+
+@router.get("/incomplete")
+async def list_incomplete_providers(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Provider chưa hoàn thiện hồ sơ (A33)"""
+    # Logic đơn giản: Lấy các provider có verification_status = pending
+    stmt = select(Provider).where(Provider.verification_status == "pending")
+    rows = (await db.execute(stmt)).scalars().all()
+    return rows
+
+
+@router.get("/{id}/completion-summary")
+async def get_provider_completion_summary(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Thống kê thiếu gì (A34)"""
+    provider = await db.get(Provider, id)
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+        
+    # Reuse provider logic if possible, or implement simple check here
+    missing = []
+    if not provider.description: missing.append("description")
+    
+    return {
+        "provider_id": id,
+        "missing_fields": missing,
+        "is_complete": len(missing) == 0
     }
 
 

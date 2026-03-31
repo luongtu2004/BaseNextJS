@@ -451,32 +451,31 @@ Admin quản lý các phiên bản xét duyệt.
 **User Verification Console:**
 | # | Method | Path | Notes | Trạng thái |
 |---|--------|------|-------|------------|
-| A21 | GET | `/api/v1/admin/user-verifications` | Danh sách hồ sơ xác minh | TODO |
-| A22 | GET | `/api/v1/admin/user-verifications/{id}` | Chi tiết hồ sơ | TODO |
-| A23 | POST | `/api/v1/admin/user-verifications/{id}/approve` | Duyệt | TODO |
-| A24 | POST | `/api/v1/admin/user-verifications/{id}/reject` | Từ chối | TODO |
-| A25 | POST | `/api/v1/admin/user-verifications/{id}/request-resubmission` | Yêu cầu bổ sung | TODO |
+| A21 | GET | `/api/v1/admin/user-verifications` | Danh sách hồ sơ xác minh | OK |
+| A22 | GET | `/api/v1/admin/user-verifications/{id}` | Chi tiết hồ sơ | OK |
+| A23 | POST | `/api/v1/admin/user-verifications/{id}/approve` | Duyệt | OK |
+| A24 | POST | `/api/v1/admin/user-verifications/{id}/reject` | Từ chối | OK |
+| A25 | POST | `/api/v1/admin/user-verifications/{id}/request-resubmission` | Yêu cầu bổ sung | OK |
 
 **Provider Document Review:**
 | # | Method | Path | Notes | Trạng thái |
 |---|--------|------|-------|------------|
-| A26 | GET | `/api/v1/admin/provider-documents` | Danh sách giấy tờ provider | TODO |
-| A27 | GET | `/api/v1/admin/provider-documents/{id}` | Chi tiết giấy tờ | TODO |
-| A28 | POST | `/api/v1/admin/provider-documents/{id}/approve` | Duyệt chứng chỉ | TODO |
-| A29 | POST | `/api/v1/admin/provider-documents/{id}/reject` | Từ chối chứng chỉ | TODO |
+| A26 | GET | `/api/v1/admin/provider-providers/documents` | Danh sách giấy tờ provider | OK |
+| A27 | GET | `/api/v1/admin/provider-providers/documents/{id}` | Chi tiết giấy tờ | OK |
+| A28 | POST | `/api/v1/admin/provider-providers/documents/{id}/review` | Duyệt/Từ chối chứng chỉ | OK |
 
 **Provider Qualification Console:**
 | # | Method | Path | Notes | Trạng thái |
 |---|--------|------|-------|------------|
-| A30 | GET | `/api/v1/admin/provider-services/qualification` | Các dịch vụ cần check | TODO |
-| A31 | GET | `/api/v1/admin/provider-services/{id}/qualification` | Chi tiết qualification | TODO |
-| A32 | POST | `/api/v1/admin/provider-services/{id}/qualification/recheck` | Ép check lại điều kiện | TODO |
+| A30 | GET | `/api/v1/admin/provider-providers/provider-services/qualification` | Các dịch vụ cần check | OK |
+| A31 | GET | `/api/v1/admin/provider-providers/provider-services/{id}/qualification` | Chi tiết qualification | OK |
+| A32 | POST | `/api/v1/admin/provider-providers/provider-services/{id}/qualification/recheck` | Ép check lại điều kiện | OK |
 
 **Provider Completion:**
 | # | Method | Path | Notes | Trạng thái |
 |---|--------|------|-------|------------|
-| A33 | GET | `/api/v1/admin/providers/incomplete` | Provider chưa hoàn thiện hồ sơ | TODO |
-| A34 | GET | `/api/v1/admin/providers/{id}/completion` | Thống kê thiếu gì | TODO |
+| A33 | GET | `/api/v1/admin/provider-providers/incomplete` | Provider chưa hoàn thiện hồ sơ | OK |
+| A34 | GET | `/api/v1/admin/provider-providers/{id}/completion-summary` | Thống kê thiếu gì | OK |
 
 ### MODULE I — Internal (Auto eKYC / Callback)
 

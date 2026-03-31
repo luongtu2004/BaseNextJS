@@ -9,24 +9,28 @@ export const metadata: Metadata = {
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-blue-400/10 blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[120px]" />
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden selection:bg-emerald-500/30 selection:text-emerald-900">
+      {/* High-Fidelity Bright Gradient Background (Light Green & Beige/Brown) */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-white">
+        <div 
+          className="absolute inset-0 opacity-[1]"
+          style={{ 
+            background: `linear-gradient(135deg, #f0f9f1 0%, #ffffff 50%, #f9f7f4 100%)` 
+          }} 
+        />
+        <div className="absolute top-[-5%] left-[-5%] w-[50%] h-[50%] rounded-full bg-emerald-100/40 blur-[100px] animate-pulse" />
+        <div className="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] rounded-full bg-orange-50/40 blur-[100px]" />
+        
+        {/* Anti-Gravity Grain */}
+        <div className="absolute inset-0 opacity-[0.02] mix-blend-multiply pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/felt.png")' }} />
       </div>
 
-      <header className="relative z-10 p-6 flex justify-center lg:justify-start">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="size-10 bg-blue-600 rounded-xl flex items-center justify-center text-white group-hover:bg-blue-700 transition-colors duration-300 shadow-sm">
-            <LayoutGrid size={22} />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase">Sàn Dịch Vụ</span>
-        </Link>
-      </header>
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center p-6 relative z-10">
+        <div className="w-full max-w-[460px] bg-white/70 backdrop-blur-[48px] rounded-[48px] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.12)] p-10 md:p-12 border border-white/40 ring-1 ring-black/5 relative overflow-hidden">
+          {/* Top accent line */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-1.5 bg-black/5 rounded-b-full px-1" />
 
-      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100">
           {children}
         </div>
       </main>

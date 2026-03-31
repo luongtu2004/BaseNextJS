@@ -30,13 +30,110 @@ router = APIRouter(prefix="/customer", tags=["customer"])
 
 @router.get("/industry-categories", response_model=list[CustomerIndustryCategory])
 async def list_industries(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: AsyncSession = Depends(get_db)
 ):
     """Lấy danh sách các ngành (Xây dựng, Sửa chữa, v.v.)"""
-    stmt = select(IndustryCategory).where(IndustryCategory.is_active == True).order_by(IndustryCategory.name)
+    stmt = (
+        select(IndustryCategory)
+        .options(selectinload(IndustryCategory.service_categories))
+        .where(IndustryCategory.is_active == True)
+        .order_by(IndustryCategory.name)
+    )
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+@router.get("/categories/{slug}", response_model=dict[str, Any])
+async def get_category_by_slug(
+    slug: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Lấy chi tiết danh mục (Pillar hoặc Service) qua slug"""
+    # 1. Tìm trong IndustryCategory
+    stmt_i = select(IndustryCategory).options(selectinload(IndustryCategory.service_categories)).where(
+        and_(IndustryCategory.slug == slug, IndustryCategory.is_active == True)
+    )
+    res_i = await db.execute(stmt_i)
+    industry = res_i.scalar_one_or_none()
+    
+    if industry:
+        return {
+            "type": "industry",
+            "data": CustomerIndustryCategory.model_validate(industry)
+        }
+        
+    # 2. Tìm trong ServiceCategory
+    stmt_s = select(ServiceCategory).where(
+        and_(ServiceCategory.slug == slug, ServiceCategory.is_active == True)
+    )
+    res_s = await db.execute(stmt_s)
+    service = res_s.scalar_one_or_none()
+    
+    if service:
+        # Lấy thêm thông tin Pillar cha có chứa data relationship
+        stmt_p = select(IndustryCategory).options(selectinload(IndustryCategory.service_categories)).where(IndustryCategory.id == service.industry_category_id)
+        res_p = await db.execute(stmt_p)
+        parent = res_p.scalar_one_or_none()
+        return {
+            "type": "service",
+            "data": CustomerServiceCategory.model_validate(service),
+            "parent": CustomerIndustryCategory.model_validate(parent) if parent else None
+        }
+        
+    raise HTTPException(status_code=404, detail="Category not found")
+
+
+@router.get("/search/taxonomy", response_model=list[dict[str, Any]])
+async def search_taxonomy(
+    q: str = Query(..., min_length=2),
+    db: AsyncSession = Depends(get_db)
+):
+    """Tìm kiếm nhanh Trụ cột hoặc Ngành nghề dịch vụ"""
+    # Tìm industries
+    stmt_i = select(IndustryCategory).where(
+        and_(
+            IndustryCategory.is_active == True,
+            or_(
+                IndustryCategory.name.ilike(f"%{q}%"),
+                IndustryCategory.description.ilike(f"%{q}%")
+            )
+        )
+    ).limit(5)
+    
+    # Tìm services
+    stmt_s = select(ServiceCategory).where(
+        and_(
+            ServiceCategory.is_active == True,
+            or_(
+                ServiceCategory.name.ilike(f"%{q}%"),
+                ServiceCategory.description.ilike(f"%{q}%")
+            )
+        )
+    ).limit(15)
+    
+    res_i = await db.execute(stmt_i)
+    res_s = await db.execute(stmt_s)
+    
+    results = []
+    for item in res_i.scalars().all():
+        results.append({
+            "type": "industry",
+            "id": item.id,
+            "name": item.name,
+            "slug": item.slug,
+            "icon_url": item.icon_url
+        })
+        
+    for item in res_s.scalars().all():
+        results.append({
+            "type": "service",
+            "id": item.id,
+            "name": item.name,
+            "slug": item.slug,
+            "icon_url": item.icon_url
+        })
+        
+    return results
 
 
 @router.get("/industry-categories/{industry_id}/service-categories", response_model=list[CustomerServiceCategory])

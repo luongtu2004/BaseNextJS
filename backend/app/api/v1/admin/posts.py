@@ -153,7 +153,7 @@ async def update_post_category(
 
 # ==================== Posts ====================
 
-@router.post("/", response_model=dict)
+@router.post("", response_model=dict)
 async def create_post(
     payload: PostCreateRequest,
     db: AsyncSession = Depends(get_db),
@@ -213,7 +213,7 @@ async def create_post(
     }
 
 
-@router.get("/")
+@router.get("")
 async def list_posts(
     db: AsyncSession = Depends(get_db),
     admin_user = Depends(get_current_admin_user),

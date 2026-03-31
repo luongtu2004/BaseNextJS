@@ -45,3 +45,6 @@ Thumbs.db
 .idea/
 *.swp
 *.bak
+
+# Mobile UI Previews
+mobile_ui_previews/

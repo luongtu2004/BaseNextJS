@@ -14,7 +14,7 @@ const mockArticles = [
     slug: 'he-sinh-thai-san-dich-vu-chinh-thuc-phu-song-toan-quoc',
     category: 'Tin tức',
     title: 'Hệ sinh thái Sàn Dịch Vụ chính thức phủ sóng toàn quốc',
-    description: 'Chúng tôi tự hào mở rộng mạng lưới 45 ngành nghề dịch vụ đến mọi miền tổ quốc, nâng tầm chất lượng sống người Việt.',
+    description: 'Chúng tôi tự hào mở rộng mạng lưới rất nhiều ngành nghề dịch vụ đến mọi miền tổ quốc, nâng tầm chất lượng sống người Việt.',
     content: `
       <p>Với sứ mệnh mang lại sự tiện nghi và chất lượng dịch vụ tốt nhất cho người dân Việt Nam, Sàn Dịch Vụ chính thức công bố việc mở rộng hoạt động trên toàn quốc. Động thái này đánh dấu một bước tiến quan trọng trong chiến lược phát triển của chúng tôi, nhằm kết nối nhanh chóng và hiệu quả giữa người dùng và các nhà cung cấp dịch vụ chuyên nghiệp.</p>
       
@@ -109,165 +109,163 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
   const relatedArticles = mockArticles.filter(a => a.slug !== article.slug).slice(0, 3);
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-[#fbfbfd]">
-        
-        {/* Article Header (Hero) */}
-        <section className="relative pt-32 pb-20 bg-slate-900 text-white overflow-hidden">
-          <div className="absolute inset-0 bg-primary/10" />
-          <div 
-            className="absolute inset-0 opacity-20 bg-cover bg-center" 
-            style={{ backgroundImage: `url(${article.image})` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent" />
-          
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="relative max-w-[900px] mx-auto px-4 md:px-8 z-10 text-center"
-          >
-            {/* Breadcrumb */}
-            <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-300 mb-8 flex-wrap">
-              <Link href="/" className="hover:text-white transition-colors flex items-center gap-1.5">
-                <LayoutGrid size={16} /> Trang chủ
-              </Link>
-              <ChevronRight size={14} />
-              <Link href="#" className="hover:text-white transition-colors">
-                Tin tức & Sự kiện
-              </Link>
-              <ChevronRight size={14} />
-              <span className="text-primary-light">{article.category}</span>
-            </div>
-            
-            <div className="inline-flex items-center justify-center px-4 py-1.5 bg-primary/20 text-primary-light border border-primary/30 rounded-full text-xs font-bold uppercase tracking-wider mb-6">
-              {article.category}
-            </div>
-            
-            <h1 className="text-3xl md:text-5xl font-black mb-6 tracking-tight leading-tight md:leading-[1.15]">
-              {article.title}
-            </h1>
-            
-            <div className="flex items-center justify-center gap-6 text-sm font-medium text-slate-300">
-              <div className="flex items-center gap-2">
-                <Calendar size={16} className="text-primary/70" />
-                {article.date}
-              </div>
-              <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-              <div className="flex items-center gap-2">
-                <User size={16} className="text-primary/70" />
-                {article.author}
-              </div>
-            </div>
-          </motion.div>
-        </section>
+    <main className="min-h-screen bg-[#fbfbfd]">
 
-        {/* Article Content & Sidebar */}
-        <section className="py-20">
-          <div className="max-w-[1740px] mx-auto px-4 md:px-8">
-            <div className="max-w-[1100px] mx-auto flex flex-col lg:flex-row gap-16 relative">
-              
-              {/* Left Sidebar (Share Buttons - Sticky) */}
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                className="lg:w-[60px] shrink-0 hidden lg:block"
-              >
-                <div className="sticky top-24 flex flex-col gap-4">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest rotate-180" style={{ writingMode: 'vertical-rl' }}>
-                    Chia sẻ
-                  </span>
-                  <div className="w-px h-8 bg-slate-200 mx-auto my-2" />
-                  <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-blue-600 hover:border-blue-600 flex items-center justify-center transition-colors shadow-sm">
+      {/* Article Header (Hero) */}
+      <section className="relative pt-32 pb-20 bg-slate-900 text-white overflow-hidden">
+        <div className="absolute inset-0 bg-primary/10" />
+        <div
+          className="absolute inset-0 opacity-20 bg-cover bg-center"
+          style={{ backgroundImage: `url(${article.image})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent" />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="relative max-w-[900px] mx-auto px-4 md:px-8 z-10 text-center"
+        >
+          {/* Breadcrumb */}
+          <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-300 mb-8 flex-wrap">
+            <Link href="/" className="hover:text-white transition-colors flex items-center gap-1.5">
+              <LayoutGrid size={16} /> Trang chủ
+            </Link>
+            <ChevronRight size={14} />
+            <Link href="#" className="hover:text-white transition-colors">
+              Tin tức & Sự kiện
+            </Link>
+            <ChevronRight size={14} />
+            <span className="text-primary-light">{article.category}</span>
+          </div>
+
+          <div className="inline-flex items-center justify-center px-4 py-1.5 bg-primary/20 text-primary-light border border-primary/30 rounded-full text-xs font-bold uppercase tracking-wider mb-6">
+            {article.category}
+          </div>
+
+          <h1 className="text-3xl md:text-5xl font-black mb-6 tracking-tight leading-tight md:leading-[1.15]">
+            {article.title}
+          </h1>
+
+          <div className="flex items-center justify-center gap-6 text-sm font-medium text-slate-300">
+            <div className="flex items-center gap-2">
+              <Calendar size={16} className="text-primary/70" />
+              {article.date}
+            </div>
+            <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+            <div className="flex items-center gap-2">
+              <User size={16} className="text-primary/70" />
+              {article.author}
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Article Content & Sidebar */}
+      <section className="py-20">
+        <div className="max-w-[1740px] mx-auto px-4 md:px-8">
+          <div className="max-w-[1100px] mx-auto flex flex-col lg:flex-row gap-16 relative">
+
+            {/* Left Sidebar (Share Buttons - Sticky) */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="lg:w-[60px] shrink-0 hidden lg:block"
+            >
+              <div className="sticky top-24 flex flex-col gap-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest rotate-180" style={{ writingMode: 'vertical-rl' }}>
+                  Chia sẻ
+                </span>
+                <div className="w-px h-8 bg-slate-200 mx-auto my-2" />
+                <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-blue-600 hover:border-blue-600 flex items-center justify-center transition-colors shadow-sm">
+                  <Facebook size={18} />
+                </button>
+                <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-sky-500 hover:border-sky-500 flex items-center justify-center transition-colors shadow-sm">
+                  <Twitter size={18} />
+                </button>
+                <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-blue-700 hover:border-blue-700 flex items-center justify-center transition-colors shadow-sm">
+                  <Linkedin size={18} />
+                </button>
+                <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:border-slate-900 flex items-center justify-center transition-colors shadow-sm mt-2">
+                  <Share2 size={18} />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Main Content Area */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 min-w-0 bg-white rounded-[40px] p-8 md:p-12 lg:p-16 border border-slate-100 shadow-sm -mt-20 relative z-20"
+            >
+              {/* Description Excerpt */}
+              <p className="text-xl md:text-2xl text-slate-600 font-medium leading-relaxed mb-12 pb-12 border-b border-slate-100">
+                {article.description}
+              </p>
+
+              {/* Prose Content (HTML rendering) */}
+              <div
+                className="prose prose-lg md:prose-xl prose-slate max-w-none
+                           prose-headings:font-black prose-headings:text-slate-900 prose-headings:tracking-tight
+                           prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-3xl
+                           prose-h3:text-2xl
+                           prose-p:text-slate-600 prose-p:leading-relaxed prose-p:mb-6
+                           prose-a:text-primary hover:prose-a:text-primary-dark
+                           prose-strong:text-slate-800
+                           prose-ul:list-disc prose-ul:pl-6 prose-ul:text-slate-600 prose-li:mb-3
+                           prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-primary/5 prose-blockquote:p-6 prose-blockquote:rounded-r-2xl prose-blockquote:text-slate-700 prose-blockquote:not-italic prose-blockquote:font-medium"
+                dangerouslySetInnerHTML={{ __html: article.content }}
+              />
+
+              {/* Mobile Share Buttons */}
+              <div className="mt-16 pt-8 border-t border-slate-100 flex items-center justify-between lg:hidden">
+                <span className="font-bold text-slate-900">Chia sẻ bài viết:</span>
+                <div className="flex gap-3">
+                  <button className="size-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
                     <Facebook size={18} />
                   </button>
-                  <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-sky-500 hover:border-sky-500 flex items-center justify-center transition-colors shadow-sm">
+                  <button className="size-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
                     <Twitter size={18} />
                   </button>
-                  <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-blue-700 hover:border-blue-700 flex items-center justify-center transition-colors shadow-sm">
-                    <Linkedin size={18} />
-                  </button>
-                  <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:border-slate-900 flex items-center justify-center transition-colors shadow-sm mt-2">
+                  <button className="size-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
                     <Share2 size={18} />
                   </button>
                 </div>
-              </motion.div>
-
-              {/* Main Content Area */}
-              <motion.div 
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="flex-1 min-w-0 bg-white rounded-[40px] p-8 md:p-12 lg:p-16 border border-slate-100 shadow-sm -mt-20 relative z-20"
-              >
-                {/* Description Excerpt */}
-                <p className="text-xl md:text-2xl text-slate-600 font-medium leading-relaxed mb-12 pb-12 border-b border-slate-100">
-                  {article.description}
-                </p>
-
-                {/* Prose Content (HTML rendering) */}
-                <div 
-                  className="prose prose-lg md:prose-xl prose-slate max-w-none
-                             prose-headings:font-black prose-headings:text-slate-900 prose-headings:tracking-tight
-                             prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-3xl
-                             prose-h3:text-2xl
-                             prose-p:text-slate-600 prose-p:leading-relaxed prose-p:mb-6
-                             prose-a:text-primary hover:prose-a:text-primary-dark
-                             prose-strong:text-slate-800
-                             prose-ul:list-disc prose-ul:pl-6 prose-ul:text-slate-600 prose-li:mb-3
-                             prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-primary/5 prose-blockquote:p-6 prose-blockquote:rounded-r-2xl prose-blockquote:text-slate-700 prose-blockquote:not-italic prose-blockquote:font-medium"
-                  dangerouslySetInnerHTML={{ __html: article.content }}
-                />
-
-                {/* Mobile Share Buttons */}
-                <div className="mt-16 pt-8 border-t border-slate-100 flex items-center justify-between lg:hidden">
-                  <span className="font-bold text-slate-900">Chia sẻ bài viết:</span>
-                  <div className="flex gap-3">
-                    <button className="size-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
-                      <Facebook size={18} />
-                    </button>
-                    <button className="size-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
-                      <Twitter size={18} />
-                    </button>
-                    <button className="size-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
-                      <Share2 size={18} />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-
-            </div>
-          </div>
-        </section>
-
-        {/* Related Articles Slider/Grid */}
-        <section className="py-20 bg-slate-50 border-t border-slate-200">
-          <div className="max-w-[1740px] mx-auto px-4 md:px-8">
-            <div className="max-w-[1100px] mx-auto">
-              <div className="flex items-center justify-between mb-12">
-                <h3 className="text-3xl font-black text-slate-900 tracking-tight">Bài viết liên quan</h3>
-                <Link href="#" className="hidden md:flex items-center gap-2 text-sm font-bold text-primary group">
-                  Xem tất cả
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
               </div>
+            </motion.div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {relatedArticles.map((rel, index) => (
-                  <motion.div
-                    key={rel.slug}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                    className="h-full"
-                  >
-                    <Link href={`/bai-viet/${rel.slug}`} className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 h-full">
-                      <div className="relative aspect-[16/10] overflow-hidden">
-                      <Image 
-                        src={rel.image} 
+          </div>
+        </div>
+      </section>
+
+      {/* Related Articles Slider/Grid */}
+      <section className="py-20 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-[1740px] mx-auto px-4 md:px-8">
+          <div className="max-w-[1100px] mx-auto">
+            <div className="flex items-center justify-between mb-12">
+              <h3 className="text-3xl font-black text-slate-900 tracking-tight">Bài viết liên quan</h3>
+              <Link href="#" className="hidden md:flex items-center gap-2 text-sm font-bold text-primary group">
+                Xem tất cả
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {relatedArticles.map((rel, index) => (
+                <motion.div
+                  key={rel.slug}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  className="h-full"
+                >
+                  <Link href={`/bai-viet/${rel.slug}`} className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 h-full">
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      <Image
+                        src={rel.image}
                         alt={rel.title}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
@@ -290,14 +288,11 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
                     </div>
                   </Link>
                 </motion.div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
-        </section>
-
-      </main>
-      <Footer />
-    </>
+        </div>
+      </section>
+    </main>
   );
 }

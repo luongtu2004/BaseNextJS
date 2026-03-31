@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
 
 /** Lấy token đã lưu trong Cookies */
 export function getToken(): string | undefined {
@@ -40,7 +40,7 @@ export async function fetchAPI<T = unknown>(
   if (!skipAuth) {
     const token = getToken();
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token.trim()}`;
     }
   }
 
@@ -55,6 +55,7 @@ export async function fetchAPI<T = unknown>(
       const err = await res.json();
       message = err?.detail || err?.message || message;
     } catch { /* ignore */ }
+
     throw new Error(message);
   }
 

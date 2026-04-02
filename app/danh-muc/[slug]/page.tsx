@@ -60,36 +60,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   // Use a fallback image if icon_url is missing
   const heroImage = data.icon_url || (type === 'service' && parent?.icon_url ? parent.icon_url : '/hero_banner.png');
 
-  // Generate some mock articles based on the real title (Posts will be integrated later)
-  const mockArticles = [
-    {
-      id: 1,
-      title: `Hướng dẫn chọn dịch vụ ${title} uy tín và chuyên nghiệp`,
-      excerpt: `Khám phá các tiêu chí quan trọng khi lựa chọn dịch vụ ${title.toLowerCase()} để đảm bảo chất lượng và an toàn tuyệt đối cho bạn và gia đình.`,
-      image: '/hero_banner.png',
-      date: '18 Tháng 3, 2026',
-      author: 'Chuyên gia Sàn Dịch Vụ',
-      category: title
-    },
-    {
-      id: 2,
-      title: `Bảng giá chuẩn cho dịch vụ ${title} năm 2026`,
-      excerpt: `Cập nhật chi tiết bảng giá mới nhất thị trường cho các gói dịch vụ thuộc nhóm ${title.toLowerCase()}. Minh bạch, rõ ràng và không phát sinh chi phí.`,
-      image: heroImage,
-      date: '15 Tháng 3, 2026',
-      author: 'Ban Biên Tập',
-      category: title
-    },
-    {
-      id: 3,
-      title: `Kinh nghiệm cần biết trước khi đặt ${title}`,
-      excerpt: `Tổng hợp những lưu ý quan trọng và kinh nghiệm thực tế từ hàng ngàn khách hàng đã sử dụng dịch vụ ${title.toLowerCase()} trên hệ thống của chúng tôi.`,
-      image: '/hero_banner.png',
-      date: '10 Tháng 3, 2026',
-      author: 'CSKH',
-      category: title
-    },
-  ];
+  // Delete mockArticles as News isn't meant for the service pillar page
 
   return (
     <main className="min-h-screen bg-[#fbfbfd]">
@@ -151,47 +122,57 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
           <div className="flex flex-col lg:flex-row gap-12">
             
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-10 pb-6 border-b border-slate-200">
-                <h2 className="text-2xl font-bold text-slate-900 uppercase">Tin tức & Hướng dẫn</h2>
-                <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{mockArticles.length} bài viết</span>
+              <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-200">
+                <h2 className="text-2xl font-bold text-slate-900 uppercase">Chi tiết Dịch vụ</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {mockArticles.map((article, index) => (
-                  <motion.article 
-                    key={article.id} 
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.7, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                    className="group bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col"
-                  >
-                    <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                      <Image 
-                        src={article.image || '/hero_banner.png'} 
-                        alt={article.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-100 shadow-sm leading-relaxed text-slate-700">
+                  {data.description ? (
+                      <div 
+                         className="prose prose-lg md:prose-xl max-w-none prose-p:mb-6 prose-h2:text-2xl prose-h2:font-bold prose-h2:text-slate-900 prose-h2:mb-4 prose-ul:list-disc prose-ul:pl-6 prose-li:mb-2 prose-a:text-primary"
+                         dangerouslySetInnerHTML={{ __html: data.description }} 
                       />
-                    </div>
-                    
-                    <div className="p-8 flex-1 flex flex-col">
-                      <div className="flex items-center gap-4 text-xs font-medium text-slate-500 mb-4">
-                        <div className="flex items-center gap-1.5"><Calendar size={14} /> {article.date}</div>
-                        <div className="flex items-center gap-1.5"><User size={14} /> {article.author}</div>
-                      </div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                        {article.title}
-                      </h3>
-                      <p className="text-slate-600 mb-6 line-clamp-3 leading-relaxed flex-1 text-[15px]">
-                        {article.excerpt}
-                      </p>
-                      <Link href="#" className="inline-flex items-center gap-2 text-sm font-bold text-primary group/link mt-auto w-fit">
-                        Chi tiết <ArrowRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
-                      </Link>
-                    </div>
-                  </motion.article>
-                ))}
+                  ) : (
+                     <div className="prose prose-lg max-w-none">
+                        <p className="text-xl font-medium text-slate-600 mb-8">
+                          Dịch vụ <strong>{title}</strong> thuộc hệ sinh thái Sàn Dịch Vụ cam kết mang đến trải nghiệm chất lượng, uy tín và minh bạch nhất cho khách hàng.
+                        </p>
+                        
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4 mt-8">Tại sao nên chọn chúng tôi?</h2>
+                        <ul className="list-disc pl-6 mb-8 space-y-3 text-slate-600">
+                           <li><strong>Quy trình chuyên nghiệp:</strong> Mọi đối tác đều trải qua quá trình kiểm duyệt khắt khe và đào tạo bài bản để phục vụ khách hàng tốt nhất.</li>
+                           <li><strong>Minh bạch giá cả:</strong> Hệ thống tự động tính toán và báo giá công khai trước khi bạn quyết định đặt dịch vụ.</li>
+                           <li><strong>Bảo hành tận tâm:</strong> Sẵn sàng hỗ trợ và xử lý khiếu nại nhanh chóng nếu có bất kỳ vấn đề phát sinh.</li>
+                        </ul>
+
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4 mt-8">Quy trình thực hiện</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8 not-prose">
+                           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:border-primary/30 transition-colors">
+                              <div className="size-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-black text-lg mb-4">1</div>
+                              <h4 className="font-bold text-slate-900 mb-2">Tiếp nhận</h4>
+                              <p className="text-sm text-slate-600">Ghi nhận thông tin yêu cầu của khách hàng qua hệ thống nhánh chóng.</p>
+                           </div>
+                           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:border-primary/30 transition-colors">
+                              <div className="size-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-black text-lg mb-4">2</div>
+                              <h4 className="font-bold text-slate-900 mb-2">Thực thi</h4>
+                              <p className="text-sm text-slate-600">Đối tác chuyên nghiệp tiến hành dịch vụ theo tiêu chuẩn an toàn.</p>
+                           </div>
+                           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:border-primary/30 transition-colors">
+                              <div className="size-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-black text-lg mb-4">3</div>
+                              <h4 className="font-bold text-slate-900 mb-2">Nghiệm thu</h4>
+                              <p className="text-sm text-slate-600">Khách hàng xác nhận hoàn thành và đánh giá trải nghiệm trực tiếp trên ứng dụng.</p>
+                           </div>
+                        </div>
+
+                        <div className="bg-blue-50/50 text-blue-800 p-6 rounded-2xl flex gap-4 mt-12 border border-blue-100">
+                           <Info className="shrink-0 mt-1" size={24} />
+                           <div>
+                             <p className="text-sm mb-1 font-bold">Lưu ý Dành Cho Quản Trị Viên:</p>
+                             <p className="text-xs mb-0">Định dạng bạn đang xem là form cấu trúc mẫu (Mock layout). Vui lòng đăng nhập Admin CMS và bổ sung trực tiếp nội dung Mô tả (Bài viết chuẩn SEO, Hình ảnh, Bảng giá) vào dữ liệu của danh mục <strong>{title}</strong> để nó được hiển thị tự động lên đây nhé.</p>
+                           </div>
+                        </div>
+                     </div>
+                  )}
               </div>
             </div>
 

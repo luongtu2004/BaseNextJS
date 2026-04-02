@@ -3,6 +3,7 @@
 import { motion } from 'motion/react';
 import { Target, ShieldCheck, TrendingUp, HandCoins, Users, Banknote, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const benefits = [
   {
@@ -57,13 +58,15 @@ export default function PartnerPage() {
             <p className="text-[18px] md:text-[20px] font-medium text-white/80 max-w-lg leading-relaxed mb-10">
               Gia nhập hệ sinh thái lớn nhất Việt Nam, kết nối hàng triệu khách hàng và bứt phá doanh thu.
             </p>
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 20px 40px -10px rgba(0, 177, 79, 0.4)" }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-primary hover:bg-[#00a049] text-white px-10 py-5 rounded-[22px] font-black text-[18px] shadow-xl transition-all cursor-pointer inline-flex items-center gap-3"
-            >
-              ĐĂNG KÝ NGAY <Target size={22} />
-            </motion.button>
+            <Link href="/contact">
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: "0 20px 40px -10px rgba(0, 177, 79, 0.4)" }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-primary hover:bg-[#00a049] text-white px-10 py-5 rounded-[22px] font-black text-[18px] shadow-xl transition-all cursor-pointer inline-flex items-center gap-3"
+              >
+                ĐĂNG KÝ NGAY <Target size={22} />
+              </motion.button>
+            </Link>
           </motion.div>
 
           <motion.div
@@ -141,13 +144,17 @@ export default function PartnerPage() {
               Chỉ với 3 bước đơn giản: Tải ứng dụng, Điền hồ sơ và Đợi kiểm duyệt. Bạn đã sẵn sàng để đón nhận những khách hàng đầu tiên.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-6 relative z-10">
-              <button className="bg-white text-primary px-10 py-5 rounded-2xl font-black text-[18px] w-full sm:w-auto hover:bg-slate-50 shadow-xl flex items-center justify-center gap-2 group transition-all">
-                ĐĂNG KÝ TƯ VẤN
-                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button className="bg-transparent text-white px-10 py-5 rounded-2xl font-black text-[18px] w-full sm:w-auto border-2 border-white/30 hover:bg-white/10 transition-all flex items-center justify-center">
-                TẢI ỨNG DỤNG NGAY
-              </button>
+              <Link href="/contact" className="w-full sm:w-auto">
+                <button className="bg-white text-primary px-10 py-5 rounded-2xl font-black text-[18px] w-full hover:bg-slate-50 shadow-xl flex items-center justify-center gap-2 group transition-all">
+                  ĐĂNG KÝ TƯ VẤN
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </Link>
+              <Link href="/" className="w-full sm:w-auto">
+                <button className="bg-transparent text-white px-10 py-5 rounded-2xl font-black text-[18px] w-full border-2 border-white/30 hover:bg-white/10 transition-all flex items-center justify-center">
+                  TẢI ỨNG DỤNG NGAY
+                </button>
+              </Link>
             </div>
           </div>
         </div>

@@ -5,17 +5,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  LayoutGrid, 
-  FileText, 
-  FolderTree, 
-  Users, 
-  Boxes, 
-  LogOut, 
+import {
+  LayoutGrid,
+  FileText,
+  FolderTree,
+  Users,
+  Boxes,
+  LogOut,
   ChevronRight,
   ShieldCheck,
   Settings
 } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -51,7 +52,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   if (!mounted || isLoading || !user || !user.roles?.includes('admin')) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <motion.div 
+        <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           className="size-8 border-4 border-black/10 border-t-black rounded-full"
@@ -69,15 +70,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-[#F8F9FA] flex font-sans text-black selection:bg-black selection:text-white">
       {/* Top Loader Bar */}
       <AnimatePresence>
-         {isLoading && (
-            <motion.div 
-               initial={{ width: 0, opacity: 0 }}
-               animate={{ width: '70%', opacity: 1 }}
-               exit={{ width: '100%', opacity: 0 }}
-               transition={{ duration: 0.5 }}
-               className="fixed top-0 left-0 h-1 bg-black z-[200] shadow-[0_0_10px_rgba(0,0,0,0.2)]"
-            />
-         )}
+        {isLoading && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: '70%', opacity: 1 }}
+            exit={{ width: '100%', opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed top-0 left-0 h-1 bg-black z-[200] shadow-[0_0_10px_rgba(0,0,0,0.2)]"
+          />
+        )}
       </AnimatePresence>
 
       {/* Sidebar - Chuẩn White Glass */}
@@ -91,15 +92,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 href={item.href}
                 className="relative group block"
               >
-                <div className={`flex items-center gap-3 px-4 py-3.5 rounded-[20px] transition-all duration-300 relative z-10 ${
-                  active 
-                    ? 'text-black font-black' 
-                    : 'text-black/40 hover:text-black font-bold'
-                }`}>
+                <div className={`flex items-center gap-3 px-4 py-3.5 rounded-[20px] transition-all duration-300 relative z-10 ${active
+                  ? 'text-black font-black'
+                  : 'text-black/40 hover:text-black font-bold'
+                  }`}>
                   <item.icon size={20} strokeWidth={active ? 2.5 : 2} />
                   <span className="text-[13px] uppercase tracking-tighter">{item.label}</span>
                   {active && (
-                    <motion.div 
+                    <motion.div
                       layoutId="active-nav-bg"
                       className="absolute inset-0 bg-black/5 rounded-[20px] -z-10"
                       transition={{ type: 'spring', stiffness: 400, damping: 40 }}
@@ -112,13 +112,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </nav>
 
         <div className="mt-auto pt-6 border-t border-black/5 space-y-3">
-          <Link 
+          <Link
             href="/"
             className="flex items-center gap-3 px-4 py-3 rounded-[20px] text-black/40 hover:text-black font-bold transition-all text-[13px] uppercase tracking-tighter group/home"
           >
-            <div className="size-6 relative flex items-center justify-center filter grayscale group-hover/home:grayscale-0 transition-all opacity-40 group-hover:opacity-100">
-              <img src="/logo.png" alt="Logo" className="object-contain" />
-            </div>
+            <Logo iconSize={20} showText={false} className="opacity-40 group-hover:opacity-100 transition-opacity" />
             Về trang chủ
           </Link>
           <button
@@ -139,14 +137,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <ChevronRight size={14} />
             <span className="text-black">{navItems.find(i => isActive(i.href, i.exact))?.label || 'Tổng quan'}</span>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-black leading-none">{user?.user?.full_name}</p>
+              <p className="text-sm font-black leading-none">{user?.full_name}</p>
               <p className="text-[10px] font-bold text-black/40 uppercase tracking-tighter mt-1">Administrator</p>
             </div>
             <div className="size-10 rounded-full bg-black/5 border border-black/5 flex items-center justify-center font-black text-xs">
-              {user?.user?.full_name?.charAt(0)}
+              {user?.full_name?.charAt(0)}
             </div>
           </div>
         </header>

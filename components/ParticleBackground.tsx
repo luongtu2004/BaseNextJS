@@ -38,10 +38,13 @@ class Particle {
   angle: number; // calculated pointing to hub
 
   constructor(cw: number, ch: number, hx: number, hy: number) {
-    // Target orbit settings
-    const rBase = Math.pow(Math.random(), 1.2) * Math.min(cw, ch) * 0.8;
+    // Target orbit settings: Create an "empty space" at the center
+    const innerRadius = 160; // Empty central zone
+    const outerRadius = Math.min(cw, ch) * 0.85;
+    const rBase = innerRadius + Math.pow(Math.random(), 1.4) * (outerRadius - innerRadius);
+    
     this.orbitRx = rBase;
-    this.orbitRy = rBase * 0.8;
+    this.orbitRy = rBase * 0.85;
     this.orbitAngle = Math.random() * Math.PI * 2;
 
     // "Converging Rays" Entrance: Spawn far away from the hub
@@ -92,8 +95,19 @@ class Particle {
     this.y += this.vy;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    const opacityHex = Math.round(this.opacity * 255).toString(16).padStart(2, '0');
+  draw(ctx: CanvasRenderingContext2D, hx: number, hy: number) {
+    const dist = Math.sqrt((this.x - hx) ** 2 + (this.y - hy) ** 2);
+    let currentAlpha = this.opacity;
+    
+    // Smooth fade-out as particles approach the inner boundary (160px)
+    // Starting to fade at 200px, fully invisible at 160px
+    if (dist < 200) {
+      currentAlpha *= Math.max(0, (dist - 160) / 40);
+    }
+
+    if (currentAlpha <= 0) return;
+
+    const opacityHex = Math.round(currentAlpha * 255).toString(16).padStart(2, '0');
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
@@ -102,7 +116,6 @@ class Particle {
     // Draw elongated shape (dash)
     const r = this.size / 2;
     ctx.beginPath();
-    // Rounded rect: -length to 0 so "head" points to hub
     ctx.roundRect(-this.length, -r, this.length, this.size, r);
     ctx.fill();
     ctx.restore();
@@ -164,7 +177,7 @@ export default function ParticleBackground() {
 
       particles.forEach(p => {
         p.update(hubX, hubY);
-        p.draw(ctx);
+        p.draw(ctx, hubX, hubY);
       });
 
       animationFrameId = requestAnimationFrame(animate);

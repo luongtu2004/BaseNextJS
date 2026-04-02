@@ -10,14 +10,19 @@ export const metadata: Metadata = {
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white flex flex-col relative overflow-hidden selection:bg-emerald-500/30 selection:text-emerald-900">
-      {/* High-Fidelity iOS 26 Mesh Gradient Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-full bg-emerald-400/15 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[80%] rounded-full bg-indigo-500/15 blur-[140px] animate-pulse" style={{ animationDuration: '12s' }} />
-        <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] rounded-full bg-blue-400/10 blur-[100px]" />
-
-        {/* Anti-Gravity Particles (Subtle) */}
-        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      {/* High-Fidelity Bright Gradient Background (Light Green & Beige/Brown) */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-white">
+        <div 
+          className="absolute inset-0 opacity-[1]"
+          style={{ 
+            background: `linear-gradient(135deg, #f0f9f1 0%, #ffffff 50%, #f9f7f4 100%)` 
+          }} 
+        />
+        <div className="absolute top-[-5%] left-[-5%] w-[50%] h-[50%] rounded-full bg-emerald-100/40 blur-[100px] animate-pulse" />
+        <div className="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] rounded-full bg-orange-50/40 blur-[100px]" />
+        
+        {/* Anti-Gravity Grain */}
+        <div className="absolute inset-0 opacity-[0.02] mix-blend-multiply pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/felt.png")' }} />
       </div>
 
       {/* Main Content */}

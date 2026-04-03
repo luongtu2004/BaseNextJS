@@ -4,7 +4,7 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserCreateRequest(BaseModel):
@@ -152,12 +152,38 @@ class DocumentReviewRequest(BaseModel):
 
 
 class VerificationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     user_id: uuid.UUID
     verification_type: str
     status: str
+    full_name_on_id: str | None = None
+    id_number: str | None = None
     submitted_at: datetime | None = None
     reviewed_at: datetime | None = None
     reviewed_by: uuid.UUID | None = None
     rejection_reason: str | None = None
     created_at: datetime
+
+
+class VerificationListResponse(BaseModel):
+    items: list[VerificationResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+class UserIdentityFileSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    file_type: str
+    file_url: str
+    uploaded_at: datetime
+
+
+class VerificationDetailResponse(BaseModel):
+    record: VerificationResponse
+    files: list[UserIdentityFileSchema]
+    user: dict[str, Any]

@@ -3,18 +3,24 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, func, select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin_user
 from app.db.session import get_db
 from app.models.identity import UserIdentityFile, UserIdentityVerification
 from app.models.user import User
-from app.schemas.admin import VerificationResponse, VerificationReviewRequest
+from app.schemas.admin import (
+    VerificationDetailResponse,
+    VerificationListResponse,
+    VerificationResponse,
+    VerificationReviewRequest,
+)
 
 router = APIRouter(tags=["admin-verifications"])
 
 
-@router.get("/user-verifications", response_model=dict[str, Any])
+@router.get("/user-verifications", response_model=VerificationListResponse)
 async def list_user_verifications(
     status: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
@@ -51,14 +57,18 @@ async def list_user_verifications(
     }
 
 
-@router.get("/user-verifications/{id}")
+@router.get("/user-verifications/{id}", response_model=VerificationDetailResponse)
 async def get_user_verification_detail(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(get_current_admin_user),
 ):
     """Chi tiết hồ sơ xác minh (A22)"""
-    stmt = select(UserIdentityVerification).where(UserIdentityVerification.id == id)
+    stmt = (
+        select(UserIdentityVerification)
+        .options(joinedload(UserIdentityVerification.user))
+        .where(UserIdentityVerification.id == id)
+    )
     record = (await db.execute(stmt)).scalar_one_or_none()
     if not record:
         raise HTTPException(status_code=404, detail="Hồ sơ không tồn tại.")

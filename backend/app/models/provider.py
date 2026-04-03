@@ -12,6 +12,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.provider_service import ProviderService
+    from app.models.transport import ProviderVehicle
     from app.models.user import User
 
 
@@ -70,6 +71,11 @@ class Provider(Base):
     )
     services: Mapped[list["ProviderService"]] = relationship(
         "ProviderService",
+        back_populates="provider",
+        cascade="all, delete-orphan",
+    )
+    vehicles: Mapped[list["ProviderVehicle"]] = relationship(
+        "ProviderVehicle",
         back_populates="provider",
         cascade="all, delete-orphan",
     )

@@ -380,6 +380,7 @@ async def import_providers(
             avg_rating=0,
             total_reviews=0,
             total_jobs_completed=0,
+            created_by=admin_user.id,
         )
         db.add(provider)
         await db.flush()
@@ -511,6 +512,7 @@ async def review_provider_document(
     doc.rejection_reason = payload.reason if payload.status == "rejected" else None
     doc.verified_at = func.now() if payload.status == "approved" else None
     doc.verified_by = admin_user.id if payload.status == "approved" else None
+    doc.updated_by = admin_user.id
     
     await db.commit()
     return {"message": f"Document status updated to {payload.status}"}

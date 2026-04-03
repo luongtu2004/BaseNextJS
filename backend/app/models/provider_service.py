@@ -56,6 +56,12 @@ class ProviderService(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
     )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     provider: Mapped["Provider"] = relationship("Provider", back_populates="services")
     attributes: Mapped[list[ProviderServiceAttribute]] = relationship(
@@ -83,6 +89,9 @@ class ProviderServiceAttribute(Base):
     value_json: Mapped[dict | list | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
     provider_service: Mapped[ProviderService] = relationship(back_populates="attributes")

@@ -114,6 +114,8 @@ create table if not exists providers (
     total_jobs_completed int not null default 0,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint chk_providers_type check (provider_type in ('individual', 'business')),
     constraint chk_providers_verification_status check (verification_status in ('pending', 'approved', 'rejected', 'suspended')),
     constraint chk_providers_status check (status in ('active', 'inactive', 'blocked'))
@@ -125,7 +127,9 @@ create table if not exists provider_individual_profiles (
     exe_year int,
     cccd varchar(50),
     created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now()
+    updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null
 );
 
 create table if not exists provider_business_profiles (
@@ -141,7 +145,9 @@ create table if not exists provider_business_profiles (
     hotline varchar(20),
     website_url text,
     created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now()
+    updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null
 );
 
 create table if not exists provider_documents (
@@ -163,6 +169,8 @@ create table if not exists provider_documents (
     note text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint chk_provider_documents_status check (verification_status in ('pending', 'approved', 'rejected', 'expired'))
 );
 
@@ -192,6 +200,8 @@ create table if not exists industry_categories (
     is_active boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint uq_industry_categories_code unique (code)
 );
 
@@ -204,6 +214,8 @@ create table if not exists service_categories (
     is_active boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint uq_service_categories_code_per_industry unique (industry_category_id, code)
 );
 
@@ -216,6 +228,8 @@ create table if not exists service_skills (
     is_active boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint uq_service_skills_code_per_category unique (service_category_id, code)
 );
 
@@ -235,6 +249,8 @@ create table if not exists service_category_attributes (
     validation_json jsonb,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint uq_service_category_attributes_key unique (service_category_id, attr_key),
     constraint chk_service_category_attributes_data_type
         check (data_type in ('text', 'textarea', 'number', 'boolean', 'date', 'select', 'multiselect', 'json'))
@@ -252,6 +268,8 @@ create table if not exists service_category_requirements (
     is_active boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint chk_service_category_requirements_provider_type
         check (applies_to_provider_type in ('individual', 'business', 'all')),
     constraint uq_service_category_requirements unique (service_category_id, requirement_code)
@@ -280,6 +298,8 @@ create table if not exists provider_services (
     verification_status varchar(30) not null default 'pending',
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint chk_provider_services_pricing_type
         check (pricing_type in ('negotiable', 'fixed', 'hourly', 'survey')),
     constraint chk_provider_services_verification_status
@@ -302,7 +322,8 @@ create table if not exists provider_service_attributes (
     value_number numeric(18,2),
     value_boolean boolean,
     value_json jsonb,
-    created_at timestamptz not null default now()
+    created_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null
 );
 
 create table if not exists provider_document_services (
@@ -441,6 +462,8 @@ create table if not exists post_categories (
     is_active boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    created_by uuid references users(id) on delete set null,
+    updated_by uuid references users(id) on delete set null,
     constraint uq_post_categories_code unique (code)
 );
 
@@ -468,6 +491,7 @@ create table if not exists posts (
     view_count int not null default 0,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
+    updated_by uuid references users(id) on delete set null,
     constraint chk_posts_type
         check (post_type in ('article', 'promotion', 'provider_profile', 'announcement', 'seo_landing')),
     constraint chk_posts_status

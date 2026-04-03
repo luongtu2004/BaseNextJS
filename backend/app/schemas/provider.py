@@ -36,6 +36,25 @@ class ProviderProfileUpdateRequest(BaseModel):
     website_url: str | None = None
 
 
+class ProviderIndividualProfileUpdate(BaseModel):
+    full_name: str | None = None
+    exe_year: int | None = None
+    cccd: str | None = None
+
+
+class ProviderBusinessProfileUpdate(BaseModel):
+    company_name: str | None = None
+    exe_year: int | None = None
+    legal_name: str | None = None
+    tax_code: str | None = None
+    business_license_number: str | None = None
+    representative_name: str | None = None
+    representative_position: str | None = None
+    founded_date: date | None = None
+    hotline: str | None = None
+    website_url: str | None = None
+
+
 class ProviderServiceCreateRequest(BaseModel):
     industry_category_id: uuid.UUID
     service_category_id: uuid.UUID
@@ -67,3 +86,28 @@ class ProviderServiceAttributeValue(BaseModel):
     value_number: float | None = None
     value_boolean: bool | None = None
     value_json: Any | None = None
+
+
+class ProviderDocumentResponse(BaseModel):
+    id: uuid.UUID
+    document_type: str
+    document_name: str | None = None
+    document_number: str | None = None
+    issued_by: str | None = None
+    issued_date: date | None = None
+    expiry_date: date | None = None
+    front_file_url: str | None = None
+    back_file_url: str | None = None
+    extra_file_url: str | None = None
+    verification_status: str
+    rejection_reason: str | None = None
+    created_at: datetime
+
+
+class ProviderDocumentCreateRequest(BaseModel):
+    document_type: str
+    document_name: str | None = None
+    document_number: str | None = None
+    issued_by: str | None = None
+    issued_date: date | None = None
+    expiry_date: date | None = None

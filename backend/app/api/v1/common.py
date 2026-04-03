@@ -18,6 +18,15 @@ from app.schemas.common import (
     RoleListResponse,
     UserProfileData,
 )
+from app.schemas.identity import (
+    IdentityFileResponse,
+    IdentityVerificationCreate,
+    IdentityVerificationDetailResponse,
+    IdentityVerificationResponse,
+    IdentityVerificationStatusResponse,
+)
+from app.models.identity import UserIdentityFile, UserIdentityVerification
+from fastapi import UploadFile, File, Form
 
 router = APIRouter(prefix="/common", tags=["common"])
 
@@ -163,3 +172,214 @@ async def post_detail(slug: str, db: AsyncSession = Depends(get_db)) -> PostDeta
         cover_image_url=post.cover_image_url,
         published_at=post.published_at,
     )
+
+
+@router.get("/me/verification-status", response_model=IdentityVerificationStatusResponse)
+async def get_verification_status(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return IdentityVerificationStatusResponse(
+        identity_verification_status=current_user.identity_verification_status,
+        identity_verified_at=current_user.identity_verified_at,
+        latest_identity_verification_id=current_user.latest_identity_verification_id,
+    )
+
+
+@router.get("/me/identity-verifications", response_model=list[IdentityVerificationResponse])
+async def list_identity_verifications(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = (
+        select(UserIdentityVerification)
+        .where(UserIdentityVerification.user_id == current_user.id)
+        .order_by(UserIdentityVerification.created_at.desc())
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    return rows
+
+
+@router.post("/me/identity-verifications", response_model=IdentityVerificationResponse)
+async def create_identity_verification(
+    payload: IdentityVerificationCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(UserIdentityVerification).where(
+        UserIdentityVerification.user_id == current_user.id,
+        UserIdentityVerification.status.in_(["draft", "submitted", "processing"]),
+    )
+    existing = (await db.execute(stmt)).scalars().first()
+    if existing:
+        raise HTTPException(
+            status_code=400, detail="Bạn đang có một hồ sơ xác minh chưa hoàn thành hoặc đang được xử lý."
+        )
+
+    update_stmt = select(UserIdentityVerification).where(
+        UserIdentityVerification.user_id == current_user.id, UserIdentityVerification.is_latest == True
+    )
+    latest_rows = (await db.execute(update_stmt)).scalars().all()
+    for row in latest_rows:
+        row.is_latest = False
+
+    new_ver = UserIdentityVerification(
+        user_id=current_user.id,
+        verification_type=payload.verification_type,
+        status="draft",
+        review_mode="hybrid",
+        is_latest=True,
+    )
+    db.add(new_ver)
+    current_user.latest_identity_verification_id = new_ver.id
+
+    await db.commit()
+    await db.refresh(new_ver)
+    return new_ver
+
+
+@router.get(
+    "/me/identity-verifications/{id}", response_model=IdentityVerificationDetailResponse
+)
+async def get_identity_verification_detail(
+    id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(UserIdentityVerification).where(
+        UserIdentityVerification.id == id,
+        UserIdentityVerification.user_id == current_user.id,
+    )
+    record = (await db.execute(stmt)).scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Hồ sơ không tồn tại.")
+
+    files_stmt = select(UserIdentityFile).where(UserIdentityFile.verification_id == id)
+    files = (await db.execute(files_stmt)).scalars().all()
+
+    response = IdentityVerificationDetailResponse.model_validate(record)
+    response.files = [IdentityFileResponse.model_validate(f) for f in files]
+    return response
+
+
+@router.post(
+    "/me/identity-verifications/{id}/files", response_model=IdentityFileResponse
+)
+async def upload_identity_verification_file(
+    id: uuid.UUID,
+    file_type: str = Form(...),
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(UserIdentityVerification).where(
+        UserIdentityVerification.id == id,
+        UserIdentityVerification.user_id == current_user.id,
+    )
+    record = (await db.execute(stmt)).scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Hồ sơ không tồn tại.")
+    if record.status != "draft":
+        raise HTTPException(
+            status_code=400, detail="Chỉ có thể tải lên tài liệu khi hồ sơ ở trạng thái draft."
+        )
+
+    file_url = f"/uploads/{uuid.uuid4()}_{file.filename}"
+
+    new_file = UserIdentityFile(
+        verification_id=record.id,
+        file_type=file_type,
+        file_url=file_url,
+        uploaded_by_user_id=current_user.id,
+        mime_type=file.content_type,
+        file_size=file.size,
+    )
+    db.add(new_file)
+    await db.commit()
+    await db.refresh(new_file)
+    return new_file
+
+
+@router.post("/me/identity-verifications/{id}/submit")
+async def submit_identity_verification(
+    id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(UserIdentityVerification).where(
+        UserIdentityVerification.id == id,
+        UserIdentityVerification.user_id == current_user.id,
+    )
+    record = (await db.execute(stmt)).scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Hồ sơ không tồn tại.")
+    if record.status != "draft":
+        raise HTTPException(
+            status_code=400, detail="Chỉ có thể nộp hồ sơ khi đang ở trạng thái draft."
+        )
+
+    files_stmt = select(UserIdentityFile).where(UserIdentityFile.verification_id == id)
+    files = (await db.execute(files_stmt)).scalars().all()
+    file_types = {f.file_type for f in files}
+
+    if record.verification_type == "cccd":
+        if "id_front" not in file_types or "id_back" not in file_types or "selfie" not in file_types:
+            raise HTTPException(
+                status_code=400, detail="Thiếu ảnh CCCD mặt trước, mặt sau hoặc ảnh selfie."
+            )
+
+    record.status = "submitted"
+    record.submitted_at = func.now()
+    current_user.identity_verification_status = "pending"
+
+    await db.commit()
+    return {"id": record.id, "status": "submitted"}
+
+
+@router.post("/me/identity-verifications/{id}/cancel")
+async def cancel_identity_verification(
+    id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(UserIdentityVerification).where(
+        UserIdentityVerification.id == id,
+        UserIdentityVerification.user_id == current_user.id,
+    )
+    record = (await db.execute(stmt)).scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Hồ sơ không tồn tại.")
+    if record.status not in ["draft", "submitted"]:
+        raise HTTPException(
+            status_code=400, detail="Không thể hủy hồ sơ ở trạng thái hiện tại."
+        )
+
+    record.status = "cancelled"
+
+    stmt_last = (
+        select(UserIdentityVerification)
+        .where(
+            UserIdentityVerification.user_id == current_user.id,
+            UserIdentityVerification.id != id,
+            UserIdentityVerification.status.in_(["approved", "rejected"]),
+        )
+        .order_by(UserIdentityVerification.created_at.desc())
+        .limit(1)
+    )
+
+    last_valid = (await db.execute(stmt_last)).scalar_one_or_none()
+    if last_valid:
+        if last_valid.status == "approved":
+            current_user.identity_verification_status = "verified"
+            current_user.latest_identity_verification_id = last_valid.id
+            last_valid.is_latest = True
+        elif last_valid.status == "rejected":
+            current_user.identity_verification_status = "rejected"
+            current_user.latest_identity_verification_id = last_valid.id
+            last_valid.is_latest = True
+    else:
+        current_user.identity_verification_status = "unverified"
+        current_user.latest_identity_verification_id = None
+
+    await db.commit()
+    return {"id": record.id, "status": "cancelled"}

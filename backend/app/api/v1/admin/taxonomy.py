@@ -30,6 +30,8 @@ class IndustryCategoryResponse(BaseModel):
     is_active: bool
     created_at: Any
     updated_at: Any
+    created_by: uuid.UUID | None = None
+    updated_by: uuid.UUID | None = None
 
 
 class IndustryCategoryCreateRequest(BaseModel):
@@ -56,6 +58,8 @@ class ServiceCategoryResponse(BaseModel):
     is_active: bool
     created_at: Any
     updated_at: Any
+    created_by: uuid.UUID | None = None
+    updated_by: uuid.UUID | None = None
 
 
 class ServiceCategoryCreateRequest(BaseModel):
@@ -84,6 +88,8 @@ class ServiceSkillResponse(BaseModel):
     is_active: bool
     created_at: Any
     updated_at: Any
+    created_by: uuid.UUID | None = None
+    updated_by: uuid.UUID | None = None
 
 
 class ServiceSkillCreateRequest(BaseModel):
@@ -118,6 +124,8 @@ class ServiceCategoryAttributeResponse(BaseModel):
     validation_json: dict | None
     created_at: Any
     updated_at: Any
+    created_by: uuid.UUID | None = None
+    updated_by: uuid.UUID | None = None
 
 
 class ServiceCategoryAttributeCreateRequest(BaseModel):
@@ -162,6 +170,8 @@ class ServiceCategoryRequirementResponse(BaseModel):
     is_active: bool
     created_at: Any
     updated_at: Any
+    created_by: uuid.UUID | None = None
+    updated_by: uuid.UUID | None = None
 
 
 class ServiceCategoryRequirementCreateRequest(BaseModel):
@@ -219,6 +229,8 @@ async def list_industry_categories(
             is_active=cat.is_active,
             created_at=cat.created_at,
             updated_at=cat.updated_at,
+            created_by=cat.created_by,
+            updated_by=cat.updated_by,
         )
         for cat in rows
     ]
@@ -235,6 +247,7 @@ async def create_industry_category(
         name=payload.name,
         description=payload.description,
         is_active=True,
+        created_by=admin_user.id,
     )
     db.add(category)
     await db.commit()
@@ -248,6 +261,8 @@ async def create_industry_category(
         is_active=category.is_active,
         created_at=category.created_at,
         updated_at=category.updated_at,
+        created_by=category.created_by,
+        updated_by=category.updated_by,
     )
 
 
@@ -271,6 +286,7 @@ async def update_industry_category(
     if payload.is_active is not None:
         category.is_active = payload.is_active
     
+    category.updated_by = admin_user.id
     await db.commit()
     await db.refresh(category)
     
@@ -282,6 +298,8 @@ async def update_industry_category(
         is_active=category.is_active,
         created_at=category.created_at,
         updated_at=category.updated_at,
+        created_by=category.created_by,
+        updated_by=category.updated_by,
     )
 
 
@@ -364,6 +382,8 @@ async def list_service_categories(
             is_active=cat.is_active,
             created_at=cat.created_at,
             updated_at=cat.updated_at,
+            created_by=cat.created_by,
+            updated_by=cat.updated_by,
         )
         for cat in rows
     ]
@@ -381,6 +401,7 @@ async def create_service_category(
         name=payload.name,
         description=payload.description,
         is_active=True,
+        created_by=admin_user.id,
     )
     db.add(category)
     await db.commit()
@@ -395,6 +416,8 @@ async def create_service_category(
         is_active=category.is_active,
         created_at=category.created_at,
         updated_at=category.updated_at,
+        created_by=category.created_by,
+        updated_by=category.updated_by,
     )
 
 
@@ -420,6 +443,7 @@ async def update_service_category(
     if payload.is_active is not None:
         category.is_active = payload.is_active
     
+    category.updated_by = admin_user.id
     await db.commit()
     await db.refresh(category)
     
@@ -432,6 +456,8 @@ async def update_service_category(
         is_active=category.is_active,
         created_at=category.created_at,
         updated_at=category.updated_at,
+        created_by=category.created_by,
+        updated_by=category.updated_by,
     )
 
 
@@ -514,6 +540,8 @@ async def list_service_skills(
             is_active=skill.is_active,
             created_at=skill.created_at,
             updated_at=skill.updated_at,
+            created_by=skill.created_by,
+            updated_by=skill.updated_by,
         )
         for skill in rows
     ]
@@ -531,6 +559,7 @@ async def create_service_skill(
         name=payload.name,
         description=payload.description,
         is_active=True,
+        created_by=admin_user.id,
     )
     db.add(skill)
     await db.commit()
@@ -545,6 +574,8 @@ async def create_service_skill(
         is_active=skill.is_active,
         created_at=skill.created_at,
         updated_at=skill.updated_at,
+        created_by=skill.created_by,
+        updated_by=skill.updated_by,
     )
 
 
@@ -568,6 +599,7 @@ async def update_service_skill(
     if payload.is_active is not None:
         skill.is_active = payload.is_active
     
+    skill.updated_by = admin_user.id
     await db.commit()
     await db.refresh(skill)
     
@@ -580,6 +612,8 @@ async def update_service_skill(
         is_active=skill.is_active,
         created_at=skill.created_at,
         updated_at=skill.updated_at,
+        created_by=skill.created_by,
+        updated_by=skill.updated_by,
     )
 
 
@@ -654,6 +688,8 @@ async def list_service_category_attributes(
             validation_json=attr.validation_json,
             created_at=attr.created_at,
             updated_at=attr.updated_at,
+            created_by=attr.created_by,
+            updated_by=attr.updated_by,
         )
         for attr in rows
     ]
@@ -695,6 +731,7 @@ async def create_service_category_attribute(
         help_text=payload.help_text,
         options_json=payload.options_json,
         validation_json=payload.validation_json,
+        created_by=admin_user.id,
     )
     db.add(attribute)
     await db.commit()
@@ -716,6 +753,8 @@ async def create_service_category_attribute(
         validation_json=attribute.validation_json,
         created_at=attribute.created_at,
         updated_at=attribute.updated_at,
+        created_by=attribute.created_by,
+        updated_by=attribute.updated_by,
     )
 
 
@@ -751,6 +790,7 @@ async def update_service_category_attribute(
     if payload.validation_json is not None:
         attribute.validation_json = payload.validation_json
     
+    attribute.updated_by = admin_user.id
     await db.commit()
     await db.refresh(attribute)
     
@@ -770,6 +810,8 @@ async def update_service_category_attribute(
         validation_json=attribute.validation_json,
         created_at=attribute.created_at,
         updated_at=attribute.updated_at,
+        created_by=attribute.created_by,
+        updated_by=attribute.updated_by,
     )
 
 
@@ -833,6 +875,8 @@ async def list_service_category_requirements(
             is_active=req.is_active,
             created_at=req.created_at,
             updated_at=req.updated_at,
+            created_by=req.created_by,
+            updated_by=req.updated_by,
         )
         for req in rows
     ]
@@ -870,6 +914,7 @@ async def create_service_category_requirement(
         is_required=payload.is_required,
         applies_to_provider_type=payload.applies_to_provider_type,
         is_active=True,
+        created_by=admin_user.id,
     )
     db.add(requirement)
     await db.commit()
@@ -887,6 +932,8 @@ async def create_service_category_requirement(
         is_active=requirement.is_active,
         created_at=requirement.created_at,
         updated_at=requirement.updated_at,
+        created_by=requirement.created_by,
+        updated_by=requirement.updated_by,
     )
 
 
@@ -928,6 +975,7 @@ async def update_service_category_requirement(
     if payload.is_active is not None:
         requirement.is_active = payload.is_active
     
+    requirement.updated_by = admin_user.id
     await db.commit()
     await db.refresh(requirement)
     
@@ -943,6 +991,8 @@ async def update_service_category_requirement(
         is_active=requirement.is_active,
         created_at=requirement.created_at,
         updated_at=requirement.updated_at,
+        created_by=requirement.created_by,
+        updated_by=requirement.updated_by,
     )
 
 

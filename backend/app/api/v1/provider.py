@@ -82,14 +82,18 @@ async def update_my_profile(
             profile.exe_year = payload.exe_year
         if profile and payload.cccd:
             profile.cccd = payload.cccd
+        if profile:
+            profile.updated_by = provider.owner_user_id
     else:
         profile = await db.get(ProviderBusinessProfile, provider.id)
         if profile:
             if payload.company_name: profile.company_name = payload.company_name
             if payload.tax_code: profile.tax_code = payload.tax_code
             if payload.website_url: profile.website_url = payload.website_url
+            profile.updated_by = provider.owner_user_id
             # Có thể thêm các trường khác nếu cần
             
+    provider.updated_by = provider.owner_user_id
     await db.commit()
     return {"message": "Profile updated successfully"}
 
@@ -112,6 +116,7 @@ async def update_individual_profile(
     if payload.full_name is not None: profile.full_name = payload.full_name
     if payload.exe_year is not None: profile.exe_year = payload.exe_year
     if payload.cccd is not None: profile.cccd = payload.cccd
+    profile.updated_by = provider.owner_user_id
     
     await db.commit()
     return {"message": "Individual profile updated"}
@@ -142,6 +147,7 @@ async def update_business_profile(
     if payload.founded_date is not None: profile.founded_date = payload.founded_date
     if payload.hotline is not None: profile.hotline = payload.hotline
     if payload.website_url is not None: profile.website_url = payload.website_url
+    profile.updated_by = provider.owner_user_id
     
     await db.commit()
     return {"message": "Business profile updated"}
@@ -215,7 +221,8 @@ async def create_document(
         issued_by=payload.issued_by,
         issued_date=payload.issued_date,
         expiry_date=payload.expiry_date,
-        verification_status="pending"
+        verification_status="pending",
+        created_by=provider.owner_user_id,
     )
     db.add(new_doc)
     await db.commit()
@@ -308,6 +315,7 @@ async def update_document(
     doc.issued_date = payload.issued_date
     doc.expiry_date = payload.expiry_date
     doc.verification_status = "pending" # Reset status if updated
+    doc.updated_by = provider.owner_user_id
     
     await db.commit()
     await db.refresh(doc)
@@ -518,7 +526,8 @@ async def register_service(
         price_unit=payload.price_unit,
         description=payload.description,
         is_primary=payload.is_primary,
-        verification_status="pending" # Đợi Admin duyệt chuyên môn
+        verification_status="pending",
+        created_by=provider.owner_user_id,
     )
     db.add(new_svc)
     await db.commit()
@@ -576,7 +585,8 @@ async def update_service_attributes(
             value_text=attr_data.value_text,
             value_number=attr_data.value_number,
             value_boolean=attr_data.value_boolean,
-            value_json=attr_data.value_json
+            value_json=attr_data.value_json,
+            created_by=provider.owner_user_id,
         )
         db.add(new_attr)
         

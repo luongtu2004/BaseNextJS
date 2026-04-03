@@ -102,6 +102,8 @@ class ProviderDocumentResponse(BaseModel):
     verification_status: str
     rejection_reason: str | None = None
     created_at: datetime
+    created_by: uuid.UUID | None = None
+    updated_by: uuid.UUID | None = None
 
 
 class ProviderDocumentCreateRequest(BaseModel):

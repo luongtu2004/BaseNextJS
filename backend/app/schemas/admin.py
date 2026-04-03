@@ -65,6 +65,7 @@ class PostCategoryCreateRequest(BaseModel):
 
 
 class PostCategoryUpdateRequest(BaseModel):
+    code: str | None = Field(None, description="Category code")
     name: str | None = Field(None, description="Category name")
     slug: str | None = Field(None, description="Category slug")
     description: str | None = Field(None, description="Description")

@@ -84,6 +84,7 @@ async def create_post_category(
         slug=payload.slug,
         description=payload.description,
         is_active=True,
+        created_by=admin_user.id,
     )
     db.add(category)
     await db.commit()
@@ -98,6 +99,8 @@ async def create_post_category(
         "is_active": category.is_active,
         "created_at": category.created_at,
         "updated_at": category.updated_at,
+        "created_by": category.created_by,
+        "updated_by": category.updated_by,
     }
 
 
@@ -136,6 +139,7 @@ async def update_post_category(
     if payload.is_active is not None:
         category.is_active = payload.is_active
     
+    category.updated_by = admin_user.id
     await db.commit()
     await db.refresh(category)
     
@@ -148,6 +152,8 @@ async def update_post_category(
         "is_active": category.is_active,
         "created_at": category.created_at,
         "updated_at": category.updated_at,
+        "created_by": category.created_by,
+        "updated_by": category.updated_by,
     }
 
 
@@ -456,6 +462,7 @@ async def update_post(
     if payload.allow_indexing is not None:
         post.allow_indexing = payload.allow_indexing
     
+    post.updated_by = admin_user.id
     await db.commit()
     await db.refresh(post)
     
@@ -465,6 +472,7 @@ async def update_post(
         "slug": post.slug,
         "status": post.status,
         "updated_at": post.updated_at,
+        "updated_by": post.updated_by,
     }
 
 

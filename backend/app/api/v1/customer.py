@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Any
 
@@ -22,6 +23,8 @@ from app.schemas.customer import (
     CustomerBusinessProfile,
 )
 from app.services.ai_service import AIService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/customer", tags=["customer"])
 
@@ -335,8 +338,10 @@ async def search_providers(
         "total": total,
         "page": page,
         "page_size": page_size,
-        "ai_debug": {"parsed": ai_data if q else None} # Thêm debug để user kiểm tra
+        "ai_debug": {"parsed": ai_data if q else None}
     }
+    logger.info("Provider search - q='%s' results=%d total=%d", q, len(providers), total)
+    return results_dict
 
 
 @router.get("/providers/{provider_id}", response_model=CustomerProviderDetail)
@@ -396,7 +401,7 @@ async def get_provider_detail(
 
 @router.post("/become-provider")
 async def become_provider(
-    provider_type: str = Query(..., regex="^(individual|business)$"),
+    provider_type: str = Query(..., pattern="^(individual|business)$"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -441,6 +446,8 @@ async def become_provider(
     else:
         message = "Provider profile created. IMPORTANT: You MUST verify your identity (CCCD/Selfie) before your provider profile can be approved."
 
+    logger.info("User became provider - user_id=%s provider_id=%s type=%s",
+                current_user.id, new_provider.id, provider_type)
     return {
         "message": message,
         "provider_id": new_provider.id,

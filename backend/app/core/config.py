@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     local_ai_model: str = Field(default="llama3", validation_alias="LOCAL_AI_MODEL")
     local_ai_api_key: str | None = Field(default=None, validation_alias="LOCAL_AI_API_KEY")
 
+    # Logging (like Log4j configuration)
+    log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
+    log_dir: str = Field(default="logs", validation_alias="LOG_DIR")
+    log_sql: bool = Field(default=False, validation_alias="LOG_SQL")
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [x.strip() for x in self.cors_origins.split(",") if x.strip()]

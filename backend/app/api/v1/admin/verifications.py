@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Any
 
@@ -16,6 +17,8 @@ from app.schemas.admin import (
     VerificationResponse,
     VerificationReviewRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["admin-verifications"])
 
@@ -112,6 +115,8 @@ async def approve_user_verification(
         user.identity_verified_at = func.now()
 
     await db.commit()
+    logger.info("[ADMIN] Verification approved - verification_id=%s user_id=%s by admin=%s",
+                id, record.user_id, admin_user.id)
     return {"message": "Duyệt hồ sơ thành công"}
 
 
@@ -141,6 +146,8 @@ async def reject_user_verification(
         user.identity_verification_status = "rejected"
 
     await db.commit()
+    logger.info("[ADMIN] Verification rejected - verification_id=%s user_id=%s reason='%s' by admin=%s",
+                id, record.user_id, payload.reason, admin_user.id)
     return {"message": "Đã từ chối hồ sơ"}
 
 
@@ -168,4 +175,6 @@ async def request_resubmission(
         user.identity_verification_status = "unverified"
 
     await db.commit()
+    logger.info("[ADMIN] Resubmission requested - verification_id=%s user_id=%s reason='%s' by admin=%s",
+                id, record.user_id, payload.reason, admin_user.id)
     return {"message": "Đã yêu cầu bổ sung hồ sơ"}

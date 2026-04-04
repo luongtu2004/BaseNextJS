@@ -80,8 +80,8 @@ class TestCustomerTransportSearch:
         )
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        provider_ids = [item["provider_id"] for item in data]
+        assert isinstance(data["items"], list)
+        provider_ids = [item["provider_id"] for item in data["items"]]
         assert str(provider.id) in provider_ids
 
     async def test_search_empty_result_for_unmatched_province(
@@ -101,7 +101,7 @@ class TestCustomerTransportSearch:
             },
         )
         assert response.status_code == 200
-        assert isinstance(response.json(), list)
+        assert isinstance(response.json()["items"], list)
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -121,11 +121,11 @@ class TestCustomerSearchRoutes:
         )
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        assert len(data) >= 1
+        assert isinstance(data["items"], list)
+        assert len(data["items"]) >= 1
         assert all(
             r["from_province"] == "Hà Nội" and r["to_province"] == "Hồ Chí Minh"
-            for r in data
+            for r in data["items"]
         )
 
     async def test_search_routes_case_insensitive(
@@ -139,7 +139,7 @@ class TestCustomerSearchRoutes:
             params={"from_province": "hà nội", "to_province": "hồ chí minh"},
         )
         assert response.status_code == 200
-        assert len(response.json()) >= 1
+        assert len(response.json()["items"]) >= 1
 
     async def test_search_routes_ordered_by_price(
         self, client: AsyncClient, db: AsyncSession
@@ -157,7 +157,7 @@ class TestCustomerSearchRoutes:
             params={"from_province": "Hà Nội", "to_province": "Hồ Chí Minh"},
         )
         assert response.status_code == 200
-        prices = [float(r["price"]) for r in response.json()]
+        prices = [float(r["price"]) for r in response.json()["items"]]
         assert prices == sorted(prices)
 
     async def test_search_routes_no_results(self, client: AsyncClient, db: AsyncSession):
@@ -167,7 +167,7 @@ class TestCustomerSearchRoutes:
             params={"from_province": "Không có", "to_province": "Cũng không"},
         )
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json()["items"] == []
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -252,8 +252,8 @@ class TestCustomerSearchRentalVehicles:
         response = await client.get("/api/v1/customer/transport/rental-vehicles")
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        assert len(data) >= 1
+        assert isinstance(data["items"], list)
+        assert len(data["items"]) >= 1
 
     async def test_search_excludes_inactive_vehicles(
         self, client: AsyncClient, db: AsyncSession
@@ -267,7 +267,7 @@ class TestCustomerSearchRentalVehicles:
         response = await client.get("/api/v1/customer/transport/rental-vehicles")
         assert response.status_code == 200
         # All vehicles are inactive — should not appear
-        ids = [v["id"] for v in response.json()]
+        ids = [v["id"] for v in response.json()["items"]]
         assert str(vehicle.id) not in ids
 
     async def test_search_excludes_blocked_vehicle_on_date(
@@ -292,7 +292,7 @@ class TestCustomerSearchRentalVehicles:
             params={"available_on": str(target_date)},
         )
         assert response.status_code == 200
-        ids = [v["id"] for v in response.json()]
+        ids = [v["id"] for v in response.json()["items"]]
         assert str(vehicle.id) not in ids
 
     async def test_search_available_vehicle_not_blocked(
@@ -309,7 +309,7 @@ class TestCustomerSearchRentalVehicles:
             params={"available_on": str(target_date)},
         )
         assert response.status_code == 200
-        ids = [v["id"] for v in response.json()]
+        ids = [v["id"] for v in response.json()["items"]]
         assert str(vehicle.id) in ids
 
     async def test_search_filter_by_seat_count(
@@ -328,7 +328,7 @@ class TestCustomerSearchRentalVehicles:
             params={"min_seats": 7},
         )
         assert response.status_code == 200
-        ids = [v["id"] for v in response.json()]
+        ids = [v["id"] for v in response.json()["items"]]
         assert str(vehicle_large.id) in ids
         assert str(vehicle_small.id) not in ids
 

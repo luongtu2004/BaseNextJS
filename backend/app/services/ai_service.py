@@ -1,6 +1,12 @@
 import json
+import logging
+
 import httpx
+
 from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
+
 
 class AIService:
     @staticmethod
@@ -20,13 +26,14 @@ class AIService:
             "Lưu ý: Chỉ trả về JSON, không giải thích."
         )
         
+        logger.info("Parsing search prompt - model=%s prompt='%s'", settings.local_ai_model, prompt[:80])
+
         try:
             headers = {}
             if settings.local_ai_api_key:
                 headers["Authorization"] = f"Bearer {settings.local_ai_api_key}"
-                
+
             async with httpx.AsyncClient(timeout=10.0) as client:
-                # Gửi yêu cầu tới Ollama hoặc API AI khác của bạn
                 response = await client.post(
                     settings.local_ai_url,
                     json={
@@ -37,21 +44,21 @@ class AIService:
                     },
                     headers=headers
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
-                    # Phản hồi từ Ollama nằm trong trường 'response'
                     ai_response_text = data.get("response", "{}")
                     try:
-                        # Parse JSON từ chuỗi kết quả của AI
-                        return json.loads(ai_response_text)
-                    except (json.JSONDecodeError, TypeError):
-                        # Nếu AI không trả về JSON hợp lệ, coi cả câu prompt là keyword
+                        parsed = json.loads(ai_response_text)
+                        logger.info("AI parse success - keyword='%s' location='%s'", parsed.get("keyword"), parsed.get("location"))
+                        return parsed
+                    except (json.JSONDecodeError, TypeError) as parse_err:
+                        logger.warning("AI returned non-JSON response - raw='%s' error=%s", ai_response_text[:200], parse_err)
                         return {"keyword": prompt, "location": None}
-                
-        except Exception as e:
-            # Trường hợp AI không phản hồi (chưa bật local AI hoặc lỗi mạng)
-            # Log lỗi và trả về dữ liệu thô để hệ thống tìm kiếm thông thường vẫn chạy được
-            print(f"--- [AI Service Warning] ---: {str(e)}")
-            
+                else:
+                    logger.error("AI request failed - status=%d body=%s", response.status_code, response.text[:200])
+
+        except Exception as exc:
+            logger.warning("AI service unavailable - %s: %s", type(exc).__name__, exc)
+
         return {"keyword": prompt, "location": None}

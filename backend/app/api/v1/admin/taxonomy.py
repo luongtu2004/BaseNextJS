@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
@@ -195,6 +196,8 @@ class ServiceCategoryRequirementUpdateRequest(BaseModel):
 
 
 # ==================== Router Definition ====================
+logger = logging.getLogger(__name__)
+
 router = APIRouter(tags=["admin-taxonomy"])
 
 
@@ -252,7 +255,9 @@ async def create_industry_category(
     db.add(category)
     await db.commit()
     await db.refresh(category)
-    
+
+    logger.info("[ADMIN] Industry category created - id=%s code=%s name=%s",
+                category.id, category.code, category.name)
     return IndustryCategoryResponse(
         id=category.id,
         code=category.code,
@@ -333,8 +338,10 @@ async def delete_industry_category(
     try:
         await db.delete(category)
         await db.commit()
+        logger.info("[ADMIN] Industry category deleted - id=%s", category_id)
     except Exception as e:
         await db.rollback()
+        logger.error("[ADMIN] Failed to delete industry category - id=%s error=%s", category_id, e)
         raise HTTPException(status_code=400, detail=f"Cannot delete industry category: {str(e)}")
     
     return {"success": True}
@@ -406,7 +413,9 @@ async def create_service_category(
     db.add(category)
     await db.commit()
     await db.refresh(category)
-    
+
+    logger.info("[ADMIN] Service category created - id=%s code=%s name=%s",
+                category.id, category.code, category.name)
     return ServiceCategoryResponse(
         id=category.id,
         industry_category_id=category.industry_category_id,
@@ -491,8 +500,10 @@ async def delete_service_category(
     try:
         await db.delete(category)
         await db.commit()
+        logger.info("[ADMIN] Service category deleted - id=%s", category_id)
     except Exception as e:
         await db.rollback()
+        logger.error("[ADMIN] Failed to delete service category - id=%s error=%s", category_id, e)
         raise HTTPException(status_code=400, detail=f"Cannot delete service category: {str(e)}")
     
     return {"success": True}
@@ -564,7 +575,9 @@ async def create_service_skill(
     db.add(skill)
     await db.commit()
     await db.refresh(skill)
-    
+
+    logger.info("[ADMIN] Service skill created - id=%s code=%s name=%s",
+                skill.id, skill.code, skill.name)
     return ServiceSkillResponse(
         id=skill.id,
         service_category_id=skill.service_category_id,
@@ -647,8 +660,10 @@ async def delete_service_skill(
     try:
         await db.delete(skill)
         await db.commit()
+        logger.info("[ADMIN] Service skill deleted - id=%s", skill_id)
     except Exception as e:
         await db.rollback()
+        logger.error("[ADMIN] Failed to delete service skill - id=%s error=%s", skill_id, e)
         raise HTTPException(status_code=400, detail=f"Cannot delete service skill: {str(e)}")
     
     return {"success": True}

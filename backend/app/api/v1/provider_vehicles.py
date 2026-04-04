@@ -225,30 +225,47 @@ async def create_vehicle(
     return ProviderVehicleResponse.model_validate(vehicle)
 
 
-@router.get("", response_model=list[ProviderVehicleResponse])
+@router.get("", response_model=dict)
 async def list_vehicles(
+    page: int = Query(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)"),
+    page_size: int = Query(default=20, ge=1, le=100, description="Kích thước trang"),
     current_user: User = Depends(check_user_role("provider_owner")),
     db: AsyncSession = Depends(get_db),
-) -> list[ProviderVehicleResponse]:
+) -> dict:
     """Danh sách xe của provider đang đăng nhập.
 
     Args:
+        page: Số trang hiện tại.
+        page_size: Số mục trên trang.
         current_user: Provider đang đăng nhập.
         db: Async DB session.
 
     Returns:
-        Danh sách ProviderVehicleResponse.
+        Danh sách ProviderVehicleResponse phân trang.
     """
     provider = await _get_provider_or_403(current_user, db)
+
+    from sqlalchemy import func
+    count_stmt = select(func.count(ProviderVehicle.id)).where(ProviderVehicle.provider_id == provider.id)
+    total = (await db.execute(count_stmt)).scalar_one()
 
     stmt = (
         select(ProviderVehicle)
         .where(ProviderVehicle.provider_id == provider.id)
         .order_by(ProviderVehicle.created_at.desc())
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     result = await db.execute(stmt)
     vehicles = result.scalars().all()
-    return [ProviderVehicleResponse.model_validate(v) for v in vehicles]
+    items = [ProviderVehicleResponse.model_validate(v) for v in vehicles]
+
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.get("/{vehicle_id}", response_model=ProviderVehicleResponse)
@@ -442,33 +459,50 @@ async def add_vehicle_document(
     return VehicleDocumentResponse.model_validate(doc)
 
 
-@router.get("/{vehicle_id}/documents", response_model=list[VehicleDocumentResponse])
+@router.get("/{vehicle_id}/documents", response_model=dict)
 async def list_vehicle_documents(
     vehicle_id: uuid.UUID,
+    page: int = Query(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)"),
+    page_size: int = Query(default=20, ge=1, le=100, description="Kích thước trang"),
     current_user: User = Depends(check_user_role("provider_owner")),
     db: AsyncSession = Depends(get_db),
-) -> list[VehicleDocumentResponse]:
+) -> dict:
     """Danh sách giấy tờ của một xe.
 
     Args:
         vehicle_id: UUID của xe.
+        page: Số trang hiện tại.
+        page_size: Số mục trên trang.
         current_user: Provider đang đăng nhập.
         db: Async DB session.
 
     Returns:
-        Danh sách VehicleDocumentResponse.
+        Danh sách VehicleDocumentResponse phân trang.
     """
     provider = await _get_provider_or_403(current_user, db)
     await _get_vehicle_or_404(vehicle_id, provider.id, db)
+
+    from sqlalchemy import func
+    count_stmt = select(func.count(ProviderVehicleDocument.id)).where(ProviderVehicleDocument.vehicle_id == vehicle_id)
+    total = (await db.execute(count_stmt)).scalar_one()
 
     stmt = (
         select(ProviderVehicleDocument)
         .where(ProviderVehicleDocument.vehicle_id == vehicle_id)
         .order_by(ProviderVehicleDocument.created_at.desc())
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     result = await db.execute(stmt)
     docs = result.scalars().all()
-    return [VehicleDocumentResponse.model_validate(d) for d in docs]
+    items = [VehicleDocumentResponse.model_validate(d) for d in docs]
+
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.get("/{vehicle_id}/documents/{doc_id}", response_model=VehicleDocumentResponse)

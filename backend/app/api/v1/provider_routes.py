@@ -280,33 +280,50 @@ async def create_route(
     )
 
 
-@router.get("/services/{svc_id}/routes", response_model=list[ServiceRouteResponse])
+@router.get("/services/{svc_id}/routes", response_model=dict)
 async def list_routes(
     svc_id: uuid.UUID,
+    page: int = Query(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)"),
+    page_size: int = Query(default=20, ge=1, le=100, description="Kích thước trang"),
     current_user: User = Depends(check_user_role("provider_owner")),
     db: AsyncSession = Depends(get_db),
-) -> list[ServiceRouteResponse]:
+) -> dict:
     """Danh sách tuyến của một dịch vụ.
 
     Args:
         svc_id: UUID của provider service.
+        page: Số trang hiện tại.
+        page_size: Số mục trên mỗi trang.
         current_user: Provider đang đăng nhập.
         db: Async DB session.
 
     Returns:
-        Danh sách ServiceRouteResponse kèm schedules.
+        Danh sách các tuyến ở dạng phân trang.
     """
     provider = await _get_provider_or_403(current_user, db)
     await _get_service_or_404(svc_id, provider.id, db)
+
+    from sqlalchemy import func
+    count_stmt = select(func.count(ServiceRoute.id)).where(ServiceRoute.provider_service_id == svc_id)
+    total = (await db.execute(count_stmt)).scalar_one()
 
     stmt = (
         select(ServiceRoute)
         .options(selectinload(ServiceRoute.schedules))
         .where(ServiceRoute.provider_service_id == svc_id)
         .order_by(ServiceRoute.created_at.desc())
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     routes = (await db.execute(stmt)).scalars().all()
-    return [ServiceRouteResponse.model_validate(r) for r in routes]
+    items = [ServiceRouteResponse.model_validate(r) for r in routes]
+
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.get("/services/{svc_id}/routes/{route_id}", response_model=ServiceRouteResponse)
@@ -504,33 +521,50 @@ async def create_schedule(
 
 @router.get(
     "/routes/{route_id}/schedules",
-    response_model=list[ServiceRouteScheduleResponse],
+    response_model=dict,
 )
 async def list_schedules(
     route_id: uuid.UUID,
+    page: int = Query(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)"),
+    page_size: int = Query(default=20, ge=1, le=100, description="Kích thước trang"),
     current_user: User = Depends(check_user_role("provider_owner")),
     db: AsyncSession = Depends(get_db),
-) -> list[ServiceRouteScheduleResponse]:
+) -> dict:
     """Danh sách lịch khởi hành của một tuyến.
 
     Args:
         route_id: UUID của tuyến.
+        page: Số trang hiện tại.
+        page_size: Kích thước trang.
         current_user: Provider đang đăng nhập.
         db: Async DB session.
 
     Returns:
-        Danh sách ServiceRouteScheduleResponse sắp xếp theo giờ.
+        Danh sách ServiceRouteScheduleResponse phân trang và sắp xếp theo giờ.
     """
     provider = await _get_provider_or_403(current_user, db)
     await _get_route_by_id_for_provider(route_id, provider.id, db)
+
+    from sqlalchemy import func
+    count_stmt = select(func.count(ServiceRouteSchedule.id)).where(ServiceRouteSchedule.route_id == route_id)
+    total = (await db.execute(count_stmt)).scalar_one()
 
     stmt = (
         select(ServiceRouteSchedule)
         .where(ServiceRouteSchedule.route_id == route_id)
         .order_by(ServiceRouteSchedule.departure_time)
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     schedules = (await db.execute(stmt)).scalars().all()
-    return [ServiceRouteScheduleResponse.model_validate(s) for s in schedules]
+    items = [ServiceRouteScheduleResponse.model_validate(s) for s in schedules]
+
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.put(

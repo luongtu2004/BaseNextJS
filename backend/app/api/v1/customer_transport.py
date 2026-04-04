@@ -51,25 +51,25 @@ _SHARED_RIDE_CODE = "xe_ghep_tien_chuyen"
 _LIMOUSINE_CODE = "xe_limousine"
 
 
-@router.get("/search", response_model=list[CustomerTransportSearchItem])
+@router.get("/search", response_model=dict)
 async def search_transport_providers(
     service_category_code: str | None = Query(
-        default=None, description="Mã loại dịch vụ vận tải — bỏ trống để tìm tất cả provider transport"
+        default=None, description="Mã loại dịch vụ vận tải - bỏ trống để tìm tất cả provider transport"
     ),
     province: str | None = Query(
         default=None, description="Lọc theo tỉnh/TP phục vụ (tìm trong attributes)"
     ),
-    limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    page: int = Query(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)"),
+    page_size: int = Query(default=20, ge=1, le=100, description="Số kết quả mỗi trang"),
     db: AsyncSession = Depends(get_db),
-) -> list[CustomerTransportSearchItem]:
+) -> dict:
     """Tìm kiếm provider theo loại dịch vụ vận tải và tỉnh/TP.
 
     Args:
         service_category_code: Mã loại dịch vụ (từ taxonomy Phase 6).
         province: Tỉnh/TP muốn tìm provider phục vụ.
-        limit: Số kết quả tối đa.
-        offset: Pagination offset.
+        page: Số trang.
+        page_size: Số item mỗi trang.
         db: Async DB session.
 
     Returns:
@@ -113,6 +113,15 @@ async def search_transport_providers(
         )
         conditions.append(province_exists)
 
+    # Đếm tổng số
+    count_stmt = (
+        select(func.count(ProviderService.id))
+        .join(Provider, ProviderService.provider_id == Provider.id)
+        .join(ServiceCategory, ProviderService.service_category_id == ServiceCategory.id)
+        .where(*conditions)
+    )
+    total = (await db.execute(count_stmt)).scalar_one()
+
     stmt = (
         select(
             ProviderService.id.label("service_id"),
@@ -134,13 +143,18 @@ async def search_transport_providers(
         .join(ServiceCategory, ProviderService.service_category_id == ServiceCategory.id)
         .where(*conditions)
         .order_by(Provider.avg_rating.desc(), Provider.total_reviews.desc())
-        .limit(limit)
-        .offset(offset)
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     rows = (await db.execute(stmt)).all()
 
     if not rows:
-        return []
+        return {
+            "items": [],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        }
 
     # Bulk load profiles (avoid N+1)
     provider_ids = list({row.provider_id for row in rows})
@@ -199,24 +213,29 @@ async def search_transport_providers(
                 price_unit=row.price_unit,
             )
         )
-    return results
+    return {
+        "items": results,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
-@router.get("/routes", response_model=list[CustomerRouteSearchItem])
+@router.get("/routes", response_model=dict)
 async def search_bus_routes(
-    from_province: str | None = Query(default=None, description="Tỉnh/TP khởi hành — bỏ trống để hiển thị tất cả"),
-    to_province: str | None = Query(default=None, description="Tỉnh/TP đến — bỏ trống để hiển thị tất cả"),
-    limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    from_province: str | None = Query(default=None, description="Tỉnh/TP khởi hành - bỏ trống để hiển thị tất cả"),
+    to_province: str | None = Query(default=None, description="Tỉnh/TP đến - bỏ trống để hiển thị tất cả"),
+    page: int = Query(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)"),
+    page_size: int = Query(default=20, ge=1, le=100, description="Số kết quả mỗi trang"),
     db: AsyncSession = Depends(get_db),
-) -> list[CustomerRouteSearchItem]:
+) -> dict:
     """Tìm tuyến xe khách liên tỉnh theo điểm đi và đến.
 
     Args:
         from_province: Tỉnh/TP xuất phát (bỏ trống = tất cả).
         to_province: Tỉnh/TP đến (bỏ trống = tất cả).
-        limit: Số kết quả tối đa.
-        offset: Pagination offset.
+        page: Số trang.
+        page_size: Kích thước trang.
         db: Async DB session.
 
     Returns:
@@ -238,6 +257,14 @@ async def search_bus_routes(
         route_conditions.append(ServiceRoute.from_province.ilike(f"%{from_province}%"))
     if to_province:
         route_conditions.append(ServiceRoute.to_province.ilike(f"%{to_province}%"))
+
+    count_stmt = (
+        select(func.count(ServiceRoute.id))
+        .join(ProviderService, ServiceRoute.provider_service_id == ProviderService.id)
+        .join(Provider, ProviderService.provider_id == Provider.id)
+        .where(*route_conditions)
+    )
+    total = (await db.execute(count_stmt)).scalar_one()
 
     stmt = (
         select(
@@ -261,13 +288,18 @@ async def search_bus_routes(
         .join(Provider, ProviderService.provider_id == Provider.id)
         .where(*route_conditions)
         .order_by(ServiceRoute.price.asc())
-        .limit(limit)
-        .offset(offset)
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     rows = (await db.execute(stmt)).all()
 
     if not rows:
-        return []
+        return {
+            "items": [],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        }
 
     # Bulk load provider profiles + user phone
     provider_ids = list({row.provider_id for row in rows})
@@ -322,7 +354,12 @@ async def search_bus_routes(
                 notes=row.notes,
             )
         )
-    return results
+    return {
+        "items": results,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.get("/routes/{route_id}", response_model=CustomerRouteDetailResponse)
@@ -423,7 +460,7 @@ async def get_route_with_schedules(
     )
 
 
-@router.get("/rental-vehicles", response_model=list[CustomerRentalVehicleItem])
+@router.get("/rental-vehicles", response_model=dict)
 async def search_rental_vehicles(
     vehicle_type: str | None = Query(
         default=None, description="Lọc theo loại xe (xe_4_cho, xe_7_cho, ...)"
@@ -434,12 +471,12 @@ async def search_rental_vehicles(
     has_ac: bool | None = Query(default=None, description="Lọc có điều hòa"),
     has_wifi: bool | None = Query(default=None, description="Lọc có WiFi"),
     available_on: date | None = Query(
-        default=None, description="Ngày muốn thuê (YYYY-MM-DD) — lọc xe còn trống"
+        default=None, description="Ngày muốn thuê (YYYY-MM-DD) - lọc xe còn trống"
     ),
-    limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    page: int = Query(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)"),
+    page_size: int = Query(default=20, ge=1, le=100, description="Số kết quả mỗi trang"),
     db: AsyncSession = Depends(get_db),
-) -> list[CustomerRentalVehicleItem]:
+) -> dict:
     """Tìm xe ô tô hoặc xe máy cho thuê tự lái.
 
     Chỉ trả về xe thuộc service category cho_thue_xe_tu_lai_oto hoặc cho_thue_xe_may.
@@ -451,9 +488,9 @@ async def search_rental_vehicles(
         min_seats: Số chỗ tối thiểu.
         has_ac: Lọc có điều hòa.
         has_wifi: Lọc có WiFi.
-        available_on: Ngày cần thuê — loại bỏ xe đã bị block.
-        limit: Số kết quả tối đa.
-        offset: Pagination offset.
+        available_on: Ngày cần thuê - loại bỏ xe đã bị block.
+        page: Số trang.
+        page_size: Số lượng kết quả mỗi trang.
         db: Async DB session.
 
     Returns:
@@ -488,17 +525,25 @@ async def search_rental_vehicles(
         )
         conditions.append(ProviderVehicle.id.not_in(blocked_subq))
 
+    count_stmt = select(func.count(ProviderVehicle.id)).where(*conditions)
+    total = (await db.execute(count_stmt)).scalar_one()
+
     stmt = (
         select(ProviderVehicle)
         .where(*conditions)
         .order_by(ProviderVehicle.created_at.desc())
-        .limit(limit)
-        .offset(offset)
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     vehicles = (await db.execute(stmt)).scalars().all()
 
     if not vehicles:
-        return []
+        return {
+            "items": [],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        }
 
     # Bulk load provider profiles, service pricing, and provider ratings
     provider_ids = list({v.provider_id for v in vehicles})
@@ -577,7 +622,12 @@ async def search_rental_vehicles(
                 price_unit=svc.price_unit if svc else None,
             )
         )
-    return results
+    return {
+        "items": results,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.get("/rental-vehicles/{vehicle_id}", response_model=CustomerRentalVehicleItem)

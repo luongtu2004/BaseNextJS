@@ -55,17 +55,17 @@ router = APIRouter(tags=["admin-transport"])
 # ─────────────────────────────────────────────────────────────────────
 
 
-@router.get("/vehicles", response_model=list[AdminVehicleListItem])
+@router.get("/vehicles", response_model=dict)
 async def admin_list_vehicles(
     provider_id: uuid.UUID | None = Query(default=None, description="Lọc theo provider"),
     vehicle_type: str | None = Query(default=None, description="Lọc theo loại xe"),
     status_filter: str | None = Query(default=None, alias="status", description="Lọc theo status"),
     license_plate: str | None = Query(default=None, description="Tìm theo biển số xe"),
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    page: int = Query(default=1, ge=1, description="Trang hiện tại"),
+    page_size: int = Query(default=50, ge=1, le=200, description="Kích thước trang"),
     current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
-) -> list[AdminVehicleListItem]:
+) -> dict:
     """Danh sách tất cả xe trong hệ thống. Hỗ trợ filter và pagination.
 
     Args:
@@ -73,8 +73,8 @@ async def admin_list_vehicles(
         vehicle_type: Lọc theo loại xe.
         status_filter: Lọc theo trạng thái (active/inactive/suspended).
         license_plate: Tìm theo biển số xe (ILIKE).
-        limit: Số bản ghi tối đa.
-        offset: Bắt đầu từ vị trí nào.
+        page: Trang hiện tại.
+        page_size: Kích thước trang.
         current_admin: Admin đang đăng nhập.
         db: Async DB session.
 
@@ -91,17 +91,26 @@ async def admin_list_vehicles(
     if license_plate is not None:
         conditions.append(ProviderVehicle.license_plate.ilike(f"%{license_plate}%"))
 
+    from sqlalchemy import func
+    count_stmt = select(func.count(ProviderVehicle.id)).where(*conditions)
+    total = (await db.execute(count_stmt)).scalar_one()
+
     stmt = (
         select(ProviderVehicle)
         .where(*conditions)
         .order_by(ProviderVehicle.created_at.desc())
-        .limit(limit)
-        .offset(offset)
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     vehicles = (await db.execute(stmt)).scalars().all()
 
     if not vehicles:
-        return []
+        return {
+            "items": [],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        }
 
     # Bulk load provider profiles for provider_name
     prov_ids = list({v.provider_id for v in vehicles})
@@ -166,7 +175,12 @@ async def admin_list_vehicles(
                 updated_at=v.updated_at,
             )
         )
-    return results
+    return {
+        "items": results,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.get("/vehicles/{vehicle_id}", response_model=ProviderVehicleResponse)
@@ -237,7 +251,7 @@ async def admin_patch_vehicle_status(
 # ─────────────────────────────────────────────────────────────────────
 
 
-@router.get("/vehicle-documents", response_model=list[AdminVehicleDocumentListItem])
+@router.get("/vehicle-documents", response_model=dict)
 async def admin_list_vehicle_documents(
     review_status: str | None = Query(
         default="pending", description="Lọc theo trạng thái duyệt: pending/approved/rejected"
@@ -245,11 +259,11 @@ async def admin_list_vehicle_documents(
     vehicle_id: uuid.UUID | None = Query(default=None, description="Lọc theo xe cụ thể"),
     provider_id: uuid.UUID | None = Query(default=None, description="Lọc theo provider"),
     document_type: str | None = Query(default=None, description="Lọc theo loại giấy tờ"),
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    page: int = Query(default=1, ge=1, description="Trang hiện tại"),
+    page_size: int = Query(default=50, ge=1, le=200, description="Số kết quả mỗi trang"),
     current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
-) -> list[AdminVehicleDocumentListItem]:
+) -> dict:
     """Queue giấy tờ xe chờ duyệt dành cho admin CMS.
 
     Args:
@@ -257,8 +271,8 @@ async def admin_list_vehicle_documents(
         vehicle_id: Lọc theo xe cụ thể.
         provider_id: Lọc theo provider.
         document_type: Lọc theo loại giấy tờ.
-        limit: Số bản ghi tối đa.
-        offset: Pagination offset.
+        page: Trang hiện tại.
+        page_size: Kích thước trang.
         current_admin: Admin đang đăng nhập.
         db: Async DB session.
 
@@ -279,17 +293,26 @@ async def admin_list_vehicle_documents(
         veh_ids = [r for r in (await db.execute(veh_ids_stmt)).scalars().all()]
         conditions.append(ProviderVehicleDocument.vehicle_id.in_(veh_ids))
 
+    from sqlalchemy import func
+    count_stmt = select(func.count(ProviderVehicleDocument.id)).where(*conditions)
+    total = (await db.execute(count_stmt)).scalar_one()
+
     stmt = (
         select(ProviderVehicleDocument)
         .where(*conditions)
         .order_by(ProviderVehicleDocument.created_at.asc())  # FIFO
-        .limit(limit)
-        .offset(offset)
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     docs = (await db.execute(stmt)).scalars().all()
 
     if not docs:
-        return []
+        return {
+            "items": [],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        }
 
     # Bulk load vehicle + provider info
     veh_ids = list({d.vehicle_id for d in docs})
@@ -345,7 +368,12 @@ async def admin_list_vehicle_documents(
                 updated_at=d.updated_at,
             )
         )
-    return results
+    return {
+        "items": results,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.post(
@@ -414,17 +442,17 @@ async def admin_review_vehicle_document(
 # ─────────────────────────────────────────────────────────────────────
 
 
-@router.get("/routes", response_model=list[AdminRouteListItem])
+@router.get("/routes", response_model=dict)
 async def admin_list_routes(
     from_province: str | None = Query(default=None),
     to_province: str | None = Query(default=None),
     is_active: bool | None = Query(default=None),
     provider_id: uuid.UUID | None = Query(default=None, description="Lọc theo provider"),
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    page: int = Query(default=1, ge=1, description="Trang hiện tại"),
+    page_size: int = Query(default=50, ge=1, le=200, description="Kích thước trang"),
     current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
-) -> list[AdminRouteListItem]:
+) -> dict:
     """Danh sách tất cả tuyến đường trong hệ thống.
 
     Args:
@@ -432,8 +460,8 @@ async def admin_list_routes(
         to_province: Lọc tỉnh đến.
         is_active: Lọc trạng thái active.
         provider_id: Lọc theo provider.
-        limit: Số bản ghi tối đa.
-        offset: Pagination offset.
+        page: Trang hiện tại.
+        page_size: Kích thước trang.
         current_admin: Admin đang đăng nhập.
         db: Async DB session.
 
@@ -452,18 +480,27 @@ async def admin_list_routes(
         svc_ids = [r for r in (await db.execute(svc_ids_stmt)).scalars().all()]
         conditions.append(ServiceRoute.provider_service_id.in_(svc_ids))
 
+    from sqlalchemy import func
+    count_stmt = select(func.count(ServiceRoute.id)).where(*conditions)
+    total = (await db.execute(count_stmt)).scalar_one()
+
     stmt = (
         select(ServiceRoute)
         .options(selectinload(ServiceRoute.schedules))
         .where(*conditions)
         .order_by(ServiceRoute.created_at.desc())
-        .limit(limit)
-        .offset(offset)
+        .limit(page_size)
+        .offset((page - 1) * page_size)
     )
     routes = (await db.execute(stmt)).scalars().all()
 
     if not routes:
-        return []
+        return {
+            "items": [],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        }
 
     # Bulk load provider info
     svc_ids = list({r.provider_service_id for r in routes})
@@ -502,7 +539,12 @@ async def admin_list_routes(
         item.provider_id = pid
         item.provider_name = pname
         results.append(item)
-    return results
+    return {
+        "items": results,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.get("/routes/{route_id}", response_model=AdminRouteListItem)

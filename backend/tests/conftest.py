@@ -4,6 +4,15 @@ Uses pytest-asyncio with in-memory SQLite for fast unit tests.
 All tests hit the Router layer directly via FastAPI TestClient / AsyncClient.
 """
 
+# ── MUST be set BEFORE any app import so get_settings() caches SQLite config ──
+import os
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("JWT_ACCESS_SECRET", "test-access-secret-32-chars-min!")
+os.environ.setdefault("JWT_REFRESH_SECRET", "test-refresh-secret-32-chars-min!")
+os.environ.setdefault("JWT_ACCESS_EXPIRE_MINUTES", "15")
+os.environ.setdefault("JWT_REFRESH_EXPIRE_DAYS", "30")
+# ──────────────────────────────────────────────────────────────────────────────
+
 import uuid
 from datetime import date, datetime, timezone
 from typing import AsyncGenerator

@@ -310,10 +310,25 @@ async def update_provider_verification_status(
         raise HTTPException(status_code=400, detail=f"Invalid verification_status. Must be one of: {valid_statuses}")
     
     old_verification_status = provider.verification_status
+    
+    # If approving, check if owner's identity is verified
+    if verification_status == "approved":
+        # Load owner if not loaded
+        if not provider.owner:
+            owner = await db.get(User, provider.owner_user_id)
+        else:
+            owner = provider.owner
+            
+        if owner.identity_verification_status != "verified":
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot approve provider. Owner's identity status is '{owner.identity_verification_status}'. It must be 'verified' first."
+            )
+
     provider.verification_status = verification_status
     
-    # Log if verified or rejected
-    if verification_status in ["verified", "rejected"] and note:
+    # Log if approved or rejected
+    if verification_status in ["approved", "rejected"] and note:
         # Update the most recent status log if exists
         status_logs = await db.execute(
             select(ProviderStatusLog).where(ProviderStatusLog.provider_id == provider_id)

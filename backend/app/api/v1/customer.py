@@ -423,11 +423,26 @@ async def become_provider(
     if not role_exists.scalar_one_or_none():
         db.add(UserRole(user_id=current_user.id, role_code="provider_owner"))
     
-    # 4. Tạo Profile mặc định theo loại (Sử dụng relationship để tự động liên kết ID)
+    # 4. Tạo Profile mặc định theo loại
     if provider_type == "individual":
         new_provider.individual_profile = ProviderIndividualProfile(full_name=current_user.full_name)
     else:
         new_provider.business_profile = ProviderBusinessProfile(company_name=f"{current_user.full_name}'s Business")
         
     await db.commit()
-    return {"message": "Success! Your provider profile is created and pending review.", "provider_id": new_provider.id}
+    await db.refresh(current_user)
+
+    # 5. Phân luồng thông báo dựa trên trạng thái xác minh danh tính
+    id_status = current_user.identity_verification_status
+    if id_status == "verified":
+        message = "Success! Your provider profile is created and pending review."
+    elif id_status == "pending":
+        message = "Provider profile created. We are still reviewing your identity verification."
+    else:
+        message = "Provider profile created. IMPORTANT: You MUST verify your identity (CCCD/Selfie) before your provider profile can be approved."
+
+    return {
+        "message": message,
+        "provider_id": new_provider.id,
+        "identity_verification_status": id_status
+    }

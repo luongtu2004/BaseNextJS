@@ -448,7 +448,6 @@ async def become_provider(
 
     logger.info("User became provider - user_id=%s provider_id=%s type=%s",
                 current_user.id, new_provider.id, provider_type)
-
     return {
         "message": message,
         "provider_id": new_provider.id,

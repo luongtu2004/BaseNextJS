@@ -28,6 +28,13 @@ from app.models.taxonomy import (
     ServiceCategoryRequirement,
     ServiceSkill,
 )
+from app.models.transport import (
+    ProviderVehicle,
+    ProviderVehicleAvailability,
+    ProviderVehicleDocument,
+    ServiceRoute,
+    ServiceRouteSchedule,
+)
 from app.models.user import User, UserProfile, UserRole, UserStatusLog
 
 __all__ = [
@@ -46,9 +53,14 @@ __all__ = [
     "ProviderService",
     "ProviderServiceAttribute",
     "ProviderStatusLog",
+    "ProviderVehicle",
+    "ProviderVehicleAvailability",
+    "ProviderVehicleDocument",
     "ServiceCategory",
     "ServiceCategoryAttribute",
     "ServiceCategoryRequirement",
+    "ServiceRoute",
+    "ServiceRouteSchedule",
     "ServiceSkill",
     "User",
     "UserIdentityFile",

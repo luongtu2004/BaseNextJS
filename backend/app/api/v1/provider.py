@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Any
 
@@ -24,6 +25,8 @@ from app.schemas.provider import (
     ProviderDocumentCreateRequest,
 )
 from fastapi import UploadFile, File, Form
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/provider", tags=["provider-owner"])
 
@@ -95,6 +98,7 @@ async def update_my_profile(
             
     provider.updated_by = provider.owner_user_id
     await db.commit()
+    logger.info("Provider profile updated - provider_id=%s type=%s", provider.id, provider.provider_type)
     return {"message": "Profile updated successfully"}
 
 
@@ -227,6 +231,8 @@ async def create_document(
     db.add(new_doc)
     await db.commit()
     await db.refresh(new_doc)
+    logger.info("Provider document created - provider_id=%s doc_id=%s type=%s",
+                provider.id, new_doc.id, payload.document_type)
     return new_doc
 
 
@@ -335,6 +341,7 @@ async def delete_document(
         
     await db.delete(doc)
     await db.commit()
+    logger.info("Provider document deleted - doc_id=%s provider_id=%s", document_id, provider.id)
     return {"message": "Document deleted"}
 
 
@@ -532,6 +539,8 @@ async def register_service(
     db.add(new_svc)
     await db.commit()
     await db.refresh(new_svc)
+    logger.info("Provider service registered - provider_id=%s service_id=%s category_id=%s",
+                provider.id, new_svc.id, payload.service_category_id)
     return new_svc
 
 
@@ -553,6 +562,7 @@ async def deactivate_service(
         
     svc.is_active = False
     await db.commit()
+    logger.info("Provider service deactivated - service_id=%s provider_id=%s", service_id, provider.id)
     return {"message": "Service deactivated"}
 
 

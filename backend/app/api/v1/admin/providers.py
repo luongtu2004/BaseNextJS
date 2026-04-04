@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
@@ -15,6 +16,7 @@ from app.models.taxonomy import ServiceCategoryRequirement
 from app.models.user import User, UserRole
 from app.schemas.admin import ProviderCreateRequest, ProviderUpdateRequest, DocumentReviewRequest
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["admin-providers"])
 
@@ -283,7 +285,9 @@ async def update_provider_status(
     
     await db.commit()
     await db.refresh(provider)
-    
+
+    logger.info("[ADMIN] Provider status changed - provider_id=%s %s->%s by admin=%s",
+                provider_id, old_status, status, admin_user.id)
     return {
         "success": True,
         "provider_id": provider_id,
@@ -340,7 +344,9 @@ async def update_provider_verification_status(
     
     await db.commit()
     await db.refresh(provider)
-    
+
+    logger.info("[ADMIN] Provider verification status changed - provider_id=%s %s->%s by admin=%s",
+                provider_id, old_verification_status, verification_status, admin_user.id)
     return {
         "success": True,
         "provider_id": provider_id,
@@ -412,7 +418,9 @@ async def import_providers(
         results.append({"user_id": user_id, "success": True, "provider_id": provider.id})
     
     await db.commit()
-    
+
+    logger.info("[ADMIN] Provider import - imported=%d failed=%d by admin=%s",
+                imported_count, failed_count, admin_user.id)
     return {
         "success": True,
         "imported_count": imported_count,
@@ -481,7 +489,9 @@ async def manual_create_provider(
     
     await db.commit()
     await db.refresh(provider)
-    
+
+    logger.info("[ADMIN] Provider manually created - provider_id=%s owner_id=%s type=%s by admin=%s",
+                provider.id, payload.owner_user_id, payload.provider_type, admin_user.id)
     return {
         "success": True,
         "provider": {
@@ -530,6 +540,8 @@ async def review_provider_document(
     doc.updated_by = admin_user.id
     
     await db.commit()
+    logger.info("[ADMIN] Document reviewed - doc_id=%s status=%s by admin=%s",
+                id, payload.status, admin_user.id)
     return {"message": f"Document status updated to {payload.status}"}
 
 

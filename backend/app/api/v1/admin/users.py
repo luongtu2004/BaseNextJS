@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
@@ -12,6 +13,8 @@ from app.db.session import get_db
 from app.models.identity import UserIdentityVerification as UserIdentity
 from app.models.user import User, UserProfile, UserRole, UserStatusLog
 from app.schemas.admin import UserCreateRequest, UserUpdateRequest
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["admin-users"])
 
@@ -197,7 +200,9 @@ async def update_user_status(
     
     await db.commit()
     await db.refresh(user)
-    
+
+    logger.info("[ADMIN] User status changed - user_id=%s %s->%s by admin=%s",
+                user_id, old_status, status, admin_user.id)
     return {
         "success": True,
         "user_id": user.id,
@@ -228,7 +233,8 @@ async def update_user(
     
     await db.commit()
     await db.refresh(user)
-    
+
+    logger.info("[ADMIN] User updated - user_id=%s by admin=%s", user_id, admin_user.id)
     return {"success": True, "message": "User updated successfully"}
 
 
@@ -256,6 +262,7 @@ async def delete_user(
     db.add(status_log)
     
     await db.commit()
+    logger.info("[ADMIN] User soft-deleted - user_id=%s by admin=%s", user_id, admin_user.id)
     return {"success": True, "message": "User marked as deleted"}
 
 
@@ -294,7 +301,9 @@ async def create_provider_owner(
     
     await db.commit()
     await db.refresh(user)
-    
+
+    logger.info("[ADMIN] Provider owner created - user_id=%s phone=%s by admin=%s",
+                user.id, user.phone, admin_user.id)
     return {
         "success": True,
         "user": {

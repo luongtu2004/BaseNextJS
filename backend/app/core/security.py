@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import random
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -10,6 +11,8 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 settings = get_settings()
@@ -53,6 +56,7 @@ def decode_otp_verification_token(token: str) -> dict[str, Any]:
 
 
 def create_access_token(user_id: str, roles: list[str]) -> str:
+    logger.debug("Creating access token - user_id=%s roles=%s", user_id, roles)
     payload: dict[str, Any] = {
         "sub": user_id,
         "roles": roles,
@@ -63,6 +67,7 @@ def create_access_token(user_id: str, roles: list[str]) -> str:
 
 
 def create_refresh_token(user_id: str, jti: str) -> str:
+    logger.debug("Creating refresh token - user_id=%s jti=%s", user_id, jti)
     payload: dict[str, Any] = {
         "sub": user_id,
         "jti": jti,
@@ -87,5 +92,6 @@ def safe_decode(token: str, token_type: str) -> dict[str, Any] | None:
         if token_type == "refresh":
             return decode_refresh_token(token)
         return decode_otp_verification_token(token)
-    except JWTError:
+    except JWTError as exc:
+        logger.warning("Token decode failed - type=%s error=%s", token_type, exc)
         return None

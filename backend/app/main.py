@@ -9,16 +9,31 @@ from app.api.v1.docs import get_swagger_html, customize_swagger_docs
 from app.api.v1.router import api_router
 from app.api.v1.swagger_login import swagger_login_router
 from app.core.config import get_settings
+from app.core.logging_config import setup_logging
 from app.db.session import AsyncSessionLocal, engine, import_models
+from app.middleware.request_logging import RequestLoggingMiddleware
 
 settings = get_settings()
+
+# ── Initialize logging BEFORE anything else ──────────────────────────
+setup_logging(
+    log_level=settings.log_level,
+    log_dir=settings.log_dir,
+    log_sql=settings.log_sql,
+)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    import logging
+    logger = logging.getLogger("app.main")
+    logger.info("Application starting up...")
     import_models()
+    logger.info("All ORM models loaded successfully")
     yield
+    logger.info("Application shutting down...")
     await engine.dispose()
+    logger.info("Database engine disposed")
 
 
 app = FastAPI(
@@ -33,6 +48,7 @@ app = FastAPI(
 # Apply custom Swagger UI documentation
 customize_swagger_docs(app)
 
+# ── Middleware stack (order matters: last added = first executed) ─────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -40,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request logging middleware — logs every API call with timing
+app.add_middleware(RequestLoggingMiddleware)
 
 
 @app.get("/docs", include_in_schema=False, response_class=HTMLResponse)

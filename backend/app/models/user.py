@@ -48,7 +48,7 @@ class User(Base):
     )
     identity_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     latest_identity_verification_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("user_identity_verifications.id"),
+        ForeignKey("user_identity_verifications.id", use_alter=True),
         nullable=True,
     )
 

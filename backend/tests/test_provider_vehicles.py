@@ -125,8 +125,8 @@ class TestListVehicles:
         response = await client.get("/api/v1/provider/vehicles", headers=auth_headers(token))
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 2
-        types = {v["vehicle_type"] for v in data}
+        assert len(data["items"]) == 2
+        types = {v["vehicle_type"] for v in data["items"]}
         assert types == {"xe_tai", "xe_may"}
 
     async def test_list_empty_when_no_vehicles(self, client: AsyncClient, db: AsyncSession):
@@ -134,7 +134,7 @@ class TestListVehicles:
         _, _, _, token = await _setup(db)
         response = await client.get("/api/v1/provider/vehicles", headers=auth_headers(token))
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json()["items"] == []
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -372,7 +372,7 @@ class TestVehicleDocuments:
             headers=auth_headers(token),
         )
         assert response.status_code == 200
-        assert len(response.json()) == 2
+        assert len(response.json()["items"]) == 2
 
     async def test_update_approved_document_returns_400(
         self, client: AsyncClient, db: AsyncSession

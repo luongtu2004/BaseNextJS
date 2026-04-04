@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import Depends, HTTPException, status
@@ -11,6 +12,8 @@ from app.core.security import safe_decode
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.schemas.auth import LoginPasswordRequest
+
+logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login/password",
@@ -24,15 +27,19 @@ async def get_current_user(
 ) -> User:
     payload = safe_decode(token, "access")
     if not payload or payload.get("typ") != "access":
+        logger.warning("Invalid access token presented")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
 
     user_id = payload.get("sub")
     if not user_id:
+        logger.warning("Access token missing 'sub' claim")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
 
     user = await db.get(User, uuid.UUID(user_id))
     if not user:
+        logger.warning("Token valid but user not found - user_id=%s", user_id)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    logger.debug("Authenticated user - user_id=%s phone=%s", user.id, user.phone)
     return user
 
 
@@ -61,6 +68,7 @@ def check_user_role(role_code: str):
         )
         role_exists = await db.execute(stmt)
         if not role_exists.scalar_one_or_none():
+            logger.warning("Role check failed - user_id=%s required_role=%s", current_user.id, role_code)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 
                 detail=f"Role '{role_code}' required"

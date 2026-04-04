@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
@@ -18,6 +19,7 @@ from app.schemas.admin import (
     PostUpdateRequest,
 )
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["admin-posts"])
 
@@ -205,7 +207,9 @@ async def create_post(
     db.add(post)
     await db.commit()
     await db.refresh(post)
-    
+
+    logger.info("[ADMIN] Post created - post_id=%s slug=%s by admin=%s",
+                post.id, post.slug, admin_user.id)
     return {
         "id": post.id,
         "category_id": post.category_id,
@@ -465,7 +469,9 @@ async def update_post(
     post.updated_by = admin_user.id
     await db.commit()
     await db.refresh(post)
-    
+
+    logger.info("[ADMIN] Post updated - post_id=%s slug=%s by admin=%s",
+                post.id, post.slug, admin_user.id)
     return {
         "id": post.id,
         "title": post.title,
@@ -506,7 +512,9 @@ async def patch_post_status(
     
     await db.commit()
     await db.refresh(post)
-    
+
+    logger.info("[ADMIN] Post status changed - post_id=%s %s->%s by admin=%s",
+                post_id, old_status, status, admin_user.id)
     return {
         "success": True,
         "post_id": post_id,

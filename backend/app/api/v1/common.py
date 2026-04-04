@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -27,6 +28,8 @@ from app.schemas.identity import (
 )
 from app.models.identity import UserIdentityFile, UserIdentityVerification
 from fastapi import UploadFile, File, Form
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/common", tags=["common"])
 
@@ -83,6 +86,7 @@ async def update_me(
     await db.commit()
     await db.refresh(current_user)
     await db.refresh(profile)
+    logger.info("Profile updated - user_id=%s", current_user.id)
 
     return MeResponse(
         id=current_user.id,
@@ -235,6 +239,8 @@ async def create_identity_verification(
 
     await db.commit()
     await db.refresh(new_ver)
+    logger.info("Identity verification created - user_id=%s verification_id=%s type=%s",
+                current_user.id, new_ver.id, payload.verification_type)
     return new_ver
 
 
@@ -333,6 +339,7 @@ async def submit_identity_verification(
     current_user.identity_verification_status = "pending"
 
     await db.commit()
+    logger.info("Identity verification submitted - verification_id=%s user_id=%s", id, current_user.id)
     return {"id": record.id, "status": "submitted"}
 
 
@@ -382,4 +389,5 @@ async def cancel_identity_verification(
         current_user.latest_identity_verification_id = None
 
     await db.commit()
+    logger.info("Identity verification cancelled - verification_id=%s user_id=%s", id, current_user.id)
     return {"id": record.id, "status": "cancelled"}

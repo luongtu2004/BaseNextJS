@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Any
 
@@ -22,6 +23,8 @@ from app.schemas.customer import (
     CustomerBusinessProfile,
 )
 from app.services.ai_service import AIService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/customer", tags=["customer"])
 
@@ -335,8 +338,10 @@ async def search_providers(
         "total": total,
         "page": page,
         "page_size": page_size,
-        "ai_debug": {"parsed": ai_data if q else None} # Thêm debug để user kiểm tra
+        "ai_debug": {"parsed": ai_data if q else None}
     }
+    logger.info("Provider search - q='%s' results=%d total=%d", q, len(providers), total)
+    return results_dict
 
 
 @router.get("/providers/{provider_id}", response_model=CustomerProviderDetail)
@@ -440,6 +445,9 @@ async def become_provider(
         message = "Provider profile created. We are still reviewing your identity verification."
     else:
         message = "Provider profile created. IMPORTANT: You MUST verify your identity (CCCD/Selfie) before your provider profile can be approved."
+
+    logger.info("User became provider - user_id=%s provider_id=%s type=%s",
+                current_user.id, new_provider.id, provider_type)
 
     return {
         "message": message,

@@ -312,16 +312,25 @@ class VehicleAvailabilityResponse(BaseModel):
 class CustomerTransportSearchItem(BaseModel):
     """Kết quả tìm kiếm dịch vụ vận tải cho khách."""
 
-    model_config = ConfigDict(from_attributes=True)
-
     provider_id: uuid.UUID
     service_id: uuid.UUID
     service_category_code: str
     service_category_name: str
+    # Thông tin provider
     provider_name: str
-    verification_status: str
+    provider_type: str
+    description: str | None
+    phone: str | None
+    hotline: str | None
+    avatar_url: str | None
     avg_rating: float
     total_reviews: int
+    total_jobs_completed: int
+    verification_status: str
+    # Thông tin dịch vụ
+    service_description: str | None
+    base_price: float | None
+    price_unit: str | None
 
 
 class CustomerRouteSearchItem(BaseModel):
@@ -329,20 +338,32 @@ class CustomerRouteSearchItem(BaseModel):
 
     id: uuid.UUID
     provider_service_id: uuid.UUID
+    provider_id: uuid.UUID
+    provider_name: str
+    phone: str | None = None
+    hotline: str | None = None
+    avg_rating: float | None = None
+    total_reviews: int | None = None
+    verification_status: str | None = None
     from_province: str
     to_province: str
+    distance_km: float | None
     price: float
     duration_min: int | None
     active_schedule_count: int
+    notes: str | None = None
 
 
 class CustomerRentalVehicleItem(BaseModel):
     """Xe cho thuê tự lái trong kết quả tìm kiếm."""
 
-    model_config = ConfigDict(from_attributes=True)
-
     id: uuid.UUID
     provider_id: uuid.UUID
+    provider_name: str
+    phone: str | None = None
+    hotline: str | None = None
+    avg_rating: float | None = None
+    total_reviews: int | None = None
     vehicle_type: str
     vehicle_brand: str | None
     vehicle_model: str | None
@@ -351,7 +372,12 @@ class CustomerRentalVehicleItem(BaseModel):
     fuel_type: str | None
     transmission: str | None
     has_ac: bool
+    has_wifi: bool
+    color: str | None
+    notes: str | None
     status: str
+    base_price: float | None
+    price_unit: str | None
 
 
 class CustomerRouteScheduleItem(BaseModel):
@@ -367,6 +393,14 @@ class CustomerRouteDetailResponse(BaseModel):
 
     id: uuid.UUID
     provider_service_id: uuid.UUID
+    provider_id: uuid.UUID | None
+    provider_name: str
+    phone: str | None = None
+    hotline: str | None = None
+    avg_rating: float | None = None
+    total_reviews: int | None = None
+    provider_type: str | None = None
+    verification_status: str | None = None
     from_province: str
     to_province: str
     distance_km: float | None
@@ -374,3 +408,78 @@ class CustomerRouteDetailResponse(BaseModel):
     price: float
     notes: str | None
     schedules: list[CustomerRouteScheduleItem]
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Admin-specific schemas
+# ─────────────────────────────────────────────────────────────────────
+
+
+class AdminVehicleListItem(BaseModel):
+    """Xe trong danh sách admin — bao gồm thông tin provider."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    provider_id: uuid.UUID
+    provider_name: str | None = None
+    owner_phone: str | None = None
+    service_id: uuid.UUID | None
+    vehicle_type: str
+    vehicle_brand: str | None
+    vehicle_model: str | None
+    year_of_manufacture: int | None
+    license_plate: str | None
+    seat_count: int | None
+    fuel_type: str | None
+    transmission: str | None
+    has_ac: bool
+    has_wifi: bool
+    color: str | None
+    status: str
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminVehicleDocumentListItem(BaseModel):
+    """Giấy tờ xe cho admin — kèm thông tin xe và provider."""
+
+    id: uuid.UUID
+    vehicle_id: uuid.UUID
+    vehicle_license_plate: str | None = None
+    vehicle_type: str | None = None
+    provider_id: uuid.UUID | None = None
+    provider_name: str | None = None
+    document_type: str
+    document_number: str | None
+    issued_date: date | None
+    expiry_date: date | None
+    file_url: str | None
+    review_status: str
+    reviewed_by: uuid.UUID | None
+    reviewed_at: datetime | None
+    review_note: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminRouteListItem(BaseModel):
+    """Tuyến đường cho admin — kèm thông tin provider."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    provider_service_id: uuid.UUID
+    provider_id: uuid.UUID | None = None
+    provider_name: str | None = None
+    from_province: str
+    to_province: str
+    distance_km: float | None
+    duration_min: int | None
+    price: float
+    is_active: bool
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+    schedules: list[ServiceRouteScheduleItem] = []

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import logging
 import textwrap
 import uuid
+
+logger = logging.getLogger(__name__)
 from datetime import UTC, datetime, timedelta
 
 import fastapi
@@ -128,7 +131,8 @@ async def send_otp(payload: OtpSendRequest, db: AsyncSession = Depends(get_db)) 
     await db.commit()
     await db.refresh(otp_session)
     # Phase 1 dev: OTP is logged for manual QA.
-    print(f"[OTP-DEV] phone={phone} otp={otp_code} session={otp_session.id}")
+    logger.warning("[OTP-DEV] phone=%s otp=%s session=%s", phone, otp_code, otp_session.id)
+    logger.info("OTP sent - phone=%s session_id=%s ttl=%ds", phone, otp_session.id, settings.otp_ttl_seconds)
     return OtpSendResponse(otp_session_id=otp_session.id, expired_in=settings.otp_ttl_seconds)
 
 
@@ -156,6 +160,7 @@ async def verify_otp(payload: OtpVerifyRequest, db: AsyncSession = Depends(get_d
     otp_session.updated_at = now
     token = create_otp_verification_token(phone, otp_session.id, payload.purpose or "general")
     await db.commit()
+    logger.info("OTP verified - phone=%s session_id=%s", phone, payload.otp_session_id)
     return OtpVerifyResponse(is_valid=True, verification_token=token)
 
 
@@ -196,6 +201,7 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
     db.add(UserProfile(user_id=user.id))
     await db.commit()
     await db.refresh(user)
+    logger.info("User registered - user_id=%s phone=%s", user.id, phone)
     return await _build_auth_response(db, user)
 
 
@@ -225,6 +231,7 @@ async def login_otp(payload: LoginOtpRequest, db: AsyncSession = Depends(get_db)
     user.last_login_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(user)
+    logger.info("OTP login success - user_id=%s phone=%s", user.id, phone)
     return await _build_auth_response(db, user)
 
 
@@ -249,11 +256,13 @@ async def login_password(payload: LoginPasswordRequest, db: AsyncSession = Depen
     user_q = await db.execute(select(User).where(User.phone == phone))
     user = user_q.scalar_one_or_none()
     if not user or not verify_password(payload.password, user.password_hash):
+        logger.warning("Password login failed - phone=%s", phone)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     user.last_login_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(user)
+    logger.info("Password login success - user_id=%s phone=%s", user.id, phone)
     return await _build_auth_response(db, user)
 
 
@@ -288,6 +297,7 @@ async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)) -
 
     role_rows = await db.execute(select(UserRole.role_code).where(UserRole.user_id == uuid.UUID(user_id)))
     roles = [x[0] for x in role_rows.all()]
+    logger.info("Token refreshed - user_id=%s", user_id)
     return {"access_token": create_access_token(user_id, roles)}
 
 
@@ -316,4 +326,5 @@ async def logout(payload: LogoutRequest, db: AsyncSession = Depends(get_db)) -> 
         refresh_row.revoked_at = datetime.now(UTC)
         refresh_row.updated_at = datetime.now(UTC)
         await db.commit()
+        logger.info("Logout - user_id=%s jti=%s revoked", user_id, jti)
     return {"success": True}

@@ -1,4 +1,4 @@
-﻿# Cursor Rules for Sàn Dịch Vụ API - FastAPI Project
+# Cursor Rules for Sàn Dịch Vụ API - FastAPI Project
 
 ## Project Overview
 
@@ -165,53 +165,138 @@ Log levels:
 - `logger.warning()`: Unexpected but recoverable situations.
 - `logger.error()`: Errors preventing an operation from completing.
 - `logger.debug()`: Detailed debug info (development only).
-- `logger.exception()`: Inside `except` blocks — logs message + full traceback automatically.
+- `logger.exception()`: Inside `except` blocks - logs message + full traceback automatically.
 
 #### Strategic Logging (Log Only When Necessary)
+
+**CRITICAL: Log enough for debugging and auditing, but avoid log noise that impacts performance.**
 
 **DO log:**
 - Critical write operations: user registration, login, OTP send/verify, provider create/update/delete, admin actions.
 - Authentication and authorisation failures.
 - Unexpected exceptions with context (user ID, entity ID, operation).
 - External API calls (AI service, third-party) with latency when notable.
+- State changes: status transitions, verification approvals/rejections, document reviews.
+- Phase 6 Transport: vehicle CRUD, route CRUD, availability block/unblock, schedule changes, document uploads.
 
 **DO NOT log:**
-- Simple reads (GET by ID) — no value, just noise.
+- Simple reads (GET by ID, list queries) - no value, just noise.
 - Every iteration of a loop.
 - Pydantic validation failures (FastAPI + 422 handles these).
-- Successful trivial operations (e.g., "session opened").
+- Successful trivial operations (e.g., "session opened", "query returned N rows").
+- Internal helper methods or private utility functions.
+
+#### Log Message Format
+
+**CRITICAL: Log messages MUST be plain text - no icons, emojis, or special characters (no em-dashes, arrows, etc.).**
+
+Use `[PREFIX]` tags for easy log filtering. Standard prefixes:
+
+| Prefix | Module |
+|--------|--------|
+| `[AUTH]` | Authentication, login, registration, OTP |
+| `[OTP]` | OTP send/verify operations |
+| `[PROVIDER]` | Provider profile, documents, services |
+| `[CUSTOMER]` | Customer search, provider lookup |
+| `[VEHICLE]` | Phase 6 - vehicle CRUD, status changes |
+| `[ROUTE]` | Phase 6 - route CRUD, schedule management |
+| `[TRANSPORT]` | Phase 6 - general transport operations |
+| `[ADMIN]` | Admin panel operations |
+| `[SECURITY]` | Ownership violations, auth failures |
+| `[AI]` | AI service calls |
+| `[DB]` | Database errors, transaction failures |
+
+#### Log Message Examples
 
 ```python
-# GOOD — critical operation entry + exit
+# GOOD - critical operation entry + exit
 logger.info("[PROVIDER] Creating provider - user_id=%s name=%s", current_user.id, body.name)
 # ... operation ...
 logger.info("[PROVIDER] Provider created - provider_id=%s", provider.id)
 
-# GOOD — simple read: no logging needed
+# GOOD - simple read: no logging needed
 async def get_provider(provider_id: uuid.UUID, db: AsyncSession) -> Provider | None:
     return await db.get(Provider, provider_id)
 
-# GOOD — error log with context before raising
+# GOOD - error log with context before raising
 logger.warning("[AUTH] OTP session expired - session_id=%s phone=%s", otp_session_id, phone[:4] + "***")
 raise HTTPException(status_code=400, detail="OTP expired")
 
-# BAD — never log passwords, tokens, OTP codes, full phone numbers
+# GOOD - state change logging
+logger.info("[VEHICLE] Status change - vehicle_id=%s old=%s new=%s", vehicle.id, old_status, new_status)
+
+# GOOD - admin audit logging
+logger.info("[ADMIN] Provider status changed - provider_id=%s %s->%s by admin=%s",
+            provider_id, old_status, new_status, admin_user.id)
+
+# GOOD - error with exception context
+logger.exception("[DB] Transaction failed during provider create")
+
+# BAD - never log passwords, tokens, OTP codes, full phone numbers
 logger.info("OTP=%s token=%s password=%s", otp_code, jwt_token, password)
+
+# BAD - logging simple reads (noise)
+logger.info("Fetching user by ID: %s", user_id)  # unnecessary
+
+# BAD - using emojis or special characters
+logger.info("[AUTH] Login success ✅ - user_id=%s", user_id)  # no emojis!
 ```
 
-#### Sensitive Data — NEVER Log
-- Passwords (plain or hashed)
-- JWT tokens / refresh tokens
-- OTP codes
-- API keys / secrets
-- Full phone numbers — use `phone[:4] + "***"` if needed
-- Any PII in production logs
+#### Sensitive Data Protection - NEVER Log
 
-**Log messages MUST be plain text — no icons or emojis.**
+**CRITICAL: Never log sensitive information:**
+- **Passwords**: Never log passwords (plain or hashed) or password-related operations
+- **Tokens**: Never log JWT tokens, refresh tokens, API keys, session tokens
+- **OTP codes**: Never log actual OTP values in production
+- **Full phone numbers**: Use `phone[:4] + "***"` if needed
+- **Personal information**: Never log full addresses, ID numbers in plain text
 
-Use `[PREFIX]` tags for easy log filtering: `[AUTH]`, `[OTP]`, `[PROVIDER]`, `[ADMIN]`.
+**Safe to log:**
+- User IDs, entity IDs (non-sensitive identifiers)
+- Operation names, status codes, timestamps
+- Error messages (without sensitive context)
+- Request paths, HTTP methods
+
+#### Error Handling Logging
+
+**ALWAYS log errors with context before throwing:**
+
+```python
+# In except blocks - use logger.exception() for full traceback
+try:
+    await db.commit()
+except Exception:
+    await db.rollback()
+    logger.exception("[PROVIDER] Transaction failed during create - user_id=%s", current_user.id)
+    raise HTTPException(status_code=500, detail="Internal server error")
+
+# For expected failures - use logger.warning()
+if not user or not verify_password(payload.password, user.password_hash):
+    logger.warning("[AUTH] Password login failed - phone=%s", phone[:4] + "***")
+    raise HTTPException(status_code=401, detail="Invalid credentials")
+```
+
+#### Phase 6 Transport Logging Guidelines
+
+Transport modules (vehicles, routes, schedules, documents) follow the same strategic approach:
+
+```python
+# Vehicle operations
+logger.info("[VEHICLE] Creating vehicle - provider_id=%s type=%s", provider.id, body.vehicle_type)
+logger.info("[VEHICLE] Vehicle created - vehicle_id=%s", vehicle.id)
+logger.info("[VEHICLE] Status change - vehicle_id=%s old=%s new=%s", vehicle.id, old, new)
+logger.info("[VEHICLE] Deleting vehicle - vehicle_id=%s provider_id=%s", vehicle.id, provider.id)
+
+# Route operations
+logger.info("[ROUTE] Creating route - provider_id=%s from=%s to=%s", provider.id, body.origin, body.destination)
+logger.info("[ROUTE] Route created - route_id=%s", route.id)
+
+# Admin transport operations
+logger.info("[ADMIN] Vehicle document reviewed - doc_id=%s status=%s by admin=%s", doc.id, status, admin.id)
+```
 
 ---
+
 
 ### 3. Error Handling
 
@@ -1055,12 +1140,16 @@ Before submitting or merging any code, verify:
 - [ ] No dead/commented-out code left in the diff
 
 ### Logging & Error Handling
-- [ ] No `print()` calls — only `logging`
+- [ ] No `print()` calls - only `logging`
+- [ ] Every module has `logger = logging.getLogger(__name__)` at module level
 - [ ] Critical operations (create/update/delete/auth) have appropriate log entries
 - [ ] Errors are logged with context before being re-raised
+- [ ] `except` blocks use `logger.exception()` for full stack traces
 - [ ] No sensitive data logged (passwords, tokens, OTP codes, full phone numbers)
-- [ ] Log messages are plain text (no emojis/icons)
-- [ ] Internal errors use generic client messages — details stay in logs
+- [ ] Log messages are plain text (no emojis, icons, em-dashes, or special chars)
+- [ ] All log messages use consistent `[PREFIX]` tags (`[AUTH]`, `[PROVIDER]`, `[VEHICLE]`, `[ADMIN]`, etc.)
+- [ ] Internal errors use generic client messages - details stay in logs
+- [ ] Phase 6 transport operations (vehicle/route CRUD, status changes, document reviews) have audit logs
 
 ### Validation
 - [ ] Pydantic schema validates format, type, and required fields

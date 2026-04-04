@@ -6,7 +6,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import check_user_role, get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.booking import (
@@ -63,7 +63,7 @@ async def estimate_fare(
 async def create_booking(
     payload: BookingCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_role("customer")),
 ) -> BookingResponse:
     """Tạo booking mới cho dịch vụ vận chuyển.
 
@@ -90,14 +90,14 @@ async def create_booking(
     description="Lấy trạng thái hiện tại của booking thuộc về khách hàng đang đăng nhập.",
 )
 async def get_booking_status(
-    booking_id: str,
+    booking_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_role("customer")),
 ) -> BookingResponse:
     """Lấy trạng thái hiện tại của booking.
 
     Args:
-        booking_id: UUID string của booking.
+        booking_id: UUID của booking.
         db: Async DB session.
         current_user: Khách hàng đang đăng nhập.
 
@@ -108,7 +108,7 @@ async def get_booking_status(
         HTTPException 403: Nếu booking không thuộc về customer hiện tại.
         HTTPException 404: Nếu booking không tồn tại.
     """
-    booking = await BookingService.get_booking(db, uuid.UUID(booking_id))
+    booking = await BookingService.get_booking(db, booking_id)
     if booking.customer_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     return booking
@@ -122,14 +122,14 @@ async def get_booking_status(
     description="Khách hàng hủy chuyến đang ở trạng thái pending hoặc accepted.",
 )
 async def cancel_booking(
-    booking_id: str,
+    booking_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_role("customer")),
 ) -> BookingResponse:
     """Khách hàng hủy chuyến.
 
     Args:
-        booking_id: UUID string của booking cần hủy.
+        booking_id: UUID của booking cần hủy.
         db: Async DB session.
         current_user: Khách hàng đang đăng nhập.
 
@@ -141,7 +141,7 @@ async def cancel_booking(
         HTTPException 400: Nếu booking không thể hủy ở trạng thái hiện tại.
     """
     logger.info("[BOOKING] Customer %s cancelling booking %s", current_user.id, booking_id)
-    booking = await BookingService.cancel_booking(db, uuid.UUID(booking_id), current_user.id)
+    booking = await BookingService.cancel_booking(db, booking_id, current_user.id)
     await db.commit()
     await db.refresh(booking)
     return booking

@@ -14,6 +14,7 @@ from app.models.booking import Booking, DriverAvailabilitySession, DriverLocatio
 from app.models.provider import Provider
 from app.models.user import User
 from app.schemas.booking import (
+    BookingProviderResponse,
     BookingResponse,
     BookingSummaryResponse,
     DriverAvailabilitySessionResponse,
@@ -125,7 +126,7 @@ async def list_available_bookings(
 
 @router.post(
     "/{id}/accept",
-    response_model=BookingResponse,
+    response_model=BookingProviderResponse,
     status_code=status.HTTP_200_OK,
     summary="Nhận cuốc xe",
     description="Tài xế nhận cuốc xe đang ở trạng thái pending.",
@@ -134,7 +135,7 @@ async def accept_booking(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_provider_user),
-) -> BookingResponse:
+) -> BookingProviderResponse:
     """Tài xế nhận cuốc xe.
 
     Args:
@@ -158,7 +159,7 @@ async def accept_booking(
 
 @router.post(
     "/{id}/arrive",
-    response_model=BookingResponse,
+    response_model=BookingProviderResponse,
     status_code=status.HTTP_200_OK,
     summary="Xác nhận đến điểm đón",
     description="Tài xế xác nhận đã đến điểm đón khách.",
@@ -167,7 +168,7 @@ async def arrive_at_pickup(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_provider_user),
-) -> BookingResponse:
+) -> BookingProviderResponse:
     """Xác nhận tài xế đã đến điểm đón khách.
 
     Args:
@@ -191,7 +192,7 @@ async def arrive_at_pickup(
 
 @router.post(
     "/{id}/board",
-    response_model=BookingResponse,
+    response_model=BookingProviderResponse,
     status_code=status.HTTP_200_OK,
     summary="Hành khách lên xe",
     description="Xác nhận hành khách lên xe bằng OTP. OTP do khách cung cấp và có hiệu lực 30 phút.",
@@ -201,7 +202,7 @@ async def passenger_board(
     otp: str,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_provider_user),
-) -> BookingResponse:
+) -> BookingProviderResponse:
     """Hành khách lên xe (yêu cầu mã OTP).
 
     Args:
@@ -226,7 +227,7 @@ async def passenger_board(
 
 @router.post(
     "/{id}/complete",
-    response_model=BookingResponse,
+    response_model=BookingProviderResponse,
     status_code=status.HTTP_200_OK,
     summary="Hoàn thành chuyến đi",
     description="Tài xế xác nhận kết thúc chuyến đi và thả khách an toàn.",
@@ -235,7 +236,7 @@ async def complete_trip(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_provider_user),
-) -> BookingResponse:
+) -> BookingProviderResponse:
     """Tài xế xác nhận kết thúc chuyến đi và thả khách an toàn.
 
     Args:

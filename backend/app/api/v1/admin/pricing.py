@@ -188,7 +188,26 @@ async def update_price_config_status(
     config = (await db.execute(select(PriceConfig).where(PriceConfig.id == config_id))).scalar_one_or_none()
     if not config:
         raise HTTPException(status_code=404, detail="Price config not found")
-        
+
+    now_utc = datetime.now(tz=timezone.utc)
+    if payload.is_active:
+        # Deactivate all other active configs for this service_type to preserve uniqueness
+        others = (await db.execute(
+            select(PriceConfig).where(
+                PriceConfig.service_type == config.service_type,
+                PriceConfig.is_active.is_(True),
+                PriceConfig.id != config_id,
+            )
+        )).scalars().all()
+        for other in others:
+            other.is_active = False
+            other.effective_to = now_utc
+        # Clear effective_to when re-activating
+        config.effective_to = None
+    else:
+        # Set effective_to when deactivating
+        config.effective_to = now_utc
+
     config.is_active = payload.is_active
     await db.commit()
     await db.refresh(config)
@@ -353,7 +372,26 @@ async def update_commission_config_status(
     config = (await db.execute(select(CommissionConfig).where(CommissionConfig.id == config_id))).scalar_one_or_none()
     if not config:
         raise HTTPException(status_code=404, detail="Commission config not found")
-        
+
+    now_utc = datetime.now(tz=timezone.utc)
+    if payload.is_active:
+        # Deactivate all other active configs for this service_type to preserve uniqueness
+        others = (await db.execute(
+            select(CommissionConfig).where(
+                CommissionConfig.service_type == config.service_type,
+                CommissionConfig.is_active.is_(True),
+                CommissionConfig.id != config_id,
+            )
+        )).scalars().all()
+        for other in others:
+            other.is_active = False
+            other.effective_to = now_utc
+        # Clear effective_to when re-activating
+        config.effective_to = None
+    else:
+        # Set effective_to when deactivating
+        config.effective_to = now_utc
+
     config.is_active = payload.is_active
     await db.commit()
     await db.refresh(config)

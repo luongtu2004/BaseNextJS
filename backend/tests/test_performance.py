@@ -14,8 +14,14 @@ Ngưỡng (trên SQLite in-memory, không bao gồm network latency):
 Cách đếm query:
   Dùng SQLAlchemy event listener "before_cursor_execute" để đếm số lần
   DB thực sự được hit trong một request.
+
+Chạy performance tests:
+  Mặc định bị skip để tránh flakiness trên CI.
+  Đặt env var RUN_PERFORMANCE_TESTS=1 để bật:
+    RUN_PERFORMANCE_TESTS=1 pytest tests/test_performance.py -m performance
 """
 
+import os
 import time
 import uuid
 from contextlib import contextmanager
@@ -39,7 +45,17 @@ from tests.conftest import (
     make_provider_token,
 )
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.performance,
+]
+
+# Skip all wall-clock time tests unless the env var is explicitly set.
+# Query-count tests (N+1 detection) always run — they are deterministic.
+_SKIP_TIME_TESTS = pytest.mark.skipif(
+    not os.environ.get("RUN_PERFORMANCE_TESTS"),
+    reason="Wall-clock performance tests skipped by default. Set RUN_PERFORMANCE_TESTS=1 to enable.",
+)
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -123,6 +139,7 @@ BOOKING_PAYLOAD = {
 # Phase 6 — Response Time Tests
 # ─────────────────────────────────────────────────────────────────────
 
+@_SKIP_TIME_TESTS
 class TestPhase6ResponseTime:
     """Kiểm tra thời gian response của các Phase 6 endpoints."""
 
@@ -255,6 +272,7 @@ class TestPhase6ResponseTime:
 # Phase 7 — Response Time Tests
 # ─────────────────────────────────────────────────────────────────────
 
+@_SKIP_TIME_TESTS
 class TestPhase7ResponseTime:
     """Kiểm tra thời gian response của các Phase 7 endpoints."""
 

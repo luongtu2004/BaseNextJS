@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import random
+import secrets
 import string
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -111,7 +111,7 @@ class BookingService:
             db, payload.service_type, distance_km, duration_min
         )
 
-        otp = "".join(random.choices(string.digits, k=4))
+        otp = "".join(secrets.choice(string.digits) for _ in range(4))
         otp_expires = datetime.now(tz=timezone.utc) + timedelta(seconds=_BOARDING_OTP_TTL_SECONDS)
 
         booking = Booking(

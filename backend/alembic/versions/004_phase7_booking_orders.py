@@ -25,11 +25,11 @@ def upgrade() -> None:
     sa.Column('service_type', sa.String(length=50), nullable=False),
     sa.Column('rate_percent', sa.Numeric(precision=5, scale=2), nullable=False),
     sa.Column('fixed_fee', sa.Numeric(precision=18, scale=2), server_default=sa.text('0'), nullable=True),
-    sa.Column('effective_from', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('effective_from', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('effective_to', sa.DateTime(timezone=True), nullable=True),
     sa.Column('is_active', sa.Boolean(), server_default=sa.text('true'), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('price_configs',
@@ -46,11 +46,11 @@ def upgrade() -> None:
     sa.Column('accept_timeout_sec', sa.Integer(), server_default=sa.text('60'), nullable=True),
     sa.Column('min_quote', sa.Numeric(precision=18, scale=2), nullable=True),
     sa.Column('max_quote', sa.Numeric(precision=18, scale=2), nullable=True),
-    sa.Column('effective_from', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('effective_from', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('effective_to', sa.DateTime(timezone=True), nullable=True),
     sa.Column('is_active', sa.Boolean(), server_default=sa.text('true'), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('driver_locations',
@@ -59,7 +59,7 @@ def upgrade() -> None:
     sa.Column('longitude', sa.Numeric(precision=10, scale=7), nullable=False),
     sa.Column('heading', sa.Numeric(precision=5, scale=2), nullable=True),
     sa.Column('speed_kmh', sa.Numeric(precision=5, scale=1), nullable=True),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('provider_id')
     )
@@ -70,7 +70,7 @@ def upgrade() -> None:
     sa.Column('status', sa.String(length=20), server_default=sa.text("'offline'"), nullable=False),
     sa.Column('online_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('offline_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['vehicle_id'], ['provider_vehicles.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
@@ -106,7 +106,7 @@ def upgrade() -> None:
     sa.Column('boarding_otp', sa.String(length=6), nullable=True),
     sa.Column('boarding_otp_expires', sa.DateTime(timezone=True), nullable=True),
     sa.Column('boarded_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('requested_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('requested_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('driver_quoted_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('customer_decided_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('accepted_at', sa.DateTime(timezone=True), nullable=True),
@@ -117,8 +117,8 @@ def upgrade() -> None:
     sa.Column('payment_method', sa.String(length=30), nullable=True),
     sa.Column('payment_status', sa.String(length=20), server_default=sa.text("'unpaid'"), nullable=False),
     sa.Column('notes', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.ForeignKeyConstraint(['customer_id'], ['users.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['route_id'], ['service_routes.id'], ondelete='SET NULL'),
@@ -134,7 +134,7 @@ def upgrade() -> None:
     sa.Column('to_status', sa.String(length=30), nullable=False),
     sa.Column('changed_by', sa.UUID(), nullable=True),
     sa.Column('note', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.ForeignKeyConstraint(['booking_id'], ['bookings.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['changed_by'], ['users.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')

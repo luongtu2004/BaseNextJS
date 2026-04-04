@@ -204,6 +204,43 @@ class BookingSummaryResponse(BaseModel):
     notes: str | None = None
 
 
+class BookingProviderResponse(BaseModel):
+    """Response schema cho provider sau các thao tác accept/arrive/board/complete.
+
+    Giống BookingResponse nhưng KHÔNG chứa boarding_otp — provider không được
+    phép đọc OTP qua API (họ phải nhận từ khách hàng trực tiếp).
+    """
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    customer_id: uuid.UUID
+    provider_id: uuid.UUID | None = None
+    vehicle_id: uuid.UUID | None = None
+    service_type: str
+    status: str
+    pricing_mode: str
+    estimated_fare: float | None = None
+    final_fare: float | None = None
+    distance_km: float | None = None
+    duration_min: int | None = None
+    pickup_lat: float | None = None
+    pickup_lng: float | None = None
+    pickup_address: str | None = None
+    dropoff_lat: float | None = None
+    dropoff_lng: float | None = None
+    dropoff_address: str | None = None
+    requested_at: datetime
+    accepted_at: datetime | None = None
+    arrived_at: datetime | None = None
+    started_at: datetime | None = None
+    boarded_at: datetime | None = None
+    completed_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    notes: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
 # ─────────────────────────────────────────────────────────────────────
 # Provider Availability & Location
 # ─────────────────────────────────────────────────────────────────────

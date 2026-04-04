@@ -401,7 +401,7 @@ async def get_provider_detail(
 
 @router.post("/become-provider")
 async def become_provider(
-    provider_type: str = Query(..., regex="^(individual|business)$"),
+    provider_type: str = Query(..., pattern="^(individual|business)$"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):

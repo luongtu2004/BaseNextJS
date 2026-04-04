@@ -140,14 +140,14 @@ class TestListRoutes:
 
         response = await client.get(_route_url(svc.id), headers=auth_headers(token))
         assert response.status_code == 200
-        assert len(response.json()) == 2
+        assert len(response.json()["items"]) == 2
 
     async def test_list_routes_empty(self, client: AsyncClient, db: AsyncSession):
         """Returns empty list when no routes exist."""
         user, provider, svc, token = await _setup(db)
         response = await client.get(_route_url(svc.id), headers=auth_headers(token))
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json()["items"] == []
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -349,8 +349,8 @@ class TestListSchedules:
         response = await client.get(_schedule_url(route.id), headers=auth_headers(token))
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 3
-        times = [s["departure_time"] for s in data]
+        assert len(data["items"]) == 3
+        times = [s["departure_time"] for s in data["items"]]
         assert times == sorted(times)
 
 

@@ -33,7 +33,12 @@ class Settings(BaseSettings):
     # Logging (like Log4j configuration)
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
     log_dir: str = Field(default="logs", validation_alias="LOG_DIR")
-    log_sql: bool = Field(default=False, validation_alias="LOG_SQL")
+    log_sql: bool = Field(default="False", validation_alias="LOG_SQL")
+
+    # Identity Verification Thresholds
+    ocr_confidence_threshold: float = Field(default=90.0, validation_alias="OCR_CONFIDENCE_THRESHOLD")
+    face_match_threshold: float = Field(default=85.0, validation_alias="FACE_MATCH_THRESHOLD")
+    liveness_threshold: float = Field(default=85.0, validation_alias="LIVENESS_THRESHOLD")
 
     @property
     def cors_origin_list(self) -> list[str]:

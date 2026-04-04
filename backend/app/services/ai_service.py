@@ -62,3 +62,49 @@ class AIService:
             logger.warning("AI service unavailable - %s: %s", type(exc).__name__, exc)
 
         return {"keyword": prompt, "location": None}
+
+    @staticmethod
+    async def verify_identity(files: dict[str, str]) -> dict:
+        """
+        Giả lập quy trình xác minh danh tính qua AI.
+        Trong thực tế, method này sẽ gọi tới các bên thứ 3 (VNPT, FPT, AI local...)
+        để thực hiện OCR, Face Match và Liveness check.
+        
+        files: {'id_front': 'url', 'id_back': 'url', 'selfie': 'url'}
+        """
+        # Giả lập kết quả trả về từ AI Vendor
+        # Trong môi trường dev, ta sẽ trả về kết quả 'success' để test flow.
+        logger.info("AI Identity Verification starting - files=%s", list(files.keys()))
+        
+        # MOCK: Giả định ảnh đẹp, OCR đọc tốt, Face match cao.
+        return {
+            "quality": {
+                "status": "success",
+                "is_blur": False,
+                "is_glare": False,
+                "is_cropped": False,
+                "is_wrong_side": False,
+                "doc_type": "cccd"
+            },
+            "ocr": {
+                "status": "success",
+                "confidence": 95.5,
+                "data": {
+                    "full_name": "NGUYEN VAN A",
+                    "id_number": "012345678901",
+                    "dob": "1990-01-01",
+                    "gender": 0,
+                    "address": "Hà Nội, Việt Nam",
+                    "issue_date": "2020-01-01",
+                    "expiry_date": "2035-01-01"
+                }
+            },
+            "face_match": {
+                "status": "success",
+                "score": 92.0
+            },
+            "liveness": {
+                "status": "success",
+                "score": 90.0
+            }
+        }

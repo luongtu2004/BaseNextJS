@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, func, or_, select
@@ -26,7 +27,9 @@ from app.schemas.identity import (
     IdentityVerificationResponse,
     IdentityVerificationStatusResponse,
 )
-from app.models.identity import UserIdentityFile, UserIdentityVerification
+from app.models.identity import UserIdentityFile, UserIdentityVerification, UserIdentityVerificationLog
+from app.services.ai_service import AIService
+from app.core.config import get_settings
 from fastapi import UploadFile, File, Form
 
 logger = logging.getLogger(__name__)
@@ -326,21 +329,93 @@ async def submit_identity_verification(
 
     files_stmt = select(UserIdentityFile).where(UserIdentityFile.verification_id == id)
     files = (await db.execute(files_stmt)).scalars().all()
-    file_types = {f.file_type for f in files}
+    file_map = {f.file_type: f.file_url for f in files}
 
+    # THỨ TỰ CHECK:
+    # 1. Kiểm tra đủ file (Group A - Quality check cơ bản)
     if record.verification_type == "cccd":
-        if "id_front" not in file_types or "id_back" not in file_types or "selfie" not in file_types:
+        required = ["id_front", "id_back", "selfie"]
+        missing = [rt for rt in required if rt not in file_map]
+        if missing:
             raise HTTPException(
-                status_code=400, detail="Thiếu ảnh CCCD mặt trước, mặt sau hoặc ảnh selfie."
+                status_code=400,
+                detail={"error_code": "missing_required_files", "message": f"Thiếu tài liệu: {', '.join(missing)}"}
             )
 
-    record.status = "submitted"
-    record.submitted_at = func.now()
-    current_user.identity_verification_status = "pending"
+    # 2. GIAO AI KIỂM TRA (OCR, FACE MATCH, LIVENESS, QUALITY)
+    settings = get_settings()
+    ai_result = await AIService.verify_identity(file_map)
+    
+    # 2.1 LOG kết quả thô của AI
+    for step in ["quality", "ocr", "face_match", "liveness"]:
+        step_data = ai_result.get(step, {})
+        new_log = UserIdentityVerificationLog(
+            verification_id=id,
+            step_name=step,
+            provider_name="AI_SERVICE_INTERNAL",
+            response_payload_json=step_data,
+            status="success" if step_data.get("status") == "success" else "failed",
+            score=step_data.get("score") or step_data.get("confidence"),
+            error_code=step_data.get("error_code")
+        )
+        db.add(new_log)
+
+    # 3. QUY TẮC PHÂN LOẠI (DECISION MATRIX)
+    quality = ai_result.get("quality", {})
+    ocr = ai_result.get("ocr", {})
+    face_match = ai_result.get("face_match", {})
+    liveness = ai_result.get("liveness", {})
+
+    # 3.1 Nhóm A (Chất lượng ảnh/Loại giấy tờ) -> Nếu fail thì giữ Draft, trả lỗi bắt chụp lại ngay
+    if (quality.get("is_blur") or quality.get("is_glare") or 
+        quality.get("is_cropped") or quality.get("is_wrong_side") or
+        ocr.get("status") == "failed"):
+        
+        detail = {"error_code": "image_quality_failed", "message": "Ảnh mờ, lóa hoặc sai mặt. Vui lòng chụp lại."}
+        if quality.get("is_wrong_side"): detail["error_code"] = "wrong_document_side"
+        if ocr.get("status") == "failed": detail["error_code"] = "ocr_unreadable"
+        
+        # Vẫn submit log nhưng không đổi status của record -> giữ draft
+        await db.commit()
+        raise HTTPException(status_code=400, detail=detail)
+
+    # 3.2 Cập nhật data chi tiết từ OCR
+    ocr_data = ocr.get("data", {})
+    record.full_name_on_id = ocr_data.get("full_name")
+    record.id_number = ocr_data.get("id_number")
+    record.date_of_birth_on_id = date.fromisoformat(ocr_data.get("dob")) if ocr_data.get("dob") else None
+    record.issue_date = date.fromisoformat(ocr_data.get("issue_date")) if ocr_data.get("issue_date") else None
+    record.expiry_date = date.fromisoformat(ocr_data.get("expiry_date")) if ocr_data.get("expiry_date") else None
+    record.ocr_confidence = ocr.get("confidence")
+    record.face_match_score = face_match.get("score")
+    record.liveness_score = liveness.get("score")
+
+    # 3.3 QUYẾT ĐỊNH CUỐI CÙNG
+    # Auto Approve nếu tất cả đều trên ngưỡng
+    all_pass = (
+        (ocr.get("confidence") or 0) >= settings.ocr_confidence_threshold and
+        (face_match.get("score") or 0) >= settings.face_match_threshold and
+        (liveness.get("score") or 0) >= settings.liveness_threshold
+    )
+
+    if all_pass:
+        record.status = "approved"
+        record.processed_at = func.now()
+        record.review_mode = "auto"
+        current_user.identity_verification_status = "verified"
+        current_user.identity_verified_at = func.now()
+        msg = "Xác minh tự động thành công."
+    else:
+        # Chuyển Admin Review nếu ảnh OK nhưng điểm thấp hoặc nghi vấn
+        record.status = "processing"
+        record.submitted_at = func.now()
+        record.review_mode = "hybrid"
+        current_user.identity_verification_status = "processing"
+        msg = "Hồ sơ đang được chuyển admin kiểm tra thêm."
 
     await db.commit()
-    logger.info("Identity verification submitted - verification_id=%s user_id=%s", id, current_user.id)
-    return {"id": record.id, "status": "submitted"}
+    logger.info("Identity verification %s - id=%s user_id=%s", record.status, id, current_user.id)
+    return {"id": record.id, "status": record.status, "message": msg}
 
 
 @router.post("/me/identity-verifications/{id}/cancel")

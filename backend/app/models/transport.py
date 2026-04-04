@@ -72,10 +72,10 @@ class ProviderVehicle(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active", server_default=text("'active'"))
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_now, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, default=_now, server_default=text("CURRENT_TIMESTAMP")
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_now, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, default=_now, server_default=text("CURRENT_TIMESTAMP")
     )
     created_by: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
@@ -120,10 +120,10 @@ class ProviderVehicleDocument(Base):
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     review_note: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_now, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, default=_now, server_default=text("CURRENT_TIMESTAMP")
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_now, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, default=_now, server_default=text("CURRENT_TIMESTAMP")
     )
     created_by: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
@@ -155,10 +155,10 @@ class ServiceRoute(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_now, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, default=_now, server_default=text("CURRENT_TIMESTAMP")
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_now, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, default=_now, server_default=text("CURRENT_TIMESTAMP")
     )
 
     schedules: Mapped[list[ServiceRouteSchedule]] = relationship(
@@ -187,10 +187,10 @@ class ServiceRouteSchedule(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_now, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, default=_now, server_default=text("CURRENT_TIMESTAMP")
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_now, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, default=_now, server_default=text("CURRENT_TIMESTAMP")
     )
 
     route: Mapped[ServiceRoute] = relationship(back_populates="schedules")

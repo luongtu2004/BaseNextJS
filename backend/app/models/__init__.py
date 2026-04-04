@@ -36,9 +36,23 @@ from app.models.transport import (
     ServiceRouteSchedule,
 )
 from app.models.user import User, UserProfile, UserRole, UserStatusLog
+from app.models.booking import (
+    Booking,
+    BookingStatusLog,
+    CommissionConfig,
+    DriverAvailabilitySession,
+    DriverLocation,
+    PriceConfig,
+)
 
 __all__ = [
     "Base",
+    "Booking",
+    "BookingStatusLog",
+    "CommissionConfig",
+    "DriverAvailabilitySession",
+    "DriverLocation",
+    "PriceConfig",
     "OtpSession",
     "RefreshToken",
     "IndustryCategory",

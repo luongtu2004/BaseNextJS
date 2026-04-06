@@ -35,6 +35,27 @@ class Settings(BaseSettings):
     log_dir: str = Field(default="logs", validation_alias="LOG_DIR")
     log_sql: bool = Field(default=False, validation_alias="LOG_SQL")
 
+    # VNPAY Sandbox Configs
+    vnpay_tmn_code: str = Field(default="", validation_alias="VNPAY_TMN_CODE")
+    vnpay_hash_secret: str = Field(default="", validation_alias="VNPAY_HASH_SECRET")
+    vnpay_payment_url: str = Field(default="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html", validation_alias="VNPAY_PAYMENT_URL")
+    vnpay_return_url: str = Field(default="http://localhost:8000/api/v1/internal/payments/vnpay/return", validation_alias="VNPAY_RETURN_URL")
+
+    # MoMo Sandbox Configs
+    momo_partner_code: str = Field(default="", validation_alias="MOMO_PARTNER_CODE")
+    momo_access_key: str = Field(default="", validation_alias="MOMO_ACCESS_KEY")
+    momo_secret_key: str = Field(default="", validation_alias="MOMO_SECRET_KEY")
+    momo_payment_url: str = Field(default="https://test-payment.momo.vn/v2/gateway/api/create", validation_alias="MOMO_PAYMENT_URL")
+    momo_return_url: str = Field(default="http://localhost:8000/api/v1/internal/payments/momo/return", validation_alias="MOMO_RETURN_URL")
+    momo_notify_url: str = Field(default="http://localhost:8000/api/v1/internal/payments/momo/callback", validation_alias="MOMO_NOTIFY_URL")
+
+    # ZaloPay Sandbox Configs
+    zalopay_app_id: str = Field(default="", validation_alias="ZALOPAY_APP_ID")
+    zalopay_key1: str = Field(default="", validation_alias="ZALOPAY_KEY1")
+    zalopay_key2: str = Field(default="", validation_alias="ZALOPAY_KEY2")
+    zalopay_payment_url: str = Field(default="https://sb-openapi.zalopay.vn/v2/create", validation_alias="ZALOPAY_PAYMENT_URL")
+    zalopay_callback_url: str = Field(default="http://localhost:8000/api/v1/internal/payments/zalopay/callback", validation_alias="ZALOPAY_CALLBACK_URL")
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [x.strip() for x in self.cors_origins.split(",") if x.strip()]

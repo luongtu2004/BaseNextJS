@@ -44,6 +44,13 @@ from app.models.booking import (
     DriverLocation,
     PriceConfig,
 )
+from app.models.payment import (
+    PaymentTransaction,
+    Promotion,
+    PromotionUsage,
+    Wallet,
+    WalletTransaction,
+)
 
 __all__ = [
     "Base",
@@ -52,7 +59,10 @@ __all__ = [
     "CommissionConfig",
     "DriverAvailabilitySession",
     "DriverLocation",
+    "PaymentTransaction",
     "PriceConfig",
+    "Promotion",
+    "PromotionUsage",
     "OtpSession",
     "RefreshToken",
     "IndustryCategory",
@@ -84,4 +94,6 @@ __all__ = [
     "UserProfile",
     "UserRole",
     "UserStatusLog",
+    "Wallet",
+    "WalletTransaction",
 ]

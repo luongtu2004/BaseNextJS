@@ -93,3 +93,24 @@ PILLARS = [
         ]
     }
 ]
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Phase 8 — Payment & Wallet Constants
+# ─────────────────────────────────────────────────────────────────────
+
+# Wallet transaction types (matches CHECK constraint in wallet_transactions)
+WALLET_TXN_TYPES = (
+    "topup", "payment", "refund", "withdrawal",
+    "earning", "commission", "bonus", "penalty", "adjust",
+)
+
+# Payment methods (matches CHECK constraint in payment_transactions)
+PAYMENT_METHODS = ("cash", "wallet", "vnpay", "momo", "zalopay")
+
+# Promotion types (matches CHECK constraint in promotions)
+PROMOTION_TYPES = ("percent", "fixed", "free_trip")
+
+# Wallet negative floor limit (VND) — cho phep vi am khi settlement cash
+# Driver can bu bang cashless rides hoac nap vi thu cong
+WALLET_NEGATIVE_FLOOR = -500_000

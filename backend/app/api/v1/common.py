@@ -398,6 +398,8 @@ async def submit_identity_verification(
         (liveness.get("score") or 0) >= settings.liveness_threshold
     )
 
+    record.submitted_at = func.now()
+
     if all_pass:
         record.status = "approved"
         record.processed_at = func.now()
@@ -408,7 +410,6 @@ async def submit_identity_verification(
     else:
         # Chuyển Admin Review nếu ảnh OK nhưng điểm thấp hoặc nghi vấn
         record.status = "processing"
-        record.submitted_at = func.now()
         record.review_mode = "hybrid"
         current_user.identity_verification_status = "processing"
         msg = "Hồ sơ đang được chuyển admin kiểm tra thêm."

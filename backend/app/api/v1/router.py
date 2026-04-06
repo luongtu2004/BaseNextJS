@@ -9,6 +9,9 @@ from app.api.v1.health import router as health_router
 from app.api.v1.provider import router as provider_router
 from app.api.v1.provider_vehicles import router as provider_vehicles_router
 from app.api.v1.provider_routes import router as provider_routes_router
+from app.api.v1.customer_booking import router as customer_booking_router
+
+from app.api.v1.provider_booking import router as provider_booking_router
 
 api_router = APIRouter()
 api_router.include_router(admin_router, prefix="/admin")
@@ -20,3 +23,5 @@ api_router.include_router(health_router)
 api_router.include_router(provider_router)
 api_router.include_router(provider_vehicles_router)
 api_router.include_router(provider_routes_router)
+api_router.include_router(customer_booking_router)
+api_router.include_router(provider_booking_router, prefix="/provider/transport/booking", tags=["Provider Transport"])

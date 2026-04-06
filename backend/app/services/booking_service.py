@@ -303,6 +303,20 @@ class BookingService:
             bk.status = "completed"
             bk.completed_at = now
 
+            # Phase 8: Settlement hook — tính và khấu trừ hoa hồng
+            # Isolate settlement DB writes in a savepoint so a flush/integrity
+            # failure does not poison the outer transaction used to complete
+            # the booking and write the status log below.
+            try:
+                from app.services.payment_service import PaymentService
+                async with db.begin_nested():
+                    await PaymentService.settle_booking_commission(db, bk)
+            except Exception:
+                logger.exception(
+                    "[BOOKING] Commission settlement failed - booking_id=%s", bk.id,
+                )
+                # Không raise — booking vẫn completed, settlement có thể retry
+
         else:
             raise HTTPException(status_code=400, detail=f"Invalid trip action: '{action}'")
 

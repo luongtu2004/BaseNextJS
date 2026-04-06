@@ -508,7 +508,7 @@ backend/
 
 ---
 
-## Phase 5 — API SPEC VER 2 (Trust & Qualification)
+## Phase 5 — API SPEC VER 2 (Trust & Qualification + AI Verification)
 
 **Mục tiêu Ver 2:**
 Tập trung vào lớp Trust & Qualification:
@@ -607,6 +607,26 @@ Admin quản lý các phiên bản xét duyệt.
 |---|--------|------|-------|------------|
 | I1 | POST | `/api/v1/internal/ekyc/callback` | Webhook từ vendor OCR/eKYC | TODO |
 | I2 | POST | `/api/v1/internal/ekyc/process/{id}` | Gọi xử lý nền bằng worker | TODO |
+
+---
+
+### Phase 5.1 — Nâng cấp AI Verification (Ver 2) 🔴 NEW
+**Mục tiêu:** Tích hợp Decision Matrix thông minh để tự động phân loại hồ sơ, giảm tải cho Admin và tăng trải nghiệm người dùng (phản hồi ngay lập tức nếu ảnh xấu).
+
+**Tài liệu quy định:** [DECISION_MATRIX_VERIFY_V2.md]
+
+**Các hạng mục chính:**
+1. **Configurable Thresholds:** Cấu hình ngưỡng OCR (>=90), Face Match (>=85), Liveness (>=85) qua Settings.
+2. **Pre-submit Validation (AI Powered):**
+   - Kiểm tra chất lượng ảnh (Blur/Glare/Crop), đúng loại giấy tờ, đúng mặt ngay khi upload.
+   - Nếu không đạt -> Yêu cầu chụp lại ngay (không cho submit).
+3. **Smart Routing Logic:**
+   - **Auto-Approve:** Tất cả checks >= Threshold.
+   - **Admin Review:** Ảnh OK nhưng dữ liệu/biometric nghi vấn (Suspicious).
+   - **Strict Block:** Chất lượng ảnh không đạt hoặc sai loại giấy tờ -> Yêu cầu resubmit ngay.
+4. **Audit Logging:** Tái sử dụng bảng `user_identity_verification_logs` để lưu chi tiết kết quả từng bước (score, payload JSON) mà không cần thay đổi cấu trúc DB.
+
+---
 
 ---
 

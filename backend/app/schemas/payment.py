@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -18,7 +19,7 @@ class WalletResponse(BaseModel):
 
     id: uuid.UUID
     user_id: uuid.UUID
-    balance: float = Field(description="Số dư hiện tại")
+    balance: Decimal = Field(description="Số dư hiện tại")
     currency: str = Field(description="Đơn vị tiền tệ (VND/USD)")
     is_frozen: bool = Field(description="Ví bị đóng băng")
     created_at: datetime

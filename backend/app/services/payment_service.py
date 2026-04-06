@@ -47,15 +47,15 @@ class PaymentService:
             return wallet
 
         # Use a savepoint (nested transaction) to safely handle concurrent wallet creations
-        async with db.begin_nested():
-            try:
+        try:
+            async with db.begin_nested():
                 wallet = Wallet(user_id=user_id)
                 db.add(wallet)
                 await db.flush()
                 logger.info("[WALLET] Created wallet - user_id=%s wallet_id=%s", user_id, wallet.id)
                 return wallet
-            except IntegrityError:
-                pass  # Concurrently created by another request
+        except IntegrityError:
+            pass  # Concurrently created by another request
 
         # If it failed, it means it was just created, so fetch it again
         wallet = (
@@ -95,8 +95,6 @@ class PaymentService:
         """
         if amount <= 0:
             raise HTTPException(status_code=400, detail="Credit amount must be positive")
-        if wallet.is_frozen:
-            raise HTTPException(status_code=400, detail="Wallet is frozen")
 
         # Refetch with row-level lock (FOR UPDATE) to prevent race conditions during credit
         locked_wallet = (
@@ -107,6 +105,9 @@ class PaymentService:
 
         if not locked_wallet:
             raise HTTPException(status_code=404, detail="Wallet not found")
+
+        if locked_wallet.is_frozen:
+            raise HTTPException(status_code=400, detail="Wallet is frozen")
 
         locked_wallet.balance = Decimal(str(locked_wallet.balance)) + Decimal(str(amount))
         locked_wallet.updated_at = datetime.now(tz=timezone.utc)
@@ -161,8 +162,6 @@ class PaymentService:
         """
         if amount <= 0:
             raise HTTPException(status_code=400, detail="Debit amount must be positive")
-        if wallet.is_frozen:
-            raise HTTPException(status_code=400, detail="Wallet is frozen")
 
         # Refetch with row-level lock (FOR UPDATE) to prevent race conditions during debit
         locked_wallet = (
@@ -174,20 +173,23 @@ class PaymentService:
         if not locked_wallet:
             raise HTTPException(status_code=404, detail="Wallet not found")
 
+        if locked_wallet.is_frozen:
+            raise HTTPException(status_code=400, detail="Wallet is frozen")
+
         current_balance = Decimal(str(locked_wallet.balance))
         debit_amount = Decimal(str(amount))
         if not allow_negative and current_balance < debit_amount:
             raise HTTPException(status_code=400, detail="Insufficient wallet balance")
 
-        locked_wallet.balance = current_balance - debit_amount
-        locked_wallet.updated_at = datetime.now(tz=timezone.utc)
-
-        # Log warning nếu ví âm dưới floor limit
-        if locked_wallet.balance < WALLET_NEGATIVE_FLOOR:
-            logger.warning(
-                "[WALLET] Balance below floor limit - wallet_id=%s balance=%s floor=%s",
-                locked_wallet.id, locked_wallet.balance, WALLET_NEGATIVE_FLOOR,
+        new_balance = current_balance - debit_amount
+        if new_balance < WALLET_NEGATIVE_FLOOR:
+            raise HTTPException(
+                status_code=400,
+                detail="Debit would exceed wallet negative floor",
             )
+
+        locked_wallet.balance = new_balance
+        locked_wallet.updated_at = datetime.now(tz=timezone.utc)
 
         txn = WalletTransaction(
             wallet_id=locked_wallet.id,
@@ -312,6 +314,8 @@ class PaymentService:
             HTTPException 400: Nếu ví bị đóng băng, số dư không đủ,
                 hoặc đã có yêu cầu rút tiền chưa xử lý.
         """
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="Withdrawal amount must be positive")
         if wallet.is_frozen:
             raise HTTPException(status_code=400, detail="Wallet is frozen")
 
@@ -659,7 +663,7 @@ class PaymentService:
         locked_txn.balance_after = locked_wallet.balance
         locked_txn.gateway_ref = gateway_ref
         if gateway_ref:
-            locked_txn.description = f"{locked_txn.description} (Ref: {gateway_ref})"
+            locked_txn.description = f"{locked_txn.description or ''} (Ref: {gateway_ref})"
 
         await db.flush()
         logger.info(

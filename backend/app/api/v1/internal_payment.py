@@ -4,7 +4,7 @@ Skeleton endpoints cho VNPay/MoMo/ZaloPay IPN callbacks.
 Bảo mật bằng signature verification (placeholder — cần credentials thật).
 
 Endpoints:
-  POST   /internal/payments/vnpay/callback
+  GET    /internal/payments/vnpay/callback
   POST   /internal/payments/momo/callback
   POST   /internal/payments/zalopay/callback
 """
@@ -15,6 +15,7 @@ import logging
 import uuid
 
 from fastapi import APIRouter, Depends, Request, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -78,6 +79,10 @@ async def vnpay_callback(
             # Ở môi trường thực tế, tuỳ bussiness có thay đổi status của WalletTransaction thành 'failed' không
             logger.info("[PAYMENT] VNPay transaction failed or cancelled - code=%s", vnp_response_code)
 
+    except IntegrityError:
+        await db.rollback()
+        logger.info("[PAYMENT] VNPay callback: duplicate gateway_ref — already confirmed.")
+        return {"RspCode": "02", "Message": "Order already confirmed"}
     except Exception as e:
         await db.rollback()
         logger.error("[PAYMENT] Error processing VNPay callback: %s", str(e))
@@ -131,6 +136,10 @@ async def momo_callback(
         if result_code == 0:
             await PaymentService.complete_wallet_topup(db, txn_uuid, str(trans_id))
             await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        logger.info("[PAYMENT] MoMo callback: duplicate gateway_ref — already confirmed. Returning 0.")
+        return {"resultCode": 0}
     except Exception as e:
         await db.rollback()
         error_msg = str(e).lower()
@@ -190,6 +199,10 @@ async def zalopay_callback(
         await PaymentService.complete_wallet_topup(db, txn_uuid, str(zp_trans_id))
         await db.commit()
 
+    except IntegrityError:
+        await db.rollback()
+        logger.info("[PAYMENT] ZaloPay callback: duplicate gateway_ref — already confirmed. Returning 1.")
+        return {"return_code": 1, "return_message": "already completed"}
     except Exception as e:
         await db.rollback()
         error_msg = str(e).lower()

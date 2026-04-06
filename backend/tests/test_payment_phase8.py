@@ -45,7 +45,7 @@ def make_customer_token(user) -> str:
 
 def make_provider_token(user) -> str:
     """Tạo JWT cho provider."""
-    return create_access_token(str(user.id), ["provider"])
+    return create_access_token(str(user.id), ["provider_owner"])
 
 
 async def seed_customer(db: AsyncSession):
@@ -55,7 +55,7 @@ async def seed_customer(db: AsyncSession):
 
 async def seed_provider_pair(db: AsyncSession):
     """Tạo provider owner + provider record."""
-    owner = await create_user(db, phone="+84222222222", role="provider")
+    owner = await create_user(db, phone="+84222222222", role="provider_owner")
     provider = await create_provider(db, owner)
     return owner, provider
 
@@ -625,14 +625,21 @@ class TestPaymentServicePromotion:
 
         user = await seed_customer(db)
         promo = await seed_promotion(db, code="CONSUME", usage_limit=10)
+
+        # Create a real Booking row (required by FK constraint on promotion_usages)
+        category = await create_service_category(db)
+        booking = Booking(
+            id=uuid.uuid4(),
+            customer_id=user.id,
+            service_category_id=category.id,
+            service_type="taxi",
+            pickup_address="Test Address",
+        )
+        db.add(booking)
         await db.commit()
 
-        # Dummy booking UUID
-        import uuid
-        booking_id = uuid.uuid4()
-
         usage = await PaymentService.consume_promotion(
-            db, "CONSUME", user.id, booking_id, 25000.0,
+            db, "CONSUME", user.id, booking.id, 25000.0,
         )
         await db.commit()
         await db.refresh(promo)

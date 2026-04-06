@@ -79,7 +79,7 @@ async def _get_provider_or_400(current_user: User, db: AsyncSession) -> Provider
 )
 async def get_driver_wallet(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(check_user_role("provider")),
+    current_user: User = Depends(check_user_role("provider_owner")),
 ) -> WalletResponse:
     """Lấy ví tài xế (auto-create nếu chưa có).
 
@@ -108,7 +108,7 @@ async def list_driver_transactions(
     page_size: int = Query(20, ge=1, le=100, description="Kích thước trang"),
     type: str | None = Query(None, description="Lọc theo loại giao dịch"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(check_user_role("provider")),
+    current_user: User = Depends(check_user_role("provider_owner")),
 ) -> dict[str, Any]:
     """Lịch sử giao dịch ví tài xế.
 
@@ -161,7 +161,7 @@ async def list_driver_transactions(
 )
 async def get_earnings_summary(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(check_user_role("provider")),
+    current_user: User = Depends(check_user_role("provider_owner")),
 ) -> EarningsSummaryResponse:
     """Tổng hợp thu nhập tài xế.
 
@@ -275,7 +275,7 @@ async def get_earnings_summary(
 async def get_earnings_history(
     days: int = Query(30, ge=1, le=90, description="Số ngày lịch sử"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(check_user_role("provider")),
+    current_user: User = Depends(check_user_role("provider_owner")),
 ) -> dict[str, Any]:
     """Chi tiết thu nhập theo ngày.
 
@@ -360,7 +360,7 @@ async def get_earnings_history(
 async def request_withdrawal(
     payload: WithdrawalRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(check_user_role("provider")),
+    current_user: User = Depends(check_user_role("provider_owner")),
 ) -> WalletTransactionResponse:
     """Tạo yêu cầu rút tiền.
 

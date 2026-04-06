@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import urllib.parse
 from datetime import datetime, timedelta
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from app.core.config import get_settings
@@ -32,8 +33,8 @@ class VNPAYService:
         """
         settings = get_settings()
         
-        # VNPAY amount format: multiply by 100
-        vnp_amount = int(amount * 100)
+        # VNPAY amount format: multiply by 100 (use Decimal to avoid float rounding)
+        vnp_amount = int(Decimal(str(amount)) * 100)
         
         # Use timezone 'Asia/Ho_Chi_Minh' for VNPAY timestamps
         tz = ZoneInfo("Asia/Ho_Chi_Minh")
@@ -105,4 +106,4 @@ class VNPAYService:
         hash_secret = settings.vnpay_hash_secret.encode("utf-8")
         hash_value = hmac.new(hash_secret, query_string.encode("utf-8"), hashlib.sha512).hexdigest()
 
-        return vnp_secure_hash == hash_value
+        return hmac.compare_digest(vnp_secure_hash, hash_value)

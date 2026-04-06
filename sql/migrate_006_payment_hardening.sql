@@ -30,8 +30,3 @@ CHECK (balance >= -500000);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pt_gateway_ref
 ON payment_transactions (gateway_ref)
 WHERE status = 'completed' AND gateway_ref IS NOT NULL AND method != 'cash';
-
--- 4. Promotion Usages Composite Index
--- Tối ưu query per-user promotion usage check
-CREATE INDEX IF NOT EXISTS ix_promotion_usages_user_promo
-ON promotion_usages(user_id, promotion_id);

@@ -201,6 +201,11 @@ Use `[PREFIX]` tags for easy log filtering. Standard prefixes:
 | `[VEHICLE]` | Phase 6 - vehicle CRUD, status changes |
 | `[ROUTE]` | Phase 6 - route CRUD, schedule management |
 | `[TRANSPORT]` | Phase 6 - general transport operations |
+| `[BOOKING]` | Phase 7 - booking lifecycle, status transitions |
+| `[PAYMENT]` | Phase 8 - payment transactions, wallet operations |
+| `[REVIEW]` | Phase 9 - rating/review create, visibility toggle |
+| `[NOTIFICATION]` | Phase 9 - notification create, broadcast, settings |
+| `[ANALYTICS]` | Phase 9 - analytics queries, dashboard KPIs |
 | `[ADMIN]` | Admin panel operations |
 | `[SECURITY]` | Ownership violations, auth failures |
 | `[AI]` | AI service calls |
@@ -886,10 +891,112 @@ user, categories = await asyncio.gather(
 )
 ```
 
+**Dashboard / Analytics endpoints:** When computing multiple independent KPIs,
+always use `asyncio.gather()` to run all queries in parallel — never sequentially.
+
+#### Batch Operations (REQUIRED for bulk writes)
+When processing multiple records (e.g., broadcast notifications, bulk status updates):
+- **Batch SELECT** settings/permissions in one query, then filter in-memory.
+- **Avoid N+1 loops** — never call a helper function per-item that issues its own SELECT.
+- Use `db.add_all()` or loop `db.add()` then flush once — not commit per item.
+
+```python
+# BAD — N+1: 1 SELECT + 1 INSERT per user
+for user_id in user_ids:
+    setting = await check_setting(db, user_id)  # N queries!
+    if setting:
+        db.add(Notification(...))
+
+# GOOD — batch fetch, filter in memory, bulk insert
+disabled = set((await db.execute(
+    select(NotificationSetting.user_id).where(
+        NotificationSetting.user_id.in_(user_ids),
+        NotificationSetting.is_enabled.is_(False),
+    )
+)).scalars().all())
+eligible = [uid for uid in user_ids if uid not in disabled]
+for uid in eligible:
+    db.add(Notification(user_id=uid, ...))
+await db.commit()  # single commit at the end
+```
+
 #### Code Complexity Limits
 - Keep functions under 50 lines — extract private helpers if longer.
 - Avoid deeply nested conditionals (> 3 levels) — use early returns / guard clauses.
 - One function should do one thing.
+
+#### PostgreSQL UPSERT (INSERT ON CONFLICT) — High-Frequency Writes
+For **write-heavy endpoints** (driver location heartbeat, session toggle, status updates):
+- Use `INSERT ... ON CONFLICT DO UPDATE ... RETURNING` — **1 round-trip instead of 2**.
+- Only applicable when the conflict target is a PRIMARY KEY or UNIQUE constraint.
+- For tables without a unique key on the conflict column, use `UPDATE RETURNING` with INSERT fallback.
+
+```python
+# GOOD — 1 round-trip (PK upsert for driver_locations)
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+stmt = (
+    pg_insert(DriverLocation)
+    .values(provider_id=provider.id, latitude=lat, longitude=lng, updated_at=func.now())
+    .on_conflict_do_update(
+        index_elements=["provider_id"],  # must be PK or UNIQUE
+        set_={"latitude": lat, "longitude": lng, "updated_at": func.now()},
+    )
+    .returning(DriverLocation)
+)
+row = (await db.execute(stmt)).scalars().one()
+await db.commit()
+
+# ACCEPTABLE — 2 round-trips when no unique constraint (UPDATE + INSERT fallback)
+result = (await db.execute(
+    sa_update(MyModel).where(...).values(...).returning(MyModel)
+)).scalars().first()
+if not result:
+    db.add(MyModel(...))
+    await db.flush()
+await db.commit()
+```
+
+#### Connection Pool — REQUIRED Configuration for Production
+Never leave connection pool at SQLAlchemy defaults (pool_size=5).
+Configure via `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, etc. environment variables.
+
+| Deployment | pool_size | max_overflow | Notes |
+|------------|-----------|--------------|-------|
+| Dev | 5 | 10 | Default env |
+| Staging | 10 | 20 | Mid-load test |
+| Production (4 workers) | 20 | 40 | ~1M users |
+| Production (8 workers) | 30 | 60 | High traffic |
+
+Rule of thumb: `pool_size ≈ workers × 5`, `max_overflow ≈ pool_size × 2`.
+
+#### Database Index Checklist (REQUIRED per table)
+Every table that is queried in production **MUST** have indexes on:
+- All FK columns used in WHERE clauses
+- Status/type columns used in filters (especially partial indexes for low-cardinality values)
+- Timestamp columns used in ORDER BY or range filters (DESC indexes)
+- Composite indexes for the most common (col1 + col2) WHERE patterns
+
+Partial indexes for categorical filters:
+```sql
+-- Fast: bookings WHERE status = 'pending' (< 1% of rows)
+CREATE INDEX ix_bookings_pending ON bookings (requested_at DESC)
+WHERE status = 'pending';
+```
+
+#### PostGIS Spatial Queries
+- Use `GEOGRAPHY(POINT, 4326)` type (not Geometry) — distance in meters, no projection needed.
+- `ST_MakePoint` takes **(longitude, latitude)** — opposite of Google Maps (lat, lng).
+- Always use `func.ST_DWithin()` for radius queries — it utilizes the GIST index.
+- Keep original Numeric lat/lng columns for API response; geography is for indexing only.
+- NEVER do Haversine math in Python (Python-side distance calculation causes N+1, no index) — always use PostgreSQL with PostGIS.
+
+```sql
+-- GOOD: 5km radius using GIST index
+SELECT * FROM bookings
+WHERE ST_DWithin(pickup_point, ST_SetSRID(ST_MakePoint(106.6, 10.8), 4326)::geography, 5000);
+```
+
 
 ---
 

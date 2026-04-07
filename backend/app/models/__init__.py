@@ -51,6 +51,8 @@ from app.models.payment import (
     Wallet,
     WalletTransaction,
 )
+from app.models.review import Review
+from app.models.notification import Notification, NotificationSetting
 
 __all__ = [
     "Base",
@@ -96,4 +98,7 @@ __all__ = [
     "UserStatusLog",
     "Wallet",
     "WalletTransaction",
+    "Review",
+    "Notification",
+    "NotificationSetting",
 ]

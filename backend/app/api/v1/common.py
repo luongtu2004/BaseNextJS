@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, or_, select, update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_roles, get_current_user
@@ -28,6 +28,16 @@ from app.schemas.identity import (
     IdentityVerificationStatusResponse,
 )
 from app.models.identity import UserIdentityFile, UserIdentityVerification, UserIdentityVerificationLog
+from app.models.notification import Notification, NotificationSetting
+from app.schemas.notification import (
+    NotificationItem,
+    NotificationListResponse,
+    NotificationSettingItem,
+    NotificationSettingsResponse,
+    UnreadCountResponse,
+    UpdateNotificationSettingsRequest,
+    VALID_NOTIFICATION_TYPES,
+)
 from app.services.ai_service import AIService
 from app.core.config import get_settings
 from fastapi import UploadFile, File, Form
@@ -467,3 +477,303 @@ async def cancel_identity_verification(
     await db.commit()
     logger.info("Identity verification cancelled - verification_id=%s user_id=%s", id, current_user.id)
     return {"id": record.id, "status": "cancelled"}
+
+
+# ═════════════════════════════════════════════════════════════════════
+# Phase 9.2 — Notifications (NF1-NF6)
+# ═════════════════════════════════════════════════════════════════════
+
+
+
+
+# ─────────────────────────────────────────────────────────────────────
+# NF1 — Danh sách thông báo
+# ─────────────────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/me/notifications",
+    response_model=NotificationListResponse,
+    summary="Danh sách thông báo",
+    description="Lấy danh sách thông báo của user hiện tại, sắp xếp theo thời gian mới nhất.",
+)
+async def list_my_notifications(
+    is_read: bool | None = Query(default=None, description="Lọc theo trạng thái đọc"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> NotificationListResponse:
+    """Danh sách thông báo in-app của user (paginated).
+
+    Args:
+        is_read: Lọc theo trạng thái đọc — True (đã đọc), False (chưa đọc), None (tất cả).
+        page: Trang hiện tại.
+        page_size: Số item mỗi trang (tối đa 100).
+        db: Async DB session.
+        current_user: User đang đăng nhập.
+
+    Returns:
+        NotificationListResponse với danh sách và pagination.
+    """
+    base_stmt = select(Notification).where(Notification.user_id == current_user.id)
+    if is_read is not None:
+        base_stmt = base_stmt.where(Notification.is_read.is_(is_read))
+
+    total = (
+        await db.execute(select(func.count()).select_from(base_stmt.subquery()))
+    ).scalar_one()
+
+    items = (
+        await db.execute(
+            base_stmt.order_by(Notification.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+    ).scalars().all()
+
+    return NotificationListResponse(
+        items=[NotificationItem.model_validate(n) for n in items],
+        page=page,
+        page_size=page_size,
+        total=total,
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────
+# NF2 — Đánh dấu một thông báo đã đọc
+# ─────────────────────────────────────────────────────────────────────
+
+
+@router.patch(
+    "/me/notifications/{notification_id}/read",
+    response_model=NotificationItem,
+    summary="Đánh dấu đã đọc",
+    description="Đánh dấu một thông báo cụ thể là đã đọc.",
+)
+async def mark_notification_read(
+    notification_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> NotificationItem:
+    """Đánh dấu một thông báo là đã đọc.
+
+    Args:
+        notification_id: UUID của thông báo cần đánh dấu.
+        db: Async DB session.
+        current_user: User đang đăng nhập.
+
+    Returns:
+        NotificationItem đã cập nhật is_read=True.
+
+    Raises:
+        HTTPException 404: Thông báo không tồn tại hoặc không thuộc user.
+    """
+    notification = await db.get(Notification, notification_id)
+    if not notification or notification.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Notification not found")
+
+    if not notification.is_read:
+        notification.is_read = True
+        notification.read_at = datetime.now(tz=timezone.utc)
+        await db.commit()
+        await db.refresh(notification)
+
+    return NotificationItem.model_validate(notification)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# NF3 — Đánh dấu tất cả đã đọc
+# ─────────────────────────────────────────────────────────────────────
+
+
+@router.post(
+    "/me/notifications/read-all",
+    response_model=dict,
+    summary="Đánh dấu tất cả đã đọc",
+    description="Đánh dấu tất cả thông báo chưa đọc của user hiện tại là đã đọc.",
+)
+async def mark_all_notifications_read(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Đánh dấu tất cả thông báo chưa đọc là đã đọc.
+
+    Args:
+        db: Async DB session.
+        current_user: User đang đăng nhập.
+
+    Returns:
+        Dict với updated_count — số thông báo đã được cập nhật.
+    """
+    now = datetime.now(tz=timezone.utc)
+    result = await db.execute(
+        sa_update(Notification)
+        .where(
+            Notification.user_id == current_user.id,
+            Notification.is_read.is_(False),
+        )
+        .values(is_read=True, read_at=now)
+    )
+    await db.commit()
+    updated = result.rowcount
+    logger.info("[NOTIFICATION] User %s marked %d notifications as read", current_user.id, updated)
+    return {"updated_count": updated}
+
+
+# ─────────────────────────────────────────────────────────────────────
+# NF4 — Unread count (badge)
+# ─────────────────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/me/notifications/unread-count",
+    response_model=UnreadCountResponse,
+    summary="Số thông báo chưa đọc",
+    description="Trả về số thông báo chưa đọc — dùng để hiển thị badge icon trên app.",
+)
+async def get_unread_count(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> UnreadCountResponse:
+    """Đếm số thông báo chưa đọc của user.
+
+    Args:
+        db: Async DB session.
+        current_user: User đang đăng nhập.
+
+    Returns:
+        UnreadCountResponse với count.
+    """
+    count = (
+        await db.execute(
+            select(func.count()).where(
+                Notification.user_id == current_user.id,
+                Notification.is_read.is_(False),
+            )
+        )
+    ).scalar_one()
+    return UnreadCountResponse(count=count)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# NF5 — Xem notification settings
+# ─────────────────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/me/notification-settings",
+    response_model=NotificationSettingsResponse,
+    summary="Xem cấu hình nhận thông báo",
+    description="Trả về danh sách toàn bộ loại thông báo và trạng thái on/off của từng loại.",
+)
+async def get_notification_settings(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> NotificationSettingsResponse:
+    """Xem cấu hình thông báo của user.
+
+    Trả về tất cả VALID_NOTIFICATION_TYPES với trạng thái is_enabled.
+    Nếu chưa có record cho type nào → mặc định True.
+
+    Args:
+        db: Async DB session.
+        current_user: User đang đăng nhập.
+
+    Returns:
+        NotificationSettingsResponse với danh sách settings.
+    """
+    rows = (
+        await db.execute(
+            select(NotificationSetting).where(
+                NotificationSetting.user_id == current_user.id
+            )
+        )
+    ).scalars().all()
+
+    settings_map = {r.notification_type: r.is_enabled for r in rows}
+
+    settings = [
+        NotificationSettingItem(
+            notification_type=ntype,
+            is_enabled=settings_map.get(ntype, True),  # default: enabled
+        )
+        for ntype in sorted(VALID_NOTIFICATION_TYPES)
+    ]
+    return NotificationSettingsResponse(settings=settings)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# NF6 — Cập nhật notification settings
+# ─────────────────────────────────────────────────────────────────────
+
+
+@router.put(
+    "/me/notification-settings",
+    response_model=NotificationSettingsResponse,
+    summary="Cập nhật cấu hình thông báo",
+    description="Batch update on/off từng loại thông báo. Ghi đè (upsert) từng type được truyền lên.",
+)
+async def update_notification_settings(
+    payload: UpdateNotificationSettingsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> NotificationSettingsResponse:
+    """Cập nhật cấu hình nhận thông báo — upsert theo từng type.
+
+    Chỉ các types trong VALID_NOTIFICATION_TYPES mới được chấp nhận.
+    Không truyền type nào → type đó giữ nguyên giá trị cũ.
+
+    Args:
+        payload: Danh sách settings cần cập nhật.
+        db: Async DB session.
+        current_user: User đang đăng nhập.
+
+    Returns:
+        NotificationSettingsResponse với toàn bộ settings sau khi cập nhật.
+
+    Raises:
+        HTTPException 400: Nếu notification_type không hợp lệ.
+    """
+    now = datetime.now(tz=timezone.utc)
+
+    for item in payload.settings:
+        if item.notification_type not in VALID_NOTIFICATION_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid notification_type: '{item.notification_type}'. "
+                       f"Valid: {sorted(VALID_NOTIFICATION_TYPES)}",
+            )
+
+    for item in payload.settings:
+        existing = (
+            await db.execute(
+                select(NotificationSetting).where(
+                    NotificationSetting.user_id == current_user.id,
+                    NotificationSetting.notification_type == item.notification_type,
+                )
+            )
+        ).scalar_one_or_none()
+
+        if existing:
+            existing.is_enabled = item.is_enabled
+            existing.updated_at = now
+        else:
+            db.add(
+                NotificationSetting(
+                    id=uuid.uuid4(),
+                    user_id=current_user.id,
+                    notification_type=item.notification_type,
+                    is_enabled=item.is_enabled,
+                )
+            )
+
+    await db.commit()
+    logger.info(
+        "[NOTIFICATION] User %s updated %d notification settings",
+        current_user.id,
+        len(payload.settings),
+    )
+
+    # Return full settings after update
+    return await get_notification_settings(db=db, current_user=current_user)

@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     log_dir: str = Field(default="logs", validation_alias="LOG_DIR")
     log_sql: bool = Field(default="False", validation_alias="LOG_SQL")
 
+    # ── Database Connection Pool ───────────────────────────────────────────
+    # pool_size: persistent connections kept alive. Rule: (workers × avg_concurrent / worker)
+    # max_overflow: extra burstable connections (held max pool_timeout seconds)
+    # pool_recycle: force reconnect after N seconds (prevents stale conn with PgBouncer/RDS)
+    # Defaults tuned for 1M+ users with 4-8 Gunicorn workers
+    db_pool_size: int = Field(default=20, validation_alias="DB_POOL_SIZE")
+    db_max_overflow: int = Field(default=40, validation_alias="DB_MAX_OVERFLOW")
+    db_pool_timeout: int = Field(default=30, validation_alias="DB_POOL_TIMEOUT")
+    db_pool_recycle: int = Field(default=1800, validation_alias="DB_POOL_RECYCLE")
+
     # Identity Verification Thresholds
     ocr_confidence_threshold: float = Field(default=90.0, validation_alias="OCR_CONFIDENCE_THRESHOLD")
     face_match_threshold: float = Field(default=85.0, validation_alias="FACE_MATCH_THRESHOLD")

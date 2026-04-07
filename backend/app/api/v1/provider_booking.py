@@ -5,7 +5,8 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, func
+from sqlalchemy import func, select, update as sa_update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, check_user_role
@@ -76,6 +77,7 @@ async def _get_provider_or_400(current_user: User, db: AsyncSession) -> Provider
 )
 async def list_available_bookings(
     service_type: str | None = None,
+    radius_km: float = Query(default=10.0, ge=1.0, le=50.0, description="Bán kính tìm kiếm (km)"),
     page: int = Query(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)"),
     page_size: int = Query(default=20, ge=1, le=100, description="Kích thước trang"),
     db: AsyncSession = Depends(get_db),
@@ -83,12 +85,13 @@ async def list_available_bookings(
 ) -> dict:
     """Danh sách các cuốc xe đang chờ nhận.
 
-    Tài xế dùng API này để duyệt các booking `pending`. MVP hiện tại đơn giản
-    trả về danh sách cuốc chờ theo `service_type`. Tương lai (Phase 8) có thể
-    áp dụng geospacial filtering theo bán kính 5km.
+    Tài xế dùng API này để duyệt các booking `pending`. MVP lấy các cuốc chờ có
+    điểm đón (`pickup_point`) nằm trong bán kính `radius_km` so với vị trí hiện tại
+    của tài xế, sử dụng PostGIS spatial query mạnh mẽ.
 
     Args:
         service_type: Lọc theo loại dịch vụ.
+        radius_km: Bán kính tìm kiếm tính từ vị trí tài xế (mặc định 5km, tối đa 50km).
         page: Số trang hiện tại.
         page_size: Số mục trên mỗi trang.
         db: Async DB session.
@@ -98,26 +101,68 @@ async def list_available_bookings(
         Dict phân trang chứa danh sách items (BookingSummaryResponse — không có OTP),
         page, page_size, total.
     """
-    logger.info("[BOOKING] Provider %s browsing available bookings", current_user.id)
+    provider = await _get_provider_or_400(current_user, db)
+    logger.info("[BOOKING] Provider %s browsing available bookings within %skm", current_user.id, radius_km)
 
-    base_query = select(Booking).where(Booking.status == "pending")
+    # Get driver's current location
+    driver_loc = await db.get(DriverLocation, provider.id)
+
+    # Query setup
+    conditions = [Booking.status == "pending"]
     if service_type:
-        base_query = base_query.where(Booking.service_type == service_type)
+        conditions.append(Booking.service_type == service_type)
 
-    count_stmt = select(func.count()).select_from(base_query.subquery())
-    total = (await db.execute(count_stmt)).scalar_one()
+    if driver_loc and driver_loc.location is not None:
+        radius_meters = radius_km * 1000
+        # Spatial filter using PostGIS ST_DWithin (utilizes GIST index)
+        # Note: ST_DWithin requires Geography parameters for meters
+        conditions.append(
+            func.ST_DWithin(
+                Booking.pickup_point,
+                driver_loc.location,
+                radius_meters
+            )
+        )
+        
+        # Calculate distance for sorting and front-end display
+        dist_expr = func.ST_Distance(Booking.pickup_point, driver_loc.location)
+        select_cols = [Booking, dist_expr.label("distance_meters")]
+        base_query = select(*select_cols).where(*conditions)
+        
+        count_stmt = select(func.count()).where(*conditions)
+        query = (
+            base_query
+            .order_by(dist_expr.asc())  # Nearest first
+            .limit(page_size)
+            .offset((page - 1) * page_size)
+        )
+    else:
+        # Fallback if driver has no known location
+        from sqlalchemy import literal
+        base_query = select(Booking, literal(0.0).label("distance_meters")).where(*conditions)
+        count_stmt = select(func.count()).where(*conditions)
+        query = (
+            base_query
+            .order_by(Booking.requested_at.desc())
+            .limit(page_size)
+            .offset((page - 1) * page_size)
+        )
 
-    query = (
-        base_query
-        .order_by(Booking.requested_at.desc())
-        .limit(page_size)
-        .offset((page - 1) * page_size)
-    )
+    total = (await db.execute(count_stmt)).scalar() or 0
     result = await db.execute(query)
-    bookings = result.scalars().all()
+    
+    items = []
+    for row in result:
+        b = row[0]
+        # Calculate distance in km
+        dist_km = (float(row[1]) / 1000.0) if row[1] is not None else None
+        
+        b_dict = BookingSummaryResponse.model_validate(b).model_dump()
+        b_dict["distance_km"] = dist_km
+        items.append(b_dict)
 
     return {
-        "items": [BookingSummaryResponse.model_validate(b) for b in bookings],
+        "items": items,
         "page": page,
         "page_size": page_size,
         "total": total,
@@ -286,29 +331,36 @@ async def go_online(
     """
     logger.info("[PROVIDER] User %s going online", current_user.id)
     provider = await _get_provider_or_400(current_user, db)
-
-    stmt = select(DriverAvailabilitySession).where(DriverAvailabilitySession.provider_id == provider.id)
-    session = (await db.execute(stmt)).scalars().first()
     now_utc = datetime.now(tz=timezone.utc)
 
-    if not session:
-        session = DriverAvailabilitySession(
-            provider_id=provider.id,
+    # Performance: single UPDATE + RETURNING, fall back to INSERT only if no row exists
+    update_stmt = (
+        sa_update(DriverAvailabilitySession)
+        .where(DriverAvailabilitySession.provider_id == provider.id)
+        .values(
             vehicle_id=body.vehicle_id,
             status="online",
             online_at=now_utc,
             offline_at=None,
         )
-        db.add(session)
-    else:
-        session.status = "online"
-        session.vehicle_id = body.vehicle_id
-        session.online_at = now_utc
-        session.offline_at = None
+        .returning(DriverAvailabilitySession)
+    )
+    result = (await db.execute(update_stmt)).scalars().first()
+    if not result:
+        # First time going online — create session
+        new_session = DriverAvailabilitySession(
+            provider_id=provider.id,
+            vehicle_id=body.vehicle_id,
+            status="online",
+            online_at=now_utc,
+        )
+        db.add(new_session)
+        await db.flush()
+        result = new_session
 
     await db.commit()
-    await db.refresh(session)
-    return session
+    await db.refresh(result)
+    return DriverAvailabilitySessionResponse.model_validate(result)
 
 
 @router.post(
@@ -336,19 +388,22 @@ async def go_offline(
     """
     logger.info("[PROVIDER] User %s going offline", current_user.id)
     provider = await _get_provider_or_400(current_user, db)
+    now_utc = datetime.now(tz=timezone.utc)
 
-    stmt = select(DriverAvailabilitySession).where(DriverAvailabilitySession.provider_id == provider.id)
-    session = (await db.execute(stmt)).scalars().first()
-
-    if not session:
+    # Performance: single UPDATE + RETURNING (no SELECT needed)
+    update_stmt = (
+        sa_update(DriverAvailabilitySession)
+        .where(DriverAvailabilitySession.provider_id == provider.id)
+        .values(status="offline", offline_at=now_utc)
+        .returning(DriverAvailabilitySession)
+    )
+    result = (await db.execute(update_stmt)).scalars().first()
+    if not result:
         raise HTTPException(status_code=400, detail="No active session found")
 
-    session.status = "offline"
-    session.offline_at = datetime.now(tz=timezone.utc)
-
     await db.commit()
-    await db.refresh(session)
-    return session
+    await db.refresh(result)
+    return DriverAvailabilitySessionResponse.model_validate(result)
 
 
 @router.post(
@@ -377,25 +432,32 @@ async def ping_location(
     """
     provider = await _get_provider_or_400(current_user, db)
 
-    stmt = select(DriverLocation).where(DriverLocation.provider_id == provider.id)
-    location_row = (await db.execute(stmt)).scalars().first()
-
-    if not location_row:
-        location_row = DriverLocation(
+    # Performance: PostgreSQL INSERT ON CONFLICT UPDATE -- single round-trip
+    # driver_locations has provider_id as PRIMARY KEY so conflict on PK
+    stmt = (
+        pg_insert(DriverLocation)
+        .values(
             provider_id=provider.id,
             latitude=body.latitude,
             longitude=body.longitude,
             heading=body.heading,
             speed_kmh=body.speed_kmh,
+            location=func.ST_SetSRID(func.ST_MakePoint(body.longitude, body.latitude), 4326),
+            updated_at=func.now(),
         )
-        db.add(location_row)
-    else:
-        location_row.latitude = body.latitude
-        location_row.longitude = body.longitude
-        location_row.heading = body.heading
-        location_row.speed_kmh = body.speed_kmh
-        location_row.updated_at = datetime.now(tz=timezone.utc)
-
+        .on_conflict_do_update(
+            index_elements=["provider_id"],  # string column name (PK)
+            set_={
+                "latitude": body.latitude,
+                "longitude": body.longitude,
+                "heading": body.heading,
+                "speed_kmh": body.speed_kmh,
+                "location": func.ST_SetSRID(func.ST_MakePoint(body.longitude, body.latitude), 4326),
+                "updated_at": func.now(),
+            },
+        )
+        .returning(DriverLocation)
+    )
+    location_row = (await db.execute(stmt)).scalars().one()
     await db.commit()
-    await db.refresh(location_row)
-    return location_row
+    return DriverLocationResponse.model_validate(location_row)

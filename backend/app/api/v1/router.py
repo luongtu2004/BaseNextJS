@@ -15,6 +15,8 @@ from app.api.v1.provider_booking import router as provider_booking_router
 from app.api.v1.customer_wallet import router as customer_wallet_router
 from app.api.v1.provider_wallet import router as provider_wallet_router
 from app.api.v1.internal_payment import router as internal_payment_router
+from app.api.v1.customer_review import router as customer_review_router
+from app.api.v1.provider_review import router as provider_review_router
 
 api_router = APIRouter()
 api_router.include_router(admin_router, prefix="/admin")
@@ -31,3 +33,5 @@ api_router.include_router(provider_booking_router, prefix="/provider/transport/b
 api_router.include_router(customer_wallet_router)
 api_router.include_router(provider_wallet_router)
 api_router.include_router(internal_payment_router)
+api_router.include_router(customer_review_router)
+api_router.include_router(provider_review_router)

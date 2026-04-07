@@ -7,6 +7,9 @@ sqlalchemy[asyncio]>=2.0.36,<2.1
 # asyncpg: cần compiler trên một số môi trường Windows / Python mới
 # psycopg[binary] thường có wheel sẵn, driver async: postgresql+psycopg
 psycopg[binary]>=3.2.0,<3.3
+# PostGIS extensions
+geoalchemy2>=0.15.0,<0.16
+shapely>=2.0.0,<3
 alembic>=1.14.0,<2
 python-jose[cryptography]>=3.3.0,<4
 passlib[bcrypt]>=1.7.4,<2

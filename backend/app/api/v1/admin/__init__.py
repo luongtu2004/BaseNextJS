@@ -9,6 +9,9 @@ from app.api.v1.admin.transport import router as transport_router
 from app.api.v1.admin.pricing import router as pricing_router
 from app.api.v1.admin.bookings import router as bookings_router
 from app.api.v1.admin.payment import router as payment_admin_router
+from app.api.v1.admin.reviews import router as reviews_admin_router
+from app.api.v1.admin.notifications import router as notifications_admin_router
+from app.api.v1.admin.analytics import router as analytics_admin_router
 
 router = APIRouter()
 
@@ -21,3 +24,6 @@ router.include_router(transport_router)
 router.include_router(pricing_router)
 router.include_router(bookings_router)
 router.include_router(payment_admin_router)
+router.include_router(reviews_admin_router)
+router.include_router(notifications_admin_router)
+router.include_router(analytics_admin_router)

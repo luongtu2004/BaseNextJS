@@ -114,3 +114,21 @@ PROMOTION_TYPES = ("percent", "fixed", "free_trip")
 # Wallet negative floor limit (VND) — cho phep vi am khi settlement cash
 # Driver can bu bang cashless rides hoac nap vi thu cong
 WALLET_NEGATIVE_FLOOR = -500_000
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Phase 9 — Rating, Notifications & Analytics Constants
+# ─────────────────────────────────────────────────────────────────────
+
+# Default platform commission rate (heuristic fallback khi chua co commission_configs table)
+DEFAULT_COMMISSION_RATE = 0.15
+
+# Valid notification types (used in settings and broadcast)
+NOTIFICATION_TYPES = (
+    "booking_updates", "review_received", "promotion",
+    "admin_broadcast", "system",
+)
+
+# Review rating range
+REVIEW_RATING_MIN = 1
+REVIEW_RATING_MAX = 5

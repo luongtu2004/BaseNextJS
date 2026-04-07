@@ -13,10 +13,9 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import cast, Date, func, select
+from sqlalchemy import case, cast, Date, func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import check_user_role
@@ -98,7 +97,7 @@ async def get_driver_wallet(
 
 @router.get(
     "/wallet/transactions",
-    response_model=dict[str, Any],
+    response_model=dict,
     status_code=status.HTTP_200_OK,
     summary="Lịch sử giao dịch ví tài xế",
     description="Danh sách giao dịch ví tài xế, hỗ trợ phân trang và lọc theo loại.",
@@ -109,7 +108,7 @@ async def list_driver_transactions(
     type: str | None = Query(None, description="Lọc theo loại giao dịch"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(check_user_role("provider_owner")),
-) -> dict[str, Any]:
+) -> dict:
     """Lịch sử giao dịch ví tài xế.
 
     Args:
@@ -181,7 +180,6 @@ async def get_earnings_summary(
     month_start = today_start.replace(day=1)
 
     # Single query: aggregate earnings for today/week/month + trips_today + commission_today
-    from sqlalchemy import case, literal
     rows = (
         await db.execute(
             select(
@@ -267,7 +265,7 @@ async def get_earnings_summary(
 
 @router.get(
     "/me/earnings/history",
-    response_model=dict[str, Any],
+    response_model=dict,
     status_code=status.HTTP_200_OK,
     summary="Lịch sử thu nhập theo ngày",
     description="Chi tiết thu nhập tài xế theo từng ngày.",
@@ -276,7 +274,7 @@ async def get_earnings_history(
     days: int = Query(30, ge=1, le=90, description="Số ngày lịch sử"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(check_user_role("provider_owner")),
-) -> dict[str, Any]:
+) -> dict:
     """Chi tiết thu nhập theo ngày.
 
     Args:

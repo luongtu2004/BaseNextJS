@@ -24,8 +24,15 @@ from sqlalchemy import select
 from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
-# ── SQLite compat: render PostgreSQL JSONB as TEXT ────────────────────
+# ── SQLite compat: render PostgreSQL JSONB and PostGIS Geography as TEXT ────────────────────
 SQLiteTypeCompiler.visit_JSONB = lambda self, type_, **kw: "TEXT"  # type: ignore[attr-defined]
+
+from sqlalchemy.ext.compiler import compiles
+from geoalchemy2.types import Geography
+
+@compiles(Geography, 'sqlite')
+def compile_geography_sqlite(element, compiler, **kw):
+    return 'TEXT'
 # ─────────────────────────────────────────────────────────────────────
 
 from app.db.base import Base
@@ -52,7 +59,22 @@ engine = create_async_engine(
     connect_args={"check_same_thread": False},
     echo=False,
 )
+
+from sqlalchemy import event
+@event.listens_for(engine.sync_engine, 'connect')
+def receive_connect(dbapi_connection, connection_record):
+    """Mock PostGIS functions for standard SQLite without spatialite"""
+    dbapi_connection.create_function('ST_DWithin', 3, lambda a,b,c: True)
+    dbapi_connection.create_function('ST_MakePoint', 2, lambda a,b: b'0000')
+    dbapi_connection.create_function('ST_SetSRID', 2, lambda a,b: '0101000020E610000000000000000000000000000000000000') # Point(0 0) in hex WKB
+    dbapi_connection.create_function('ST_Distance', 2, lambda a,b: 1000)
+    dbapi_connection.create_function('ST_AsEWKB', 1, lambda a: '0101000020E610000000000000000000000000000000000000')
+    dbapi_connection.create_function('ST_AsBinary', 1, lambda a: '0101000020E610000000000000000000000000000000000000')
+    dbapi_connection.create_function('AsBinary', 1, lambda a: '0101000020E610000000000000000000000000000000000000')
+    dbapi_connection.create_function('ST_GeogFromText', 1, lambda a: '0101000020E610000000000000000000000000000000000000')
+
 TestSessionLocal = async_sessionmaker(
+
     engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
 )
 

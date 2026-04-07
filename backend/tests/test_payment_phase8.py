@@ -664,10 +664,9 @@ class TestCustomerWalletAPI:
         token = make_customer_token(customer)
 
         resp = await client.get("/api/v1/customer/wallet", headers=auth_headers(token))
-
         assert resp.status_code == 200
         data = resp.json()
-        assert data["balance"] == 0
+        assert float(data["balance"]) == 0.0
         assert data["currency"] == "VND"
         assert data["is_frozen"] is False
 
@@ -772,7 +771,7 @@ class TestProviderWalletAPI:
 
         assert resp.status_code == 200
         data = resp.json()
-        assert data["balance"] == 0
+        assert float(data["balance"]) == 0.0
 
     @pytest.mark.asyncio
     async def test_get_earnings_summary(self, client: AsyncClient, db: AsyncSession):
@@ -887,7 +886,7 @@ class TestAdminPaymentAPI:
 
         assert resp.status_code == 200
         data = resp.json()
-        assert data["balance"] == 50000
+        assert float(data["balance"]) == 50000.0
 
     @pytest.mark.asyncio
     async def test_admin_adjust_wallet_debit(self, client: AsyncClient, db: AsyncSession):
@@ -910,7 +909,7 @@ class TestAdminPaymentAPI:
 
         assert resp.status_code == 200
         data = resp.json()
-        assert data["balance"] == 70000
+        assert float(data["balance"]) == 70000.0
 
     @pytest.mark.asyncio
     async def test_admin_adjust_zero_fails(self, client: AsyncClient, db: AsyncSession):

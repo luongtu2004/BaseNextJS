@@ -4,6 +4,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
+from geoalchemy2 import Geography
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -114,6 +115,13 @@ class DriverLocation(Base):
     longitude: Mapped[float] = mapped_column(Numeric(10, 7), nullable=False)
     heading: Mapped[float | None] = mapped_column(Numeric(5, 2))
     speed_kmh: Mapped[float | None] = mapped_column(Numeric(5, 1))
+    
+    # PostGIS spatial column
+    location = mapped_column(
+        Geography(geometry_type="POINT", srid=4326, spatial_index=False),
+        nullable=True,
+    )
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
@@ -152,6 +160,16 @@ class Booking(Base):
     dropoff_address: Mapped[str | None] = mapped_column(Text)
     dropoff_lat: Mapped[float | None] = mapped_column(Numeric(10, 7))
     dropoff_lng: Mapped[float | None] = mapped_column(Numeric(10, 7))
+
+    # PostGIS spatial columns
+    pickup_point = mapped_column(
+        Geography(geometry_type="POINT", srid=4326, spatial_index=False),
+        nullable=True,
+    )
+    dropoff_point = mapped_column(
+        Geography(geometry_type="POINT", srid=4326, spatial_index=False),
+        nullable=True,
+    )
 
     route_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("service_routes.id", ondelete="SET NULL")

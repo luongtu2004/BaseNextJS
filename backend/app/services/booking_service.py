@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -126,9 +126,11 @@ class BookingService:
             duration_min=duration_min,
             pickup_lat=payload.pickup_lat,
             pickup_lng=payload.pickup_lng,
+            pickup_point=func.ST_SetSRID(func.ST_MakePoint(payload.pickup_lng, payload.pickup_lat), 4326),
             pickup_address=payload.pickup_address,
             dropoff_lat=payload.dropoff_lat,
             dropoff_lng=payload.dropoff_lng,
+            dropoff_point=func.ST_SetSRID(func.ST_MakePoint(payload.dropoff_lng, payload.dropoff_lat), 4326) if (payload.dropoff_lat and payload.dropoff_lng) else None,
             dropoff_address=payload.dropoff_address,
             boarding_otp=otp,
             boarding_otp_expires=otp_expires,
